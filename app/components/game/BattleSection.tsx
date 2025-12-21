@@ -13,53 +13,39 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }:
   return (
     <div className={styles.container}>
       {/* Stage Select Button */}
-      <button className={styles.sideButton} onClick={onStageSelect}>
+      <button className={styles.stageButton} onClick={onStageSelect}>
         <Image 
-          src="/game/icons/map.svg" 
+          src="/game/icons/stage-button.png" 
           alt="Map" 
-          width={28} 
-          height={28}
+          width={64} 
+          height={60}
+          className={styles.stageButtonImage}
         />
-        <span className={styles.sideLabel}>STAGE SELECT</span>
+        <span className={styles.stageLabel}>STAGE</span>
       </button>
 
       {/* Battle Button */}
       <button className={styles.battleButton} onClick={onBattle}>
         <Image 
-          src="/game/icons/swords.png" 
+          src="/game/icons/battle-button.png" 
           alt="Battle" 
-          width={32} 
-          height={32}
-          className={styles.battleIcon}
+          width={153} 
+          height={54}
+          className={styles.battleButtonImage}
         />
         <span className={styles.battleLabel}>BATTLE</span>
       </button>
 
       {/* PvP Button */}
-      <button 
-        className={`${styles.sideButton} ${styles.pvpButton}`} 
-        disabled={!isPvPEnabled}
-      >
-        <div className={styles.pvpIconContainer}>
-          <Image 
-            src="/game/icons/swords.png" 
-            alt="PvP" 
-            width={24} 
-            height={24}
-            className={styles.pvpSwords}
-          />
-          {!isPvPEnabled && (
-            <Image 
-              src="/game/icons/lock.svg" 
-              alt="Locked" 
-              width={16} 
-              height={16}
-              className={styles.lockIcon}
-            />
-          )}
-        </div>
-        <span className={styles.sideLabel}>PvP</span>
-        {!isPvPEnabled && <span className={styles.comingSoon}>Coming Soon</span>}
+      <button className={styles.pvpButton} onClick={() => {}}>
+        <Image 
+          src="/game/icons/swords.png" 
+          alt="PvP" 
+          width={51} 
+          height={54}
+          className={styles.pvpButtonImage}
+        />
+        <span className={styles.pvpLabel}>PVP</span>
       </button>
     </div>
   );

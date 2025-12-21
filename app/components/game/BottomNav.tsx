@@ -11,9 +11,9 @@ interface BottomNavProps {
 }
 
 const navItems: { id: NavItem; icon: string; label: string }[] = [
-  { id: 'cards', icon: '/game/icons/cards.png', label: 'Cards' },
-  { id: 'arena', icon: '/game/icons/swords.png', label: 'Arena' },
-  { id: 'market', icon: '/game/icons/market.png', label: 'Market' },
+  { id: 'cards', icon: '/game/icons/cards-icon.png', label: 'CARDS' },
+  { id: 'arena', icon: '/game/icons/swords.png', label: 'ARENA' },
+  { id: 'market', icon: '/game/icons/market.png', label: 'MARKET' },
 ];
 
 export function BottomNav({ activeItem, onNavigate }: BottomNavProps) {

@@ -1,84 +1,101 @@
 .header {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--spacing-md);
   background: linear-gradient(180deg, rgba(30, 58, 95, 0.95) 0%, rgba(15, 28, 46, 0.9) 100%);
   border-bottom: 2px solid var(--color-gold);
-  gap: var(--spacing-sm);
+  min-height: 90px;
 }
 
 .levelBadge {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.crownIcon {
   position: absolute;
-  top: -14px;
-  z-index: 2;
-}
-
-.shield {
-  width: 44px;
-  height: 52px;
-  background: linear-gradient(180deg, var(--color-gold) 0%, var(--color-gold-dark) 100%);
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  left: 14px;
+  top: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+  width: 60px;
+  height: 70px;
+  z-index: 2;
+}
+
+.levelBadgeImage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .levelNumber {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-pixelify);
-  font-size: var(--font-size-xl);
+  font-size: 20px;
   font-weight: bold;
-  color: var(--color-navy-dark);
-  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+  color: white;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  margin-top: 8px;
 }
 
 .xpSection {
-  flex: 1;
+  position: absolute;
+  left: 49px;
+  top: 22px;
+  z-index: 1;
+}
+
+.xpProgressContainer {
+  position: relative;
+  width: 168px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.progressBarImage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.xpContent {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-width: 140px;
+  align-items: flex-start;
+  gap: 0;
+  padding-left: 27px;
+  padding-top: 6px;
 }
 
-.xpLabel {
+.addressText {
   font-family: var(--font-pixelify);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-cream);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  color: white;
+  line-height: 1;
+  white-space: nowrap;
+  margin-bottom: 2px;
 }
 
-.xpBarContainer {
-  height: 16px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  border: 2px solid var(--color-green-xp-dark);
-  overflow: hidden;
-}
-
-.xpBarFill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-green-xp) 0%, var(--color-green-xp-dark) 100%);
-  border-radius: 6px;
-  transition: width 0.3s ease;
-  box-shadow: 0 0 8px var(--color-green-xp);
-}
-
-.xpPercentage {
+.xpText {
   font-family: var(--font-pixelify);
-  font-size: var(--font-size-xs);
-  color: var(--color-green-xp);
+  font-size: 12px;
+  color: white;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .currencySection {
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: row;
   gap: var(--spacing-sm);

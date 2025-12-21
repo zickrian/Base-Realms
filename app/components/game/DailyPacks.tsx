@@ -37,16 +37,16 @@ export function DailyPacks({ questCount, onQuestClick }: DailyPacksProps) {
 
       <button className={styles.questButton} onClick={onQuestClick}>
         <Image 
-          src="/game/icons/quest.png" 
+          src="/game/icons/quest-button.png" 
           alt="Quests" 
-          width={32} 
-          height={32}
-          className={styles.questIcon}
+          width={60} 
+          height={60}
+          className={styles.questButtonImage}
         />
         {questCount > 0 && (
           <div className={styles.questBadge}>{questCount}</div>
         )}
-        <span className={styles.questLabel}>QUESTS</span>
+        <span className={styles.questLabel}>QUEST</span>
       </button>
     </div>
   );

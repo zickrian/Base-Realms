@@ -56,35 +56,48 @@ export function HeaderBar({ player }: HeaderBarProps) {
     return value.toFixed(3);
   };
 
+  const formatAddress = (addr: string | undefined) => {
+    if (!addr) return "0x067AAAAAAAB...";
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // Mock data - tidak menggunakan backend
+  const mockLevel = 67;
+  const mockCurrentXP = 8700;
+  const mockMaxXP = 9500;
+
   return (
     <div className={styles.header}>
-      {/* Level Badge */}
+      {/* Level Badge - Connected to Progress Bar */}
       <div className={styles.levelBadge}>
         <Image 
-          src="/game/icons/crown.svg" 
-          alt="Crown" 
-          width={24} 
-          height={24} 
-          className={styles.crownIcon}
+          src="/game/icons/level-badge.png" 
+          alt="Level Badge" 
+          width={60} 
+          height={70}
+          className={styles.levelBadgeImage}
         />
-        <div className={styles.shield}>
-          <span className={styles.levelNumber}>{player.level}</span>
-        </div>
+        <span className={styles.levelNumber}>{mockLevel}</span>
       </div>
 
-      {/* XP Progress Bar */}
+      {/* XP Progress Bar - Connected to Level Badge */}
       <div className={styles.xpSection}>
-        <span className={styles.xpLabel}>PLAYER LEVEL</span>
-        <div className={styles.xpBarContainer}>
-          <div 
-            className={styles.xpBarFill} 
-            style={{ width: `${player.xpPercentage}%` }}
+        <div className={styles.xpProgressContainer}>
+          <Image 
+            src="/game/icons/progress-bar.png" 
+            alt="Progress Bar" 
+            width={168} 
+            height={52}
+            className={styles.progressBarImage}
           />
+          <div className={styles.xpContent}>
+            <span className={styles.addressText}>{formatAddress(address)}</span>
+            <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+          </div>
         </div>
-        <span className={styles.xpPercentage}>{player.xpPercentage}% XP</span>
       </div>
 
-      {/* Currency Display */}
+      {/* Currency Display - Keep as is */}
       <div className={styles.currencySection}>
         {/* IDRX - Left */}
         <div className={styles.currencyItem}>

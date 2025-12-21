@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28" fill="none">
-  <path d="M12 0L24 6V14C24 21 18 26 12 28C6 26 0 21 0 14V6L12 0Z" fill="url(#shieldGrad)" stroke="#B8860B" stroke-width="1"/>
-  <defs>
-    <linearGradient id="shieldGrad" x1="12" y1="0" x2="12" y2="28" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFD700"/>
-      <stop offset="100%" stop-color="#B8860B"/>
-    </linearGradient>
-  </defs>
-</svg>

@@ -21,10 +21,10 @@ export function StageDisplay({ stage }: StageDisplayProps) {
       
       <div className={styles.islandContainer}>
         <Image 
-          src="/game/illustrations/isometric-island.svg"
+          src="/game/illustrations/island.png"
           alt="Floating Island Arena"
-          width={320}
-          height={200}
+          width={393}
+          height={259}
           className={styles.islandImage}
           priority
         />
