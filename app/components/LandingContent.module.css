@@ -14,10 +14,12 @@
   width: 100%;
   max-width: 400px;
   padding: 2rem 1.5rem;
-  background-color: var(--color-card-bg);
-  border: 2px solid var(--color-border);
+  background-color: rgba(10, 30, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .logoSection {
@@ -57,22 +59,51 @@
 }
 
 .connectButton {
+  /* Layout Dasar */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: auto;
   min-width: 200px;
-  padding: 1rem 2rem;
+  padding: 12px 28px;
+  
+  /* Typography */
   font-family: var(--font-pixelify), cursive;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: white;
-  background-color: var(--color-primary);
+  text-decoration: none;
+  
+  /* Background & Border */
+  background-color: #2b59ff;
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  
+  /* Efek 3D (Shadow) */
+  box-shadow: 
+    inset -4px -4px 0px 0px #1a3ab1,
+    inset 2px 2px 0px 0px #6a8dff,
+    0px 4px 0px 0px #152d8a;
+  
+  transition: all 0.1s ease;
+  user-select: none;
 }
 
 .connectButton:hover {
-  background-color: var(--color-primary-hover);
+  background-color: #3a68ff;
+  box-shadow: 
+    inset -4px -4px 0px 0px #1a3ab1,
+    inset 2px 2px 0px 0px #7a9dff,
+    0px 4px 0px 0px #152d8a;
+}
+
+/* Efek Klik (Tombol Tertekan) */
+.connectButton:active {
+  transform: translateY(2px);
+  box-shadow: 
+    inset -2px -2px 0px 0px #1a3ab1,
+    0px 2px 0px 0px #152d8a;
 }
 
 .alternativeSection {
