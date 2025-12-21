@@ -11,7 +11,8 @@ export function RootProvider({ children }: { children: ReactNode }) {
       chain={base}
       config={{
         appearance: {
-          mode: "auto",
+          mode: "dark",
+          theme: "default",
         },
         wallet: {
           display: "modal",

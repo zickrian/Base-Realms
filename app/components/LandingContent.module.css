@@ -1,0 +1,166 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background-color: transparent;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem 1.5rem;
+  background-color: var(--color-card-bg);
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.logoSection {
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  width: 150px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.welcomeSection {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.welcomeText {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--color-text-cream);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.buttonSection {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.connectButton {
+  width: auto;
+  min-width: 200px;
+  padding: 1rem 2rem;
+  font-family: var(--font-pixelify), cursive;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.connectButton:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.alternativeSection {
+  margin-bottom: 2rem;
+}
+
+.alternativeLink {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.875rem;
+  color: var(--color-link-yellow);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.alternativeLink:hover {
+  opacity: 0.8;
+}
+
+.recommendationSection {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+}
+
+.recommendationTitle {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.recommendationText {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.coinbaseLink {
+  color: var(--color-link-blue);
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+}
+
+.coinbaseLink:hover {
+  opacity: 0.8;
+}
+
+.benefitsText {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
+/* Mobile-first responsive adjustments */
+@media (min-width: 480px) {
+  .card {
+    padding: 2.5rem 2rem;
+  }
+
+  .logo {
+    width: 180px;
+  }
+
+  .welcomeText {
+    font-size: 2rem;
+  }
+}
+
+/* Tablet and larger screens */
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem;
+  }
+
+  .card {
+    max-width: 450px;
+    padding: 3rem 2.5rem;
+  }
+
+  .logo {
+    width: 200px;
+  }
+
+  .welcomeText {
+    font-size: 2.25rem;
+  }
+}
