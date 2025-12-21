@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 80" fill="none">
+  <rect x="2" y="2" width="56" height="76" rx="4" fill="url(#towerGrad)" stroke="#1E3A5F" stroke-width="2"/>
+  <defs>
+    <linearGradient id="towerGrad" x1="30" y1="0" x2="30" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4ECDC4"/>
+      <stop offset="100%" stop-color="#1E3A5F"/>
+    </linearGradient>
+  </defs>
+  <!-- Tower base -->
+  <rect x="18" y="45" width="24" height="25" fill="#4A5568"/>
+  <!-- Tower middle -->
+  <rect x="20" y="30" width="20" height="18" fill="#718096"/>
+  <!-- Tower top -->
+  <rect x="22" y="18" width="16" height="14" fill="#A0AEC0"/>
+  <!-- Roof -->
+  <path d="M20 18L30 8L40 18H20Z" fill="#2D3748"/>
+  <!-- Flag -->
+  <rect x="29" y="4" width="2" height="8" fill="#8B4513"/>
+  <path d="M31 4L40 7L31 10V4Z" fill="#FF6B35"/>
+  <!-- Windows -->
+  <rect x="26" y="22" width="8" height="6" fill="#FFD700"/>
+  <rect x="24" y="35" width="5" height="8" fill="#FFD700"/>
+  <rect x="31" y="35" width="5" height="8" fill="#FFD700"/>
+  <!-- Door -->
+  <rect x="25" y="55" width="10" height="15" rx="5" fill="#8B4513"/>
+  <!-- Bricks pattern -->
+  <line x1="18" y1="50" x2="42" y2="50" stroke="#2D3748" stroke-width="1"/>
+  <line x1="18" y1="55" x2="42" y2="55" stroke="#2D3748" stroke-width="1"/>
+  <line x1="18" y1="60" x2="42" y2="60" stroke="#2D3748" stroke-width="1"/>
+  <!-- Border decoration -->
+  <rect x="6" y="6" width="48" height="68" rx="2" fill="none" stroke="#FFD700" stroke-width="1" stroke-dasharray="4 2"/>
+</svg>

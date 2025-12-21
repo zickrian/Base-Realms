@@ -5,6 +5,11 @@
   min-height: 100vh;
   padding: 1rem;
   background-color: transparent;
+  transition: opacity 0.3s ease-out;
+}
+
+.fadeOut {
+  opacity: 0;
 }
 
 .card {
@@ -193,5 +198,44 @@
 
   .welcomeText {
     font-size: 2.25rem;
+  }
+}
+
+
+/* Loading dots animation */
+.loadingDots {
+  display: flex;
+  gap: 8px;
+  margin-top: 1.5rem;
+}
+
+.loadingDots span {
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-link-yellow);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loadingDots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loadingDots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loadingDots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
   }
 }

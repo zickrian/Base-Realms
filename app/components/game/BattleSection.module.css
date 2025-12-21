@@ -1,0 +1,122 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: linear-gradient(180deg, rgba(30, 58, 95, 0.9) 0%, rgba(15, 28, 46, 0.95) 100%);
+}
+
+.sideButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(180deg, #4a5568 0%, #2d3748 100%);
+  border: 2px solid var(--color-gold);
+  border-radius: 12px;
+  cursor: pointer;
+  min-width: 72px;
+  min-height: 64px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sideButton:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px var(--color-gold);
+}
+
+.sideButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sideIcon {
+  width: 28px;
+  height: 28px;
+}
+
+.sideLabel {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-cream);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.battleButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-2xl);
+  background: linear-gradient(180deg, var(--color-orange) 0%, var(--color-orange-dark) 100%);
+  border: 3px solid var(--color-gold);
+  border-radius: 16px;
+  cursor: pointer;
+  min-width: 140px;
+  min-height: 56px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 
+    0 4px 12px rgba(255, 107, 53, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.battleButton:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 6px 20px rgba(255, 107, 53, 0.6),
+    0 0 20px var(--color-gold),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.battleButton:active {
+  transform: scale(0.98);
+}
+
+.battleIcon {
+  width: 32px;
+  height: 32px;
+}
+
+.battleLabel {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 2px;
+}
+
+.pvpButton {
+  position: relative;
+}
+
+.pvpIconContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pvpSwords {
+  opacity: 0.6;
+}
+
+.lockIcon {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+}
+
+.comingSoon {
+  font-family: var(--font-pixelify);
+  font-size: 8px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  position: absolute;
+  bottom: 4px;
+}

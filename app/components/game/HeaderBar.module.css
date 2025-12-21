@@ -1,0 +1,117 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(180deg, rgba(30, 58, 95, 0.95) 0%, rgba(15, 28, 46, 0.9) 100%);
+  border-bottom: 2px solid var(--color-gold);
+  gap: var(--spacing-sm);
+}
+
+.levelBadge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.crownIcon {
+  position: absolute;
+  top: -14px;
+  z-index: 2;
+}
+
+.shield {
+  width: 44px;
+  height: 52px;
+  background: linear-gradient(180deg, var(--color-gold) 0%, var(--color-gold-dark) 100%);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+}
+
+.levelNumber {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--color-navy-dark);
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.xpSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 140px;
+}
+
+.xpLabel {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-cream);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.xpBarContainer {
+  height: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  border: 2px solid var(--color-green-xp-dark);
+  overflow: hidden;
+}
+
+.xpBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-green-xp) 0%, var(--color-green-xp-dark) 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px var(--color-green-xp);
+}
+
+.xpPercentage {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: var(--color-green-xp);
+}
+
+.currencySection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.currencyItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 80px;
+}
+
+.idrxIcon {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-sm);
+  font-weight: bold;
+  color: var(--color-idrx-blue);
+  background: rgba(59, 130, 246, 0.2);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.ethIcon {
+  font-size: var(--font-size-sm);
+  color: var(--color-eth-purple);
+}
+
+.currencyValue {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-cream);
+}

@@ -1,22 +1,27 @@
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
-  padding: 1rem;
-  background-color: var(--background);
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--background);
+  position: relative;
 }
 
-.title {
-  font-family: var(--font-pixelify), cursive;
-  font-size: 2rem;
-  color: var(--color-text-cream);
-  margin-bottom: 1rem;
+/* Ensure the stage display takes remaining space */
+.container > *:nth-child(3) {
+  flex: 1;
 }
 
-.subtitle {
-  font-family: var(--font-pixelify), cursive;
-  font-size: 1rem;
-  color: var(--color-text-secondary);
+/* Mobile-first responsive */
+@media (max-width: 430px) {
+  .container {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 431px) {
+  .container {
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  }
 }

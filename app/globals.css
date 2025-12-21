@@ -14,8 +14,39 @@
     --color-border: #333344;
     --color-card-bg: #16162a;
     
+    /* Game-specific colors */
+    --game-bg-cyan: #4ecdc4;
+    --game-bg-gradient-start: #87ceeb;
+    --game-bg-gradient-end: #4ecdc4;
+    --color-gold: #ffd700;
+    --color-gold-dark: #b8860b;
+    --color-orange: #ff6b35;
+    --color-orange-dark: #e55a2b;
+    --color-green-xp: #4ade80;
+    --color-green-xp-dark: #22c55e;
+    --color-purple: #a855f7;
+    --color-pink-glow: #ff69b4;
+    --color-navy: #1e3a5f;
+    --color-navy-dark: #0f1c2e;
+    --color-idrx-blue: #3b82f6;
+    --color-eth-purple: #627eea;
+    
+    /* Spacing system */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+    
     /* Typography */
     --font-pixelify: 'Pixelify Sans', cursive;
+    --font-size-xs: 0.625rem;
+    --font-size-sm: 0.75rem;
+    --font-size-base: 0.875rem;
+    --font-size-lg: 1rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
   }
 
   html,
