@@ -29,13 +29,6 @@ export function StageDisplay({ stage }: StageDisplayProps) {
           priority
         />
       </div>
-      
-      {/* Water Effect */}
-      <div className={styles.water}>
-        <div className={styles.wave}></div>
-        <div className={styles.wave}></div>
-        <div className={styles.wave}></div>
-      </div>
     </div>
   );
 }

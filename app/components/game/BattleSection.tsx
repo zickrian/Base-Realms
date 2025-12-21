@@ -26,10 +26,11 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }:
       {/* Battle Button */}
       <button className={styles.battleButton} onClick={onBattle}>
         <Image 
-          src="/game/icons/swords.svg" 
+          src="/game/icons/swords.png" 
           alt="Battle" 
           width={32} 
           height={32}
+          className={styles.battleIcon}
         />
         <span className={styles.battleLabel}>BATTLE</span>
       </button>
@@ -41,7 +42,7 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }:
       >
         <div className={styles.pvpIconContainer}>
           <Image 
-            src="/game/icons/swords.svg" 
+            src="/game/icons/swords.png" 
             alt="PvP" 
             width={24} 
             height={24}

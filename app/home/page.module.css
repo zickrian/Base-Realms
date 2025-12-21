@@ -4,7 +4,7 @@
   min-height: 100vh;
   max-width: 430px;
   margin: 0 auto;
-  background: var(--background);
+  background: transparent;
   position: relative;
 }
 

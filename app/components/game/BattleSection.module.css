@@ -4,7 +4,9 @@
   justify-content: center;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
-  background: linear-gradient(180deg, rgba(30, 58, 95, 0.9) 0%, rgba(15, 28, 46, 0.95) 100%);
+  background: url('/background.png') no-repeat center center;
+  background-size: 100% auto;
+  background-attachment: local;
 }
 
 .sideButton {
@@ -13,7 +15,7 @@
   align-items: center;
   gap: 4px;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(180deg, #4a5568 0%, #2d3748 100%);
+  background: transparent;
   border: 2px solid var(--color-gold);
   border-radius: 12px;
   cursor: pointer;
@@ -47,29 +49,29 @@
 
 .battleButton {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-2xl);
-  background: linear-gradient(180deg, var(--color-orange) 0%, var(--color-orange-dark) 100%);
-  border: 3px solid var(--color-gold);
-  border-radius: 16px;
+  background: linear-gradient(180deg, var(--color-orange) 0%, #d94a1f 100%);
+  border: 2px solid rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
   cursor: pointer;
-  min-width: 140px;
-  min-height: 56px;
+  min-width: 160px;
+  min-height: 48px;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 
-    0 4px 12px rgba(255, 107, 53, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    0 0 20px rgba(135, 206, 235, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
 }
 
 .battleButton:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
   box-shadow: 
-    0 6px 20px rgba(255, 107, 53, 0.6),
-    0 0 20px var(--color-gold),
-    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    0 0 25px rgba(135, 206, 235, 0.4),
+    0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .battleButton:active {
@@ -79,6 +81,7 @@
 .battleIcon {
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
 }
 
 .battleLabel {

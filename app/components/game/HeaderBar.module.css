@@ -80,9 +80,9 @@
 
 .currencySection {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-end;
+  flex-direction: row;
+  gap: var(--spacing-sm);
+  align-items: center;
 }
 
 .currencyItem {

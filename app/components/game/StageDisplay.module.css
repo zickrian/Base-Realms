@@ -4,7 +4,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, var(--game-bg-gradient-start) 0%, var(--game-bg-cyan) 100%);
+  background: url('/background.png') no-repeat center center;
+  background-size: 100% auto;
+  background-attachment: local;
   padding: var(--spacing-lg);
   position: relative;
   overflow: hidden;
@@ -39,43 +41,3 @@
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
 }
 
-.water {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  background: linear-gradient(180deg, rgba(78, 205, 196, 0.3) 0%, rgba(78, 205, 196, 0.6) 100%);
-  overflow: hidden;
-}
-
-.wave {
-  position: absolute;
-  width: 200%;
-  height: 20px;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 20px,
-    rgba(255, 255, 255, 0.3) 20px,
-    rgba(255, 255, 255, 0.3) 40px
-  );
-  animation: waveMove 3s linear infinite;
-}
-
-.wave:nth-child(2) {
-  top: 15px;
-  animation-delay: -1s;
-  opacity: 0.7;
-}
-
-.wave:nth-child(3) {
-  top: 30px;
-  animation-delay: -2s;
-  opacity: 0.5;
-}
-
-@keyframes waveMove {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}

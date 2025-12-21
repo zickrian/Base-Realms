@@ -37,7 +37,7 @@ export function DailyPacks({ questCount, onQuestClick }: DailyPacksProps) {
 
       <button className={styles.questButton} onClick={onQuestClick}>
         <Image 
-          src="/game/icons/scroll.svg" 
+          src="/game/icons/quest.png" 
           alt="Quests" 
           width={32} 
           height={32}

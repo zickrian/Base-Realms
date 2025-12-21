@@ -4,6 +4,9 @@
   justify-content: space-between;
   padding: var(--spacing-md);
   gap: var(--spacing-md);
+  background: url('/background.png') no-repeat center center;
+  background-size: 100% auto;
+  background-attachment: local;
 }
 
 .packsSection {

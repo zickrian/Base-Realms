@@ -8,8 +8,6 @@ import styles from "./page.module.css";
 const mockPlayerData = {
   level: 5,
   xpPercentage: 65,
-  idrxBalance: 12500.50,
-  ethBalance: 0.125,
 };
 
 const mockStageData = {
