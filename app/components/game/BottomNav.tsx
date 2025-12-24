@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import styles from "./BottomNav.module.css";
 
 type NavItem = 'cards' | 'arena' | 'market';
@@ -25,12 +22,13 @@ export function BottomNav({ activeItem, onNavigate }: BottomNavProps) {
           className={`${styles.navItem} ${activeItem === item.id ? styles.active : ''}`}
           onClick={() => onNavigate?.(item.id)}
         >
-          <Image 
-            src={item.icon} 
-            alt={item.label} 
-            width={32} 
-            height={32}
+          {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
+          <img
+            src={item.icon}
+            alt={item.label}
             className={styles.navIcon}
+            width={32}
+            height={32}
           />
           <span className={styles.navLabel}>{item.label}</span>
         </button>

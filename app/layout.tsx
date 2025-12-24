@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Code_Pro, Pixelify_Sans } from "next/font/google";
+import { Inter, Source_Code_Pro, Pixelify_Sans, Russo_One } from "next/font/google";
 import { SafeArea } from "@coinbase/onchainkit/minikit";
 import { minikitConfig } from "@/minikit.config";
 import { RootProvider } from "./rootProvider";
@@ -55,6 +55,12 @@ const pixelifySans = Pixelify_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
+const russoOne = Russo_One({
+  variable: "--font-russo",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -62,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable}`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
         <RootProvider>
           <SafeArea>{children}</SafeArea>
         </RootProvider>
