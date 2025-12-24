@@ -10,49 +10,42 @@ interface BattleSectionProps {
 
 export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }: BattleSectionProps) {
   return (
-    <div className={styles.container}>
-      {/* Stage Select Button */}
-      <button className={styles.stageButton} onClick={onStageSelect}>
-        {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
-        <img
-          src="/game/icons/stage-button.png"
-          alt="Map"
-          width={64}
-          height={60}
-          className={styles.stageButtonImage}
-        />
-        <span className={styles.stageLabel}>STAGE</span>
-      </button>
+    <div className={styles.wrapper}>
+      {/* Unified Base Card containing Stage, Battle, and PvP */}
+      <div className={styles.unifiedBaseCard}>
 
-      {/* Battle Button */}
-      <button className={styles.battleButton} onClick={onBattle}>
-        <div className={styles.battleContent}>
-          <div className={styles.iconWrapper}>
-            {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
+        {/* Left: Stage Button */}
+        <button key="stage-btn" className={styles.stageButton} onClick={onStageSelect}>
+          <div className={styles.cardInner}>
+            <img
+              src="/game/icons/stage-button.png"
+              alt="Stats"
+              className={styles.pannelIcon}
+            />
+            <span className={styles.buttonLabel} suppressHydrationWarning>STATS</span>
+          </div>
+        </button>
+
+        {/* Center: Battle Button */}
+        <button key="battle-btn" className={styles.battleButton} onClick={onBattle}>
+          <div className={styles.battleContent}>
+            <span className={styles.battleLabel} suppressHydrationWarning>BATTLE</span>
+          </div>
+        </button>
+
+        {/* Right: PvP Button */}
+        <button key="pvp-btn" className={styles.pvpButton} onClick={() => { }}>
+          <div className={styles.cardInnerPvP}>
             <img
               src="/game/icons/swords.png"
-              alt="Battle"
-              width={40}
-              height={40}
-              className={styles.battleIcon}
+              alt="PvP"
+              className={styles.pannelIcon}
             />
+            <span className={styles.buttonLabel} suppressHydrationWarning>PVP</span>
           </div>
-          <span className={styles.battleLabel}>BATTLE</span>
-        </div>
-      </button>
+        </button>
 
-      {/* PvP Button */}
-      <button className={styles.pvpButton} onClick={() => { }}>
-        {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
-        <img
-          src="/game/icons/swords.png"
-          alt="PvP"
-          width={51}
-          height={54}
-          className={styles.pvpButtonImage}
-        />
-        <span className={styles.pvpLabel}>PVP</span>
-      </button>
+      </div>
     </div>
   );
 }

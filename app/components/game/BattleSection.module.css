@@ -1,236 +1,172 @@
-.container {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  /* 3 kolom: left, center, right */
+/* Main Wrapper */
+.wrapper {
+  display: flex;
+  justify-content: center;
   align-items: flex-end;
-  padding: var(--spacing-lg) var(--spacing-md);
-  min-height: 120px;
-  background: transparent;
-  gap: 0px;
-  /* Gap 0 untuk sangat dempet */
+  padding: 0 16px 24px 16px;
+  /* Added spacing from bottom and sides */
+  width: 100%;
 }
 
+/* --- Unified Base Card --- */
+.unifiedBaseCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  /* The single "Base Card" styling */
+  background-color: #0066AA;
+  /* Sea Blue (Lighter) */
+  border-radius: 20px;
+  /* Rounder corners */
+  padding: 8px;
+
+  /* Deep shadow to make it float */
+  box-shadow:
+    0px 8px 0px #003366,
+    0px 20px 20px rgba(0, 0, 0, 0.4);
+
+  border: 3px solid #004488;
+  position: relative;
+
+  /* Constrain max width for better mobile view */
+  max-width: 100%;
+  transform: scale(0.9);
+  /* Global scale down slightly as requested */
+}
+
+/* Stage Button (Left Card Slot) */
 .stageButton {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(180deg, #0088CC 0%, #005599 100%);
+  border: 2px solid #00AAFF;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 4px 0 #003366;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: transform 0.1s;
+}
+
+.stageButton:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #003366;
+}
+
+.cardInner {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
+  /* Stack Icon and Text */
+  justify-content: center;
   align-items: center;
-  gap: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  width: 83px;
-  /* 64px * 1.3 = 83.2px */
-  transition: transform 0.2s;
-  grid-column: 1;
-  /* Kolom pertama */
-  justify-self: end;
-  /* Align ke kanan agar gap sama dengan PVP */
-  position: relative;
+  box-shadow: none;
+  gap: 2px;
 }
 
-.stageButton::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 83px;
-  /* 64px * 1.3 = 83.2px */
-  height: 78px;
-  /* 60px * 1.3 = 78px */
-  background-image: url('/game/icons/button1.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  z-index: 0;
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-}
-
-.stageButton:hover {
-  transform: scale(1.05);
-}
-
-.stageButtonImage {
-  width: 64px;
-  /* Tetap ukuran asli, tidak dibesarkan */
-  height: 60px;
-  /* Tetap ukuran asli, tidak dibesarkan */
-  object-fit: contain;
-  margin-bottom: 4px;
-  position: relative;
-  z-index: 1;
-}
-
-.stageLabel {
-  font-family: var(--font-pixelify);
-  font-size: 16px;
-  /* 12px * 1.3 = 15.6px, bulatkan ke 16px */
-  color: white;
-  text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
-  position: relative;
-  z-index: 1;
-}
-
-/* Battle Button */
+/* Battle Button (Yellow Center) */
 .battleButton {
-  position: relative;
-  border: none;
-  background: transparent;
-  padding: 0;
+  width: 140px;
+  height: 64px;
+  background: linear-gradient(180deg, #FFCC00 0%, #FFAA00 100%);
+  border: 2px solid #FFDD44;
+  border-radius: 16px;
   cursor: pointer;
-  grid-column: 2;
-  justify-self: center;
-  align-self: center;
-  margin-bottom: 21px;
-  width: 180px;
-  height: 60px;
-  z-index: 10;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.5),
+    0 4px 0 #CC7700,
+    0 0 10px rgba(255, 180, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.1s, filter 0.1s;
+}
+
+.battleButton:hover {
+  filter: brightness(1.1);
+}
+
+.battleButton:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.5), 0 2px 0 #CC7700;
 }
 
 .battleContent {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: 100%;
-  height: 100%;
-
-  /* Gradient Orange to Red */
-  background: linear-gradient(180deg, #FF9500 0%, #FF5E00 100%);
-
-  /* Thinner border (2px) as requested */
-  border: 2px solid #2B1200;
-  border-radius: 12px;
-
-  /* 3D Depth (Bottom) and Outer Glow */
-  box-shadow:
-    /* Inner light highlight at top */
-    inset 0px 2px 0px rgba(255, 255, 255, 0.5),
-    /* 3D Depth at bottom (dark red/brown) */
-    0px 4px 0px #A03000,
-    /* Outer Glow (Yellow/White) - "cahaya di sekelilingnya" */
-    0px 0px 8px 2px rgba(255, 255, 100, 0.6),
-    0px 0px 15px 4px rgba(255, 255, 200, 0.3);
-
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.battleButton:hover .battleContent {
-  transform: translateY(-1px);
-  background: linear-gradient(180deg, #FFA520 0%, #FF6A10 100%);
-  box-shadow:
-    inset 0px 2px 0px rgba(255, 255, 255, 0.5),
-    0px 5px 0px #A03000,
-    0px 0px 12px 3px rgba(255, 255, 100, 0.8),
-    0px 0px 20px 6px rgba(255, 255, 200, 0.4);
-}
-
-.battleButton:active .battleContent {
-  transform: translateY(4px);
-  box-shadow:
-    inset 0px 2px 0px rgba(255, 255, 255, 0.5),
-    0px 0px 0px #A03000,
-    0px 0px 6px 1px rgba(255, 255, 100, 0.5);
-}
-
-.iconWrapper {
-  display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.battleIcon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  filter: drop-shadow(0px 2px 0px rgba(0, 0, 0, 0.3));
 }
 
 .battleLabel {
   font-family: var(--font-russo), sans-serif;
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 26px;
   color: #FFFFFF;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  /* Brown stroke */
   text-shadow:
-    -2px -2px 0 #4A2411,
-    2px -2px 0 #4A2411,
-    -2px 2px 0 #4A2411,
-    2px 2px 0 #4A2411,
-    0px 4px 0px rgba(0, 0, 0, 0.2);
+    0 2px 0 #884400,
+    -1px -1px 0 #884400,
+    1px 1px 0 #884400;
 }
 
+/* PvP Button (Right Card Slot) */
 .pvpButton {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(180deg, #00AA88 0%, #007766 100%);
+  border: 2px solid #00CCAA;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 4px 0 #004433;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.1s;
+}
+
+.pvpButton:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #004433;
+}
+
+.cardInnerPvP {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
+  /* Stack Icon and Text */
+  justify-content: center;
   align-items: center;
-  gap: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  width: 83px;
-  /* Samakan dengan STAGE button untuk gap yang sama */
-  transition: transform 0.2s;
-  grid-column: 3;
-  /* Kolom ketiga */
-  justify-self: start;
-  /* Align ke kiri agar gap sama dengan STAGE */
-  position: relative;
+  box-shadow: none;
+  gap: 2px;
 }
 
-.pvpButton::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 83px;
-  /* Sama dengan STAGE button (64px * 1.3 = 83px) */
-  height: 78px;
-  /* Sama dengan STAGE button (60px * 1.3 = 78px) */
-  background-image: url('/game/icons/button1.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  z-index: 0;
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-}
-
-.pvpButton:hover {
-  transform: scale(1.05);
-}
-
-.pvpButtonImage {
-  width: 51px;
-  /* Tetap ukuran asli, tidak dibesarkan */
-  height: 54px;
-  /* Tetap ukuran asli, tidak dibesarkan */
+.pannelIcon {
+  width: 30px;
+  /* Reduced from 38px to fit text */
+  height: 30px;
   object-fit: contain;
-  margin-bottom: 10px;
-  /* 4px gap + 6px untuk align bottom edge = 10px total */
-  position: relative;
-  z-index: 1;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
 }
 
-.pvpLabel {
-  font-family: var(--font-pixelify);
-  font-size: 16px;
-  /* 12px * 1.3 = 15.6px, bulatkan ke 16px */
-  color: white;
-  text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
-  position: relative;
-  z-index: 1;
+.buttonLabel {
+  font-family: var(--font-pixelify), monospace;
+  font-size: 10px;
+  color: #FFFFFF;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  line-height: 1;
 }
