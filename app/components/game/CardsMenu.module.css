@@ -1,0 +1,159 @@
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
+  background: url('/background.png') no-repeat center top;
+  background-size: 100% auto;
+}
+
+.title {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-2xl);
+  color: white;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: var(--spacing-md);
+}
+
+.sectionTitle {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xl);
+  color: white;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+}
+
+.shopContainer {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(12, 74, 110, 0.9);
+  border-radius: 12px;
+  padding: var(--spacing-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--color-gold-dark);
+  margin-bottom: var(--spacing-lg);
+}
+
+.packsRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.packCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.packImageWrapper {
+  width: 90px;
+  height: 110px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  margin-bottom: var(--spacing-xs);
+}
+
+.packName {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: white;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.packPrice {
+  margin-top: 2px;
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: var(--color-gold);
+  text-align: center;
+}
+
+.inventoryContainer {
+  width: 100%;
+  max-width: 380px;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.cardSlot {
+  position: relative;
+  width: 100%;
+  padding-top: 130%; /* Aspect ratio */
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  box-shadow: 0 3px 0 #020617;
+  overflow: hidden;
+}
+
+.cardInner {
+  position: absolute;
+  inset: 4px;
+  border-radius: 8px;
+  background: radial-gradient(circle at top, #38bdf8 0%, #1d4ed8 40%, #020617 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardImage {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+
+.cardCount {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: white;
+  border: 1px solid var(--color-gold);
+}
+
+.cardEmpty {
+  position: absolute;
+  inset: 4px;
+  border-radius: 8px;
+  border: 2px dashed rgba(148, 163, 184, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardEmptyLabel {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: rgba(148, 163, 184, 0.9);
+  text-align: center;
+}
+
+.bottomSpacer {
+  height: 12px;
+}
+
+

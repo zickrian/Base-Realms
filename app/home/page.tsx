@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { HeaderBar, DailyPacks, StageDisplay, BattleSection, BottomNav } from "../components/game";
+import {
+  HeaderBar,
+  DailyPacks,
+  StageDisplay,
+  BattleSection,
+  BottomNav,
+  CardsMenu,
+  QuestMenu,
+} from "../components/game";
 import styles from "./page.module.css";
 
 // Mock data untuk demo
@@ -16,7 +24,10 @@ const mockStageData = {
 };
 
 export default function HomePage() {
-  const [activeNav, setActiveNav] = useState<'cards' | 'arena' | 'market'>('arena');
+  const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">(
+    "arena"
+  );
+  const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
 
   const handleBattle = () => {
     console.log("Battle started!");
@@ -27,20 +38,40 @@ export default function HomePage() {
   };
 
   const handleQuestClick = () => {
-    console.log("Quests opened!");
+    setIsQuestMenuOpen(true);
   };
 
-  return (
-    <div className={styles.container}>
+  const handlePackClick = () => {
+    console.log("Daily packs clicked!");
+  };
+
+  const renderArenaView = () => (
+    <>
       <HeaderBar player={mockPlayerData} />
-      <DailyPacks questCount={3} onQuestClick={handleQuestClick} />
+      <DailyPacks 
+        questCount={3} 
+        onQuestClick={handleQuestClick}
+        packCount={4}
+        onPackClick={handlePackClick}
+      />
       <StageDisplay stage={mockStageData} />
-      <BattleSection 
+      <BattleSection
         onBattle={handleBattle}
         onStageSelect={handleStageSelect}
         isPvPEnabled={false}
       />
+    </>
+  );
+
+  const renderCardsView = () => <CardsMenu />;
+
+  return (
+    <div className={styles.container}>
+      {activeNav === "arena" ? renderArenaView() : null}
+      {activeNav === "cards" ? renderCardsView() : null}
+      {/* TODO: implement market view */}
       <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
+      <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
     </div>
   );
 }

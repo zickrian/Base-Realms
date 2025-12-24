@@ -6,48 +6,41 @@ import styles from "./DailyPacks.module.css";
 interface DailyPacksProps {
   questCount: number;
   onQuestClick?: () => void;
+  packCount?: number;
+  onPackClick?: () => void;
 }
 
-const cardPacks = [
-  { id: 'dragon', src: '/game/illustrations/card-dragon.svg', alt: 'Dragon Card' },
-  { id: 'tower', src: '/game/illustrations/card-tower.svg', alt: 'Tower Card' },
-  { id: 'knight', src: '/game/illustrations/card-knight.svg', alt: 'Knight Card' },
-  { id: 'magic', src: '/game/illustrations/card-magic.svg', alt: 'Magic Card' },
-];
-
-export function DailyPacks({ questCount, onQuestClick }: DailyPacksProps) {
+export function DailyPacks({ questCount, onQuestClick, packCount = 4, onPackClick }: DailyPacksProps) {
   return (
     <div className={styles.container}>
       <div className={styles.packsSection}>
         <span className={styles.label}>FREE DAILY PACKS</span>
-        <div className={styles.cardsRow}>
-          {cardPacks.map((pack) => (
-            <div key={pack.id} className={styles.cardPack}>
-              <Image 
-                src={pack.src} 
-                alt={pack.alt} 
-                width={56} 
-                height={72}
-                className={styles.cardImage}
-              />
-            </div>
-          ))}
-        </div>
+        <button className={styles.packButton} onClick={onPackClick}>
+          <Image 
+            src="/game/icons/packs.png" 
+            alt="Daily Packs" 
+            width={60} 
+            height={60}
+            className={styles.packButtonImage}
+          />
+        </button>
       </div>
 
-      <button className={styles.questButton} onClick={onQuestClick}>
-        <Image 
-          src="/game/icons/quest-button.png" 
-          alt="Quests" 
-          width={60} 
-          height={60}
-          className={styles.questButtonImage}
-        />
-        {questCount > 0 && (
-          <div className={styles.questBadge}>{questCount}</div>
-        )}
+      <div className={styles.questSection}>
         <span className={styles.questLabel}>QUEST</span>
-      </button>
+        <button className={styles.questButton} onClick={onQuestClick}>
+          <Image 
+            src="/game/icons/quest-button.png" 
+            alt="Quests" 
+            width={60} 
+            height={60}
+            className={styles.questButtonImage}
+          />
+          {questCount > 0 && (
+            <div className={styles.questBadge}>{questCount}</div>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

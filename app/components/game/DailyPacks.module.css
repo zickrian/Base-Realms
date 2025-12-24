@@ -10,45 +10,79 @@
 .packsSection {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--spacing-sm);
 }
 
 .label {
   font-family: var(--font-pixelify);
   font-size: var(--font-size-xs);
-  color: var(--color-gold);
+  color: white;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
 }
 
-.cardsRow {
+.packButton {
   display: flex;
-  gap: var(--spacing-sm);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: transform 0.2s;
 }
 
-.cardPack {
-  width: 56px;
-  height: 72px;
-  border-radius: 8px;
+.packButton:hover {
+  transform: scale(1.05);
+}
+
+.packButtonImage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.packBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  font-weight: bold;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.cardPack:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 215, 0, 0.5);
+.questSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-.cardImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.questLabel {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-xs);
+  color: white;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
 }
 
 .questButton {
@@ -93,15 +127,4 @@
   justify-content: center;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.questLabel {
-  position: relative;
-  z-index: 1;
-  font-family: var(--font-pixelify);
-  font-size: 12px;
-  color: white;
-  text-transform: uppercase;
-  margin-top: 40px;
-  text-align: center;
 }
