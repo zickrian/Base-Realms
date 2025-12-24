@@ -97,4 +97,23 @@
   .text-blue {
     color: var(--color-link-blue);
   }
+
+  /* Disable image smoothing for pixel art */
+  img,
+  [style*="background-image"],
+  *::before,
+  *::after {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  /* Next.js Image component */
+  img[src*="/game/"],
+  img[src*="icons"],
+  img[src*="illustrations"] {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
 }

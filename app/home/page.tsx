@@ -41,10 +41,19 @@ export default function HomePage() {
     setIsQuestMenuOpen(true);
   };
 
+  const handlePackClick = () => {
+    console.log("Daily packs clicked!");
+  };
+
   const renderArenaView = () => (
     <>
       <HeaderBar player={mockPlayerData} />
-      <DailyPacks questCount={3} onQuestClick={handleQuestClick} />
+      <DailyPacks 
+        questCount={3} 
+        onQuestClick={handleQuestClick}
+        packCount={4}
+        onPackClick={handlePackClick}
+      />
       <StageDisplay stage={mockStageData} />
       <BattleSection
         onBattle={handleBattle}
