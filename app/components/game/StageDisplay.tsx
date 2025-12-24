@@ -18,15 +18,15 @@ export function StageDisplay({ stage }: StageDisplayProps) {
       <h2 className={styles.stageTitle}>
         {stage.name} - STAGE {stage.stageNumber}
       </h2>
-      
+
       <div className={styles.islandContainer}>
-        <Image 
-          src="/game/illustrations/island.png"
-          alt="Floating Island Arena"
-          width={393}
-          height={259}
+        <video
+          src="/game/icons/Untitled.mp4"
           className={styles.islandImage}
-          priority
+          autoPlay
+          loop
+          muted
+          playsInline
         />
       </div>
     </div>
