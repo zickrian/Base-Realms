@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+
 import styles from "./DailyPacks.module.css";
 
 interface DailyPacksProps {
@@ -16,10 +16,11 @@ export function DailyPacks({ questCount, onQuestClick, packCount = 4, onPackClic
       <div className={styles.packsSection}>
         <span className={styles.label}>FREE DAILY PACKS</span>
         <button className={styles.packButton} onClick={onPackClick}>
-          <Image 
-            src="/game/icons/packs.png" 
-            alt="Daily Packs" 
-            width={60} 
+          {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
+          <img
+            src="/game/icons/packs.png"
+            alt="Daily Packs"
+            width={60}
             height={60}
             className={styles.packButtonImage}
           />
@@ -29,10 +30,11 @@ export function DailyPacks({ questCount, onQuestClick, packCount = 4, onPackClic
       <div className={styles.questSection}>
         <span className={styles.questLabel}>QUEST</span>
         <button className={styles.questButton} onClick={onQuestClick}>
-          <Image 
-            src="/game/icons/quest-button.png" 
-            alt="Quests" 
-            width={60} 
+          {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
+          <img
+            src="/game/icons/quest-button.png"
+            alt="Quests"
+            width={60}
             height={60}
             className={styles.questButtonImage}
           />
