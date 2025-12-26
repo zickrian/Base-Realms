@@ -20,7 +20,7 @@ const BASE_CHAIN_ID = 8453; // Base Mainnet
 
 export function HeaderBar({ player }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
-  
+
   // Get ETH balance
   const { data: ethBalanceData } = useBalance({
     address: address,
@@ -39,7 +39,7 @@ export function HeaderBar({ player }: HeaderBarProps) {
     if (value < 0.01) return value.toFixed(6);
     return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
-  
+
   const idrxBalance = useMemo(() => {
     if (!idrxBalanceData || !isConnected) return 0;
     return parseFloat(formatUnits(idrxBalanceData.value, idrxBalanceData.decimals));
@@ -68,53 +68,56 @@ export function HeaderBar({ player }: HeaderBarProps) {
 
   return (
     <div className={styles.header}>
-      {/* Level Badge - Connected to Progress Bar */}
-      <div className={styles.levelBadge}>
-        <Image 
-          src="/game/icons/level-badge.png" 
-          alt="Level Badge" 
-          width={60} 
-          height={70}
-          className={styles.levelBadgeImage}
-        />
-        <span className={styles.levelNumber}>{mockLevel}</span>
-      </div>
-
-      {/* XP Progress Bar - Connected to Level Badge */}
-      <div className={styles.xpSection}>
-        <div className={styles.xpProgressContainer}>
-          <Image 
-            src="/game/icons/progress-bar.png" 
-            alt="Progress Bar" 
-            width={168} 
-            height={52}
-            className={styles.progressBarImage}
-          />
-          <div className={styles.xpContent}>
-            <span className={styles.addressText}>{formatAddress(address)}</span>
-            <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+      {/* Player Stats Group (Left) */}
+      <div className={styles.playerStats}>
+        {/* XP Progress Bar - Layer 1 (Behind) */}
+        <div className={styles.xpSection}>
+          <div className={styles.xpProgressContainer}>
+            <Image
+              src="/game/icons/progress-bar.png"
+              alt="Progress Bar"
+              width={168}
+              height={52}
+              className={styles.progressBarImage}
+            />
+            <div className={styles.xpContent}>
+              <span className={styles.addressText}>{formatAddress(address)}</span>
+              <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+            </div>
           </div>
+        </div>
+
+        {/* Level Badge - Layer 2 (Front) */}
+        <div className={styles.levelBadge}>
+          <Image
+            src="/game/icons/level-badge.png"
+            alt="Level Badge"
+            width={60}
+            height={70}
+            className={styles.levelBadgeImage}
+          />
+          <span className={styles.levelNumber}>{mockLevel}</span>
         </div>
       </div>
 
-      {/* Currency Display - Keep as is */}
+      {/* Currency Display (Right) */}
       <div className={styles.currencySection}>
-        {/* IDRX - Left */}
+        {/* IDRX */}
         <div className={styles.currencyItem}>
-          <Image 
-            src="/game/icons/idrx.svg" 
-            alt="IDRX" 
-            width={20} 
+          <Image
+            src="/game/icons/idrx.svg"
+            alt="IDRX"
+            width={20}
             height={20}
           />
           <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
-        {/* ETH - Right */}
+        {/* ETH */}
         <div className={styles.currencyItem}>
-          <Image 
-            src="/game/icons/eth.svg" 
-            alt="ETH" 
-            width={20} 
+          <Image
+            src="/game/icons/eth.svg"
+            alt="ETH"
+            width={20}
             height={20}
           />
           <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
