@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useGameCanvas } from "@/app/hooks/useGameCanvas";
 import { GameAssets } from "@/app/utils/gameAssets";
-import { drawSprite } from "@/app/utils/sprite";
-import { Animation } from "@/app/utils/animation";
 import styles from "./StageDisplay.module.css";
 
 interface StageInfo {
@@ -17,46 +15,72 @@ interface StageDisplayProps {
 }
 
 export function StageDisplay({ stage }: StageDisplayProps) {
-  const [islandImage, setIslandImage] = useState<HTMLImageElement | null>(null);
-  const animation = useState(() => new Animation())[0];
+  const [cloudImage, setCloudImage] = useState<HTMLImageElement | null>(null);
+  const cloudXRef = useRef<number>(0);
 
-  // Load island image
+  // Load cloud image
   useEffect(() => {
-    GameAssets.loadImage('/game/illustrations/island.png')
-      .then(setIslandImage)
+    GameAssets.loadImage('/game/icons/awan.png')
+      .then((cloud) => {
+        console.log('Cloud image loaded:', { width: cloud.width, height: cloud.height });
+        setCloudImage(cloud);
+      })
       .catch((error) => {
-        console.error("Error loading island image:", error);
+        console.error("Error loading cloud image:", error);
       });
   }, []);
 
   // Canvas setup
   const canvasRef = useGameCanvas({
-    width: 393,
+    width: 430,
     height: 259,
     pixelArt: true,
     onUpdate: (ctx, deltaTime) => {
-      if (!islandImage) return;
-
-      animation.update(deltaTime);
-
-      // Draw island with subtle breathing animation
-      const scale = 1 + Animation.sinWave(animation.getTime(), 0.5, 0.02);
-      
-      drawSprite(ctx, {
-        image: islandImage,
-        x: 393 / 2,
-        y: 259 / 2,
-        scale: scale,
-      });
+      // Draw cloud layer yang bergerak horizontal
+      if (cloudImage) {
+        const speed = 15; // Kecepatan gerak (pixel per second) - diperlambat
+        const canvasWidth = 430;
+        const canvasHeight = 259;
+        
+        // Update posisi X (gerak kanan ke kiri)
+        cloudXRef.current -= speed * deltaTime;
+        
+        // Reset posisi untuk seamless loop
+        if (cloudXRef.current <= -canvasWidth) {
+          cloudXRef.current += canvasWidth;
+        }
+        
+        // Y position sedikit ke atas
+        const yOffset = -30;
+        
+        // Scale height proporsional dengan width
+        // Width PERSIS canvasWidth untuk mengisi penuh tanpa gap
+        const scaleY = canvasWidth / cloudImage.width;
+        const scaledHeight = cloudImage.height * scaleY;
+        
+        // Draw pertama - width PERSIS canvasWidth (tidak ada gap)
+        ctx.drawImage(
+          cloudImage, 
+          cloudXRef.current, 
+          yOffset, 
+          canvasWidth,  // Width PERSIS canvas width
+          scaledHeight
+        );
+        
+        // Draw kedua untuk seamless loop - width PERSIS canvasWidth
+        ctx.drawImage(
+          cloudImage, 
+          cloudXRef.current + canvasWidth, 
+          yOffset, 
+          canvasWidth,  // Width PERSIS canvas width
+          scaledHeight
+        );
+      }
     },
   });
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.stageTitle}>
-        {stage.name} - STAGE {stage.stageNumber}
-      </h2>
-
       <div className={styles.islandContainer}>
         <canvas ref={canvasRef} className={styles.gameCanvas} />
       </div>

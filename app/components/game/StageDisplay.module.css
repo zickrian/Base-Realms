@@ -7,7 +7,7 @@
   background: transparent;
   padding: var(--spacing-lg);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   min-height: 280px;
 }
 
@@ -23,47 +23,34 @@
 }
 
 .islandContainer {
-  position: relative;
+  position: absolute;
+  top: -180px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
-  max-width: 393px;
+  max-width: 430px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   z-index: 1;
   background: transparent;
-}
-
-.islandImage {
-  width: 100%;
-  height: auto;
-  max-width: 393px;
-  max-height: 259px;
-  object-fit: cover;
-  display: block;
-  background: transparent;
+  min-height: 259px;
 }
 
 .gameCanvas {
   width: 100%;
   height: 100%;
-  max-width: 393px;
+  max-width: 430px;
   max-height: 259px;
   display: block;
   background: transparent;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-}
-
-.islandContainer {
-  position: relative;
-  width: 100%;
-  max-width: 393px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 1;
-  background: transparent;
-  min-height: 259px;
+  pointer-events: none; /* Agar button di atasnya bisa diklik */
 }
 
