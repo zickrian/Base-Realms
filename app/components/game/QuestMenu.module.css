@@ -25,11 +25,14 @@
   }
 }
 
-/* Main Box - Parchment Style */
+/* Main Box - Parchment Style (Mobile First) */
 .menuBox {
   width: 90%;
   max-width: 420px;
-  max-height: 90vh;
+  max-height: 80vh;
+  /* Reduced to ensure it fits within screen */
+  margin: auto;
+  /* Safe centering */
   /* Parchment Background */
   background-color: #fdf6e3;
   background-image:
