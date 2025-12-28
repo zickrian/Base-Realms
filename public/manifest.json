@@ -8,12 +8,12 @@
   "theme_color": "#1a1a2e",
   "icons": [
     {
-      "src": "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/logos_demo.png",
+      "src": "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/logos.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/logos_demo.png",
+      "src": "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/logos.png",
       "sizes": "512x512",
       "type": "image/png"
     }
