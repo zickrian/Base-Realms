@@ -4,23 +4,19 @@ import { useMemo, useState, useEffect } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
+import { usePlayerProfile } from "../../hooks/usePlayerProfile";
 import styles from "./HeaderBar.module.css";
 
-interface PlayerData {
-  level: number;
-  xpPercentage: number;
-}
-
 interface HeaderBarProps {
-  player: PlayerData;
   onSettingsClick?: () => void;
 }
 
 const IDRX_TOKEN_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22" as const;
 const BASE_CHAIN_ID = 8453; // Base Mainnet
 
-export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
+export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
+  const { profile, loading: profileLoading } = usePlayerProfile();
 
   // Get ETH balance
   const { data: ethBalanceData } = useBalance({
@@ -62,11 +58,11 @@ export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  // Mock data - tidak menggunakan backend
-  const mockLevel = 67;
-  const mockCurrentXP = 8700;
-  const mockMaxXP = 9500;
-  const xpPercentage = (mockCurrentXP / mockMaxXP) * 100;
+  // Get level and XP from profile
+  const level = profile?.level || 1;
+  const currentXP = profile?.currentXp || 0;
+  const maxXP = profile?.maxXp || 100;
+  const xpPercentage = profile?.xpPercentage || 0;
 
   const [mounted, setMounted] = useState(false);
 
@@ -105,7 +101,7 @@ export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
               height={70}
               className={styles.levelBadgeImage}
             />
-            <span className={styles.levelNumber}>{mockLevel}</span>
+            <span className={styles.levelNumber}>{level}</span>
           </div>
 
           {/* Wallet & Progress Bar Section (Right of Badge) */}
@@ -124,7 +120,7 @@ export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
                 </div>
               </div>
               <div className={styles.xpContent}>
-                <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+                <span className={styles.xpText}>{currentXP} / {maxXP}</span>
               </div>
             </div>
           </div>

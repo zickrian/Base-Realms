@@ -17,26 +17,31 @@ import {
 import { LoadingState } from "../components/LoadingState";
 import styles from "./page.module.css";
 
-// Mock data untuk demo
-const mockPlayerData = {
-  level: 5,
-  xpPercentage: 65,
-};
-
-const mockStageData = {
-  name: "MYSTIC PEAKS",
-  stageNumber: 3,
-};
-
 export default function HomePage() {
   const router = useRouter();
-  const { isConnected, isConnecting } = useAccount();
+  const { isConnected, isConnecting, address } = useAccount();
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">(
     "arena"
   );
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Initialize user session on mount
+  useEffect(() => {
+    if (isConnected && address) {
+      // Call login API to ensure user exists in database
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: address }),
+      }).catch(err => {
+        console.error('Failed to initialize session:', err);
+      });
+    }
+  }, [isConnected, address]);
 
   // Redirect to landing page if wallet is not connected
   useEffect(() => {
@@ -74,16 +79,13 @@ export default function HomePage() {
   const renderArenaView = () => (
     <>
       <HeaderBar 
-        player={mockPlayerData} 
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
       <DailyPacks 
-        questCount={3} 
         onQuestClick={handleQuestClick}
-        packCount={4}
         onPackClick={handlePackClick}
       />
-      <StageDisplay stage={mockStageData} />
+      <StageDisplay />
       <BattleSection
         onBattle={handleBattle}
         onStageSelect={handleStageSelect}

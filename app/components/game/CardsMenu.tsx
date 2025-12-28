@@ -1,81 +1,62 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { getGameIconUrl } from '../../utils/supabaseStorage';
+import { useCardPacks } from '../../hooks/useCardPacks';
+import { useInventory } from '../../hooks/useInventory';
 import styles from "./CardsMenu.module.css";
 
-interface CardPack {
-  id: string;
-  name: string;
-  priceIdrx: number;
-  priceEth: number;
-  image: string;
-  description: string;
-  rarity?: string;
-}
-
-interface InventoryCard {
-  id: string;
-  image: string;
-  count: number;
-  empty?: boolean;
-}
-
-const packs: CardPack[] = [
-  {
-    id: "fire",
-    name: "FIRE & FURY",
-    priceIdrx: 150,
-    priceEth: 0.001,
-    image: getGameIconUrl("rare.png"),
-    description: "Unleash the power of Rare cards! This pack contains essential units to bolster your army's core strength.",
-    rarity: "rare",
-  },
-  {
-    id: "nature",
-    name: "NATURE'S WRATH",
-    priceIdrx: 150,
-    priceEth: 0.001,
-    image: getGameIconUrl("epic.png"),
-    description: "Harness the forces of nature with Epic cards. Includes powerful beasts and spells to dominate the battlefield.",
-    rarity: "epic",
-  },
-  {
-    id: "arcane",
-    name: "ARCANE MYSTERIES",
-    priceIdrx: 150,
-    priceEth: 0.001,
-    image: getGameIconUrl("legend.png"),
-    description: "Unlock ancient secrets with Legendary cards. The ultimate pack for those seeking the most powerful heroes and artifacts.",
-    rarity: "legendary",
-  },
-];
-
-// Mock inventory data for layout
-const inventory: InventoryCard[] = [
-  { id: "knight", image: getGameIconUrl("cards.png"), count: 3 },
-  { id: "archer", image: getGameIconUrl("cards.png"), count: 3 },
-  { id: "golem", image: getGameIconUrl("cards.png"), count: 1 },
-  { id: "dragon1", image: getGameIconUrl("cards.png"), count: 1 },
-  { id: "mage1", image: getGameIconUrl("cards.png"), count: 2 },
-  { id: "wyvern", image: getGameIconUrl("cards.png"), count: 1 },
-  { id: "dwarf", image: getGameIconUrl("cards.png"), count: 2 },
-  { id: "orc", image: getGameIconUrl("cards.png"), count: 3 },
-  { id: "dragon2", image: getGameIconUrl("cards.png"), count: 1 },
-  { id: "mage2", image: getGameIconUrl("cards.png"), count: 2 },
-  { id: "empty1", image: "", count: 0, empty: true },
-  { id: "empty2", image: "", count: 0, empty: true },
-];
-
 export function CardsMenu() {
-  const [selectedPack, setSelectedPack] = React.useState<CardPack | null>(null);
+  const { address } = useAccount();
+  const { packs, loading: packsLoading } = useCardPacks();
+  const { inventory, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
+  const [selectedPack, setSelectedPack] = useState<any>(null);
+  const [purchasing, setPurchasing] = useState(false);
 
-  const handleInfoClick = (pack: CardPack) => {
+  const handleInfoClick = (pack: any) => {
     setSelectedPack(pack);
   };
 
   const closePopup = () => {
     setSelectedPack(null);
+  };
+
+  const handlePurchase = async () => {
+    if (!selectedPack || !address || purchasing) return;
+
+    try {
+      setPurchasing(true);
+      const response = await fetch('/api/cards/purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': address,
+        },
+        body: JSON.stringify({
+          packId: selectedPack.id,
+          paymentMethod: 'eth', // Default to ETH for now
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Purchase failed');
+      }
+
+      const data = await response.json();
+      
+      // Refetch inventory
+      await refetchInventory();
+      
+      // Close popup and show success
+      closePopup();
+      alert(`Successfully purchased ${selectedPack.name}!`);
+    } catch (error: any) {
+      alert(`Purchase failed: ${error.message}`);
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   return (
@@ -87,34 +68,40 @@ export function CardsMenu() {
         <h2 className={styles.sectionTitle}>CARDS SHOP</h2>
 
         <div className={styles.packsRow}>
-          {packs.map((pack) => (
-            <div
-              key={pack.id}
-              className={`${styles.packCard} ${styles[pack.rarity || 'common']}`}
-            >
-              {/* Card Header Removed */}
+          {packsLoading ? (
+            <div>Loading packs...</div>
+          ) : packs.length === 0 ? (
+            <div>No packs available</div>
+          ) : (
+            packs.map((pack) => (
+              <div
+                key={pack.id}
+                className={`${styles.packCard} ${styles[pack.rarity || 'common']}`}
+              >
+                {/* Card Header Removed */}
 
-              {/* Main Illustration Area */}
-              <div className={styles.cardIllustration}>
-                <div className={styles.glowEffect} />
-                <img
-                  src={pack.image}
-                  alt={pack.name}
-                  className={styles.packImage}
-                />
-              </div>
+                {/* Main Illustration Area */}
+                <div className={styles.cardIllustration}>
+                  <div className={styles.glowEffect} />
+                  <img
+                    src={pack.imageUrl}
+                    alt={pack.name}
+                    className={styles.packImage}
+                  />
+                </div>
 
-              {/* Card Footer */}
-              <div className={styles.cardFooter}>
-                <button
-                  className={styles.priceButton}
-                  onClick={() => handleInfoClick(pack)}
-                >
-                  {pack.priceEth.toFixed(3)} ETH
-                </button>
+                {/* Card Footer */}
+                <div className={styles.cardFooter}>
+                  <button
+                    className={styles.priceButton}
+                    onClick={() => handleInfoClick(pack)}
+                  >
+                    {pack.priceEth.toFixed(3)} ETH
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -123,25 +110,28 @@ export function CardsMenu() {
         <h2 className={styles.sectionTitle}>MY CARDS INVENTORY</h2>
 
         <div className={styles.cardsGrid}>
-          {inventory.map((card) => (
-            <div key={card.id} className={styles.cardSlot}>
-              {card.empty ? (
-                <div className={styles.cardEmpty}>
-                  <span className={styles.cardEmptyLabel}>Coming Soon</span>
-                </div>
-              ) : (
-                <>
-                  <div className={styles.cardInner}>
-                    <img
-                      src={card.image}
-                      alt={card.id}
-                      className={styles.cardImage}
-                    />
-                  </div>
-                </>
-              )}
+          {inventoryLoading ? (
+            <div>Loading inventory...</div>
+          ) : inventory.length === 0 ? (
+            <div className={styles.cardEmpty}>
+              <span className={styles.cardEmptyLabel}>No cards yet</span>
             </div>
-          ))}
+          ) : (
+            inventory.map((item) => (
+              <div key={item.id} className={styles.cardSlot}>
+                <div className={styles.cardInner}>
+                  <img
+                    src={item.cardTemplate.imageUrl}
+                    alt={item.cardTemplate.name}
+                    className={styles.cardImage}
+                  />
+                  {item.quantity > 1 && (
+                    <div className={styles.cardQuantity}>{item.quantity}</div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -159,12 +149,12 @@ export function CardsMenu() {
               <button className={styles.cancelButton} onClick={closePopup}>
                 CANCEL
               </button>
-              <button className={styles.confirmButton} onClick={() => {
-                // TODO: Implement actual purchase logic here (mint NFT)
-                alert(`Minting ${selectedPack.name}...`);
-                closePopup();
-              }}>
-                CONFIRM
+              <button 
+                className={styles.confirmButton} 
+                onClick={handlePurchase}
+                disabled={purchasing}
+              >
+                {purchasing ? 'PURCHASING...' : 'CONFIRM'}
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, CheckCircle2, Gamepad2, Trophy, Gift } from 'lucide-react';
+import { useQuests } from '../../hooks/useQuests';
 import styles from './QuestMenu.module.css';
 
 interface QuestMenuProps {
@@ -9,53 +10,23 @@ interface QuestMenuProps {
   onClose: () => void;
 }
 
-interface Quest {
-  id: number;
-  title: string;
-  description: string;
-  currentProgress: number;
-  maxProgress: number;
-  reward?: string;
-  status: 'active' | 'completed';
-  icon: React.ReactNode;
-}
+const getQuestIcon = (questType: string) => {
+  switch (questType) {
+    case 'play_games':
+      return <Gamepad2 size={24} />;
+    case 'win_games':
+      return <Trophy size={24} />;
+    case 'open_packs':
+      return <Gift size={24} />;
+    default:
+      return <Gift size={24} />;
+  }
+};
 
 export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
-  if (!isOpen) return null;
+  const { quests, loading, claimQuest } = useQuests();
 
-  // Mock data untuk 3 quest
-  const quests: Quest[] = [
-    {
-      id: 1,
-      title: "Play 3 Games",
-      description: "Complete 3 battles to earn rewards",
-      currentProgress: 2,
-      maxProgress: 3,
-      reward: "100 Gold + 50 XP",
-      status: "active",
-      icon: <Gamepad2 size={24} />
-    },
-    {
-      id: 2,
-      title: "Win 3 Games",
-      description: "Win 3 battles to prove your strength",
-      currentProgress: 1,
-      maxProgress: 3,
-      reward: "200 Gold + 100 XP",
-      status: "active",
-      icon: <Trophy size={24} />
-    },
-    {
-      id: 3,
-      title: "Open Free Cards",
-      description: "Open your free card pack",
-      currentProgress: 0,
-      maxProgress: 1,
-      reward: "50 Gold + 25 XP",
-      status: "active",
-      icon: <Gift size={24} />
-    }
-  ];
+  if (!isOpen) return null;
 
   const getProgressPercentage = (current: number, max: number) => {
     return Math.min((current / max) * 100, 100);
@@ -74,53 +45,69 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
 
         {/* Quest List */}
         <div className={styles.questList}>
-          {quests.map((quest) => {
-            const progressPercentage = getProgressPercentage(quest.currentProgress, quest.maxProgress);
-            const isCompleted = quest.status === 'completed' || quest.currentProgress >= quest.maxProgress;
+          {loading ? (
+            <div>Loading quests...</div>
+          ) : quests.length === 0 ? (
+            <div>No quests available</div>
+          ) : (
+            quests.map((quest) => {
+              const progressPercentage = getProgressPercentage(quest.currentProgress, quest.maxProgress);
+              const isCompleted = quest.status === 'completed' || quest.currentProgress >= quest.maxProgress;
 
-            return (
-              <div key={quest.id} className={styles.questCard}>
-                {/* Quest Header */}
-                <div className={styles.questHeader}>
-                  <div className={styles.questIcon}>
-                    {quest.icon}
+              return (
+                <div key={quest.id} className={styles.questCard}>
+                  {/* Quest Header */}
+                  <div className={styles.questHeader}>
+                    <div className={styles.questIcon}>
+                      {getQuestIcon(quest.questType)}
+                    </div>
+                    <div className={styles.questTitleSection}>
+                      <h3 className={styles.questTitle}>{quest.title}</h3>
+                      <p className={styles.questDescription}>{quest.description}</p>
+                    </div>
+                    {isCompleted && (
+                      <div className={styles.completedBadge}>
+                        <CheckCircle2 size={20} />
+                      </div>
+                    )}
                   </div>
-                  <div className={styles.questTitleSection}>
-                    <h3 className={styles.questTitle}>{quest.title}</h3>
-                    <p className={styles.questDescription}>{quest.description}</p>
+
+                  {/* Progress Bar */}
+                  <div className={styles.progressContainer}>
+                    <div className={styles.progressBarBackground}>
+                      <div 
+                        className={`${styles.progressBarFill} ${isCompleted ? styles.progressBarComplete : ''}`}
+                        style={{ width: `${progressPercentage}%` }}
+                      >
+                        <div className={styles.progressBarShine}></div>
+                      </div>
+                    </div>
+                    <div className={styles.progressText}>
+                      <span>{quest.currentProgress} / {quest.maxProgress}</span>
+                    </div>
                   </div>
-                  {isCompleted && (
-                    <div className={styles.completedBadge}>
-                      <CheckCircle2 size={20} />
+
+                  {/* Reward Info */}
+                  {quest.reward && (
+                    <div className={styles.rewardInfo}>
+                      <span className={styles.rewardLabel}>Reward:</span>
+                      <span className={styles.rewardValue}>{quest.reward}</span>
                     </div>
                   )}
-                </div>
 
-                {/* Progress Bar */}
-                <div className={styles.progressContainer}>
-                  <div className={styles.progressBarBackground}>
-                    <div 
-                      className={`${styles.progressBarFill} ${isCompleted ? styles.progressBarComplete : ''}`}
-                      style={{ width: `${progressPercentage}%` }}
+                  {/* Claim Button */}
+                  {isCompleted && quest.status === 'completed' && (
+                    <button
+                      className={styles.claimButton}
+                      onClick={() => claimQuest(quest.id)}
                     >
-                      <div className={styles.progressBarShine}></div>
-                    </div>
-                  </div>
-                  <div className={styles.progressText}>
-                    <span>{quest.currentProgress} / {quest.maxProgress}</span>
-                  </div>
+                      Claim Reward
+                    </button>
+                  )}
                 </div>
-
-                {/* Reward Info */}
-                {quest.reward && (
-                  <div className={styles.rewardInfo}>
-                    <span className={styles.rewardLabel}>Reward:</span>
-                    <span className={styles.rewardValue}>{quest.reward}</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </div>

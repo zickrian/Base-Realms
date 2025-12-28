@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Volume2, Bell, LogOut } from 'lucide-react';
 import { useDisconnect, useAccount } from 'wagmi';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import styles from './SettingsMenu.module.css';
 
 interface SettingsMenuProps {
@@ -15,33 +16,18 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
   const router = useRouter();
   const { disconnect } = useDisconnect();
   const { isConnected } = useAccount();
+  const { settings, loading, updateSettings } = useUserSettings();
   const [volume, setVolume] = useState(50);
   const [notifications, setNotifications] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // Load settings from localStorage on mount
+  // Sync with database settings
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedVolume = localStorage.getItem('gameVolume');
-      const savedNotifications = localStorage.getItem('gameNotifications');
-
-      if (savedVolume) setVolume(Number(savedVolume));
-      if (savedNotifications) setNotifications(savedNotifications === 'true');
+    if (settings) {
+      setVolume(settings.soundVolume);
+      setNotifications(settings.notificationsEnabled);
     }
-  }, []);
-
-  // Save volume to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('gameVolume', volume.toString());
-    }
-  }, [volume]);
-
-  // Save notifications to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('gameNotifications', notifications.toString());
-    }
-  }, [notifications]);
+  }, [settings]);
 
   const handleLogout = async () => {
     try {
@@ -102,8 +88,20 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
                 min="0"
                 max="100"
                 value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
+                onChange={(e) => {
+                  const newVolume = Number(e.target.value);
+                  setVolume(newVolume);
+                  // Debounce save
+                  clearTimeout((window as any).volumeSaveTimeout);
+                  (window as any).volumeSaveTimeout = setTimeout(() => {
+                    setSaving(true);
+                    updateSettings({ soundVolume: newVolume }).finally(() => {
+                      setSaving(false);
+                    });
+                  }, 300);
+                }}
                 className={styles.volumeSlider}
+                disabled={loading || saving}
               />
               <div className={styles.volumeValue}>{volume}%</div>
             </div>
@@ -119,7 +117,15 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
             </div>
             <button
               className={`${styles.toggleSwitch} ${notifications ? styles.toggleActive : ''}`}
-              onClick={() => setNotifications(!notifications)}
+              onClick={() => {
+                const newNotifications = !notifications;
+                setNotifications(newNotifications);
+                setSaving(true);
+                updateSettings({ notificationsEnabled: newNotifications }).finally(() => {
+                  setSaving(false);
+                });
+              }}
+              disabled={loading || saving}
             >
               <div className={styles.toggleThumb}></div>
             </button>

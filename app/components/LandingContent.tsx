@@ -10,20 +10,34 @@ import styles from "./LandingContent.module.css";
 
 export function LandingContent() {
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (isConnected && !isRedirecting) {
+    if (isConnected && address && !isRedirecting) {
       setIsRedirecting(true);
-      // Wait 1 second then redirect to home
-      const timer = setTimeout(() => {
-        router.push("/home");
-      }, 1000);
-
-      return () => clearTimeout(timer);
+      
+      // Call login API
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: address }),
+      }).then(() => {
+        // Wait 1 second then redirect to home
+        setTimeout(() => {
+          router.push("/home");
+        }, 1000);
+      }).catch(err => {
+        console.error('Login failed:', err);
+        // Still redirect even if login fails
+        setTimeout(() => {
+          router.push("/home");
+        }, 1000);
+      });
     }
-  }, [isConnected, isRedirecting, router]);
+  }, [isConnected, address, isRedirecting, router]);
 
   // Show connected state with redirect message
   if (isConnected) {

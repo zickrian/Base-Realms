@@ -4,18 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { useGameCanvas } from "@/app/hooks/useGameCanvas";
 import { GameAssets } from "@/app/utils/gameAssets";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
+import { useStages } from "../../hooks/useStages";
 import styles from "./StageDisplay.module.css";
 
-interface StageInfo {
-  name: string;
-  stageNumber: number;
-}
-
-interface StageDisplayProps {
-  stage: StageInfo;
-}
-
-export function StageDisplay({ stage }: StageDisplayProps) {
+export function StageDisplay() {
+  const { currentStage } = useStages();
   const [cloudImage, setCloudImage] = useState<HTMLImageElement | null>(null);
   const cloudXRef = useRef<number>(0);
 
