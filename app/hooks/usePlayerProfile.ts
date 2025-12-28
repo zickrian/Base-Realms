@@ -36,6 +36,7 @@ export function usePlayerProfile() {
           headers: {
             'x-wallet-address': address,
           },
+          cache: 'no-store', // Prevent caching
         });
 
         if (!response.ok) {
@@ -43,8 +44,14 @@ export function usePlayerProfile() {
         }
 
         const data = await response.json();
-        setProfile(data.profile);
-        setError(null);
+        console.log('Profile data received:', data);
+        if (data.profile) {
+          setProfile(data.profile);
+          setError(null);
+        } else {
+          console.error('No profile in response:', data);
+          setError('Invalid profile data');
+        }
       } catch (err: any) {
         setError(err.message);
         setProfile(null);
@@ -56,32 +63,38 @@ export function usePlayerProfile() {
     fetchProfile();
   }, [address, isConnected]);
 
-  return { profile, loading, error, refetch: () => {
+  const refetch = async () => {
     if (address && isConnected) {
-      const fetchProfile = async () => {
-        try {
-          setLoading(true);
-          const response = await fetch('/api/player/profile', {
-            headers: {
-              'x-wallet-address': address,
-            },
-          });
+      try {
+        setLoading(true);
+        const response = await fetch('/api/player/profile', {
+          headers: {
+            'x-wallet-address': address,
+          },
+          cache: 'no-store', // Prevent caching
+        });
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch profile');
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
 
-          const data = await response.json();
+        const data = await response.json();
+        console.log('Profile refetch data received:', data);
+        if (data.profile) {
           setProfile(data.profile);
           setError(null);
-        } catch (err: any) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
+        } else {
+          console.error('No profile in refetch response:', data);
         }
-      };
-      fetchProfile();
+      } catch (err: any) {
+        console.error('Profile refetch error:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     }
-  } };
+  };
+
+  return { profile, loading, error, refetch };
 }
 

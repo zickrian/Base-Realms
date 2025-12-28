@@ -48,10 +48,27 @@ export async function GET(request: NextRequest) {
       ? (profile.current_xp / profile.max_xp) * 100 
       : 0;
 
+    // Ensure current_xp is a number (handle null/undefined)
+    const currentXp = Number(profile.current_xp) || 0;
+    const maxXp = Number(profile.max_xp) || 100;
+    const level = Number(profile.level) || 1;
+
+    console.log('Profile API - Raw data from DB:', {
+      current_xp: profile.current_xp,
+      max_xp: profile.max_xp,
+      level: profile.level,
+      calculated: { currentXp, maxXp, level, xpPercentage }
+    });
+
     return NextResponse.json({
       profile: {
-        ...profile,
+        level,
+        currentXp, // This comes directly from current_xp in database
+        maxXp, // This comes directly from max_xp in database
         xpPercentage: Math.round(xpPercentage * 100) / 100,
+        totalBattles: profile.total_battles || 0,
+        wins: profile.wins || 0,
+        losses: profile.losses || 0,
         stage: profile.stages,
       },
     });

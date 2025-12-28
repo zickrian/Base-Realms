@@ -58,11 +58,25 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  // Get level and XP from profile
+  // Get level and XP from profile - ensure these come from current_xp in database
   const level = profile?.level || 1;
-  const currentXP = profile?.currentXp || 0;
-  const maxXP = profile?.maxXp || 100;
-  const xpPercentage = profile?.xpPercentage || 0;
+  const currentXP = profile?.currentXp ?? 0; // Use nullish coalescing to handle 0 values
+  const maxXP = profile?.maxXp ?? 100;
+  const xpPercentage = profile?.xpPercentage ?? 0;
+
+  // Debug logging to verify current_xp is displayed
+  useEffect(() => {
+    if (profile) {
+      console.log('HeaderBar - Profile from API:', profile);
+      console.log('HeaderBar - XP Values:', { 
+        currentXP, 
+        maxXP, 
+        xpPercentage, 
+        level,
+        note: 'currentXP should match current_xp from database'
+      });
+    }
+  }, [profile, currentXP, maxXP, xpPercentage, level]);
 
   const [mounted, setMounted] = useState(false);
 

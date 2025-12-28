@@ -38,9 +38,9 @@ export async function calculateLevelFromXp(totalXp: number): Promise<LevelInfo> 
   let baseXpForLevel = 0; // Base XP required to reach this level
   let maxXpForLevel = 100; // XP needed to complete this level (always 100 per level)
   
-  for (let i = 0; i < sortedConfigs.length; i++) {
+  // Find the highest level where totalXp >= total_xp_required
+  for (let i = sortedConfigs.length - 1; i >= 0; i--) {
     const config = sortedConfigs[i];
-    const nextConfig = sortedConfigs[i + 1];
     
     // Check if totalXp is at or above this level's base XP
     if (totalXp >= config.total_xp_required) {
@@ -49,8 +49,7 @@ export async function calculateLevelFromXp(totalXp: number): Promise<LevelInfo> 
       
       // Max XP for current level is always 100 (required_xp)
       maxXpForLevel = config.required_xp;
-    } else {
-      break;
+      break; // Found the highest level, stop searching
     }
   }
 
@@ -64,7 +63,7 @@ export async function calculateLevelFromXp(totalXp: number): Promise<LevelInfo> 
     level: currentLevel,
     currentXp,
     maxXp,
-    totalXpRequired,
+    totalXpRequired: baseXpForLevel,
     xpForNextLevel,
   };
 }
