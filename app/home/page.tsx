@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi";
+import { base } from "wagmi/chains";
 import {
   HeaderBar,
   DailyPacks,
@@ -17,9 +18,25 @@ import {
 import { LoadingState } from "../components/LoadingState";
 import styles from "./page.module.css";
 
+const CONTRACT_ADDRESS = "0x2FFb8aA5176c1da165EAB569c3e4089e84EC5816" as const;
+const CONTRACT_ABI = [
+  {
+    name: "mint",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
+] as const;
+
 export default function HomePage() {
   const router = useRouter();
   const { isConnected, isConnecting, address } = useAccount();
+  const chainId = useChainId();
+  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">(
     "arena"
   );
@@ -86,28 +103,49 @@ export default function HomePage() {
   const handlePackClick = async () => {
     if (!address) return;
     
-    try {
-      // Claim daily pack first
-      const response = await fetch('/api/daily-packs', {
-        method: 'POST',
-        headers: {
-          'x-wallet-address': address,
-        },
-      });
+    // Directly open card reveal modal without database connection
+    setIsCardModalOpen(true);
+  };
 
-      if (response.ok) {
-        // Open card reveal modal after successful claim
-        setIsCardModalOpen(true);
-        // Quest progress will be updated automatically by the API
+  const handleMint = async () => {
+    if (!address || !isConnected) {
+      alert("Wallet tidak terhubung");
+      return;
+    }
+
+    // Check if on Base Mainnet (chainId: 8453)
+    if (chainId !== base.id) {
+      alert("Pindah ke Base Network");
+      return;
+    }
+
+    try {
+      // Use wagmi writeContract - no need to request accounts, wallet already connected
+      writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: "mint",
+      });
+    } catch (err: any) {
+      console.error("Mint error:", err);
+      
+      // Better error messages
+      if (err.code === 4001) {
+        alert("Transaksi dibatalkan");
+      } else if (err.message?.includes("user rejected")) {
+        alert("Transaksi ditolak");
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to claim daily pack');
+        alert("Mint gagal: " + (err.message || "Unknown error"));
       }
-    } catch (error: any) {
-      console.error('Failed to claim daily pack:', error);
-      alert('Failed to claim daily pack');
     }
   };
+
+  // Show success message when transaction is confirmed
+  useEffect(() => {
+    if (isSuccess) {
+      alert("NFT berhasil di-mint 🎉");
+    }
+  }, [isSuccess]);
 
   const renderArenaView = () => (
     <>
@@ -138,7 +176,9 @@ export default function HomePage() {
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
       <CardRevealModal 
         isOpen={isCardModalOpen} 
-        onClose={() => setIsCardModalOpen(false)} 
+        onClose={() => setIsCardModalOpen(false)}
+        onMint={handleMint}
+        isMinting={isPending || isConfirming}
       />
       <SettingsMenu 
         isOpen={isSettingsOpen} 

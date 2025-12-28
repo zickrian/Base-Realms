@@ -61,6 +61,8 @@
 
 .cardWrapper.flipped {
   transform: rotateY(180deg);
+  animation: none !important; /* Remove all animations after flip */
+  transition: none; /* Remove any transitions after flip */
 }
 
 @keyframes cardRotate {
@@ -149,6 +151,46 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+/* Mint Button */
+.mintButton {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #f4e4bc;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 10;
+  font-family: var(--font-pixelify);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mintButton:hover:not(:disabled) {
+  background: rgba(20, 20, 20, 0.95);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateX(-50%) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.mintButton:active:not(:disabled) {
+  transform: translateX(-50%) scale(0.98);
+}
+
+.mintButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Mobile Responsive */
 @media (max-width: 480px) {
   .cardWrapper {
@@ -159,6 +201,12 @@
   .clickHint {
     font-size: 0.85rem;
     padding: 0.5rem 1rem;
+    bottom: -45px;
+  }
+
+  .mintButton {
+    font-size: 0.85rem;
+    padding: 0.6rem 1.5rem;
     bottom: -45px;
   }
 }
@@ -172,6 +220,12 @@
   .clickHint {
     font-size: 0.8rem;
     padding: 0.4rem 0.8rem;
+    bottom: -40px;
+  }
+
+  .mintButton {
+    font-size: 0.8rem;
+    padding: 0.5rem 1.2rem;
     bottom: -40px;
   }
 }

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
-import { getStorageUrl } from '../utils/supabaseStorage';
+import { getStorageUrl, getGameIconUrl } from '../utils/supabaseStorage';
+import { useNFTBalance } from './useNFTBalance';
 
 interface InventoryCard {
   id: string;
@@ -16,13 +17,14 @@ interface InventoryCard {
 
 export function useInventory() {
   const { address, isConnected } = useAccount();
-  const [inventory, setInventory] = useState<InventoryCard[]>([]);
+  const { hasNFT, balance: nftBalance, isLoading: nftLoading } = useNFTBalance();
+  const [dbInventory, setDbInventory] = useState<InventoryCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isConnected || !address) {
-      setInventory([]);
+      setDbInventory([]);
       setLoading(false);
       return;
     }
@@ -53,11 +55,12 @@ export function useInventory() {
           },
           quantity: item.quantity || 1,
         }));
-        setInventory(formatted);
+        
+        setDbInventory(formatted);
         setError(null);
       } catch (err: any) {
         setError(err.message);
-        setInventory([]);
+        setDbInventory([]);
       } finally {
         setLoading(false);
       }
@@ -66,7 +69,31 @@ export function useInventory() {
     fetchInventory();
   }, [address, isConnected]);
 
-  return { inventory, loading, error, refetch: () => {
+  // Combine database inventory with NFT card using useMemo
+  const inventory = useMemo(() => {
+    // Add NFT card if user has NFT from the contract
+    const nftCard: InventoryCard | null = hasNFT ? {
+      id: 'nft-blockchain-card',
+      cardTemplate: {
+        id: 'nft-blockchain-template',
+        name: 'Common Card',
+        rarity: 'common',
+        imageUrl: getGameIconUrl('commoncards.png'),
+        description: 'NFT card from blockchain',
+      },
+      quantity: nftBalance,
+    } : null;
+    
+    // Combine database inventory with NFT card
+    return nftCard 
+      ? [...dbInventory, nftCard]
+      : dbInventory;
+  }, [dbInventory, hasNFT, nftBalance]);
+
+  // Combine loading states
+  const combinedLoading = loading || nftLoading;
+
+  return { inventory, loading: combinedLoading, error, refetch: () => {
     if (address && isConnected) {
       const fetchInventory = async () => {
         try {
@@ -94,7 +121,8 @@ export function useInventory() {
             },
             quantity: item.quantity || 1,
           }));
-          setInventory(formatted);
+          
+          setDbInventory(formatted);
           setError(null);
         } catch (err: any) {
           setError(err.message);
