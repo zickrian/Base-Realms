@@ -114,18 +114,74 @@
   min-height: 100px;
 }
 
-/* Glow behind items */
+/* Glow behind items - Enhanced & Dynamic */
+/* Glow behind items - Sharp Starburst */
 .glowEffect {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 120%;
-  height: 120%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  width: 150%;
+  height: 150%;
   pointer-events: none;
-  mix-blend-mode: overlay;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  /* Sharp Starburst Pattern */
+  background: repeating-conic-gradient(from 0deg,
+      transparent 0deg,
+      transparent 15deg,
+      white 15deg,
+      white 20deg);
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 70%);
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 70%);
+  animation: rotateGlow 30s linear infinite;
+  z-index: 1;
 }
+
+@keyframes rotateGlow {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Specific starburst colors */
+.rare .glowEffect {
+  background: repeating-conic-gradient(from 0deg,
+      rgba(59, 130, 246, 0) 0deg,
+      rgba(59, 130, 246, 0) 15deg,
+      /* Transparent Gap */
+      rgba(59, 130, 246, 1) 15deg,
+      /* Hard Start */
+      rgba(96, 165, 250, 0.8) 18deg,
+      rgba(59, 130, 246, 1) 20deg,
+      /* Hard End */
+      rgba(59, 130, 246, 0) 20deg);
+}
+
+.epic .glowEffect {
+  background: repeating-conic-gradient(from 0deg,
+      rgba(168, 85, 247, 0) 0deg,
+      rgba(168, 85, 247, 0) 15deg,
+      rgba(192, 132, 252, 1) 15deg,
+      rgba(232, 121, 249, 0.8) 18deg,
+      rgba(192, 132, 252, 1) 20deg,
+      rgba(168, 85, 247, 0) 20deg);
+}
+
+.legendary .glowEffect {
+  background: repeating-conic-gradient(from 0deg,
+      rgba(234, 179, 8, 0) 0deg,
+      rgba(234, 179, 8, 0) 15deg,
+      rgba(251, 191, 36, 1) 15deg,
+      rgba(253, 224, 71, 0.8) 18deg,
+      rgba(251, 191, 36, 1) 20deg,
+      rgba(234, 179, 8, 0) 20deg);
+}
+
 
 .packImage {
   width: 85%;

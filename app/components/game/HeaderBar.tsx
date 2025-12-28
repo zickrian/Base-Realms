@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import styles from "./HeaderBar.module.css";
@@ -65,6 +65,22 @@ export function HeaderBar({ player }: HeaderBarProps) {
   const mockCurrentXP = 8700;
   const mockMaxXP = 9500;
   const xpPercentage = (mockCurrentXP / mockMaxXP) * 100;
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className={styles.header}>
+        {/* Placeholder to prevent layout shift */}
+        <div className={styles.playerStats} style={{ opacity: 0 }}></div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.header}>
