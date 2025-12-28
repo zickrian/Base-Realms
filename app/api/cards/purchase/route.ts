@@ -129,9 +129,9 @@ export async function POST(request: NextRequest) {
         .eq('id', existingInventory.id);
     }
 
-    // Update quest progress
+    // Update quest progress and auto-claim
     const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
-    await updateQuestProgress(user.id, 'open_packs', 1);
+    await updateQuestProgress(user.id, 'open_packs', 1, true);
 
     return NextResponse.json({
       success: true,

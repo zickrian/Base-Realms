@@ -5,12 +5,14 @@ export type QuestType = 'play_games' | 'win_games' | 'open_packs' | 'daily_login
 
 /**
  * Update quest progress based on quest type
+ * Returns array of completed quest IDs that were auto-claimed
  */
 export async function updateQuestProgress(
   userId: string,
   questType: QuestType,
-  increment: number = 1
-): Promise<void> {
+  increment: number = 1,
+  autoClaim: boolean = true
+): Promise<{ completedQuestIds: string[]; xpAwarded: number }> {
   // Get active quests of this type
   const { data: quests, error } = await supabaseAdmin
     .from('user_quests')
@@ -23,8 +25,11 @@ export async function updateQuestProgress(
     .eq('quest_templates.quest_type', questType);
 
   if (error || !quests || quests.length === 0) {
-    return;
+    return { completedQuestIds: [], xpAwarded: 0 };
   }
+
+  const completedQuestIds: string[] = [];
+  let totalXpAwarded = 0;
 
   // Update each quest
   for (const quest of quests) {
@@ -39,6 +44,24 @@ export async function updateQuestProgress(
     if (isCompleted && quest.status === 'active') {
       updateData.status = 'completed';
       updateData.completed_at = new Date().toISOString();
+      completedQuestIds.push(quest.id);
+
+      // Auto-claim if enabled
+      if (autoClaim) {
+        const template = quest.quest_templates;
+        
+        // Award XP
+        if (template.reward_xp > 0) {
+          await awardXp(userId, template.reward_xp);
+          totalXpAwarded += template.reward_xp;
+        }
+
+        // TODO: Add card pack to inventory if reward_card_pack_id exists
+
+        // Mark quest as claimed
+        updateData.status = 'claimed';
+        updateData.claimed_at = new Date().toISOString();
+      }
     }
 
     await supabaseAdmin
@@ -46,6 +69,8 @@ export async function updateQuestProgress(
       .update(updateData)
       .eq('id', quest.id);
   }
+
+  return { completedQuestIds, xpAwarded: totalXpAwarded };
 }
 
 /**

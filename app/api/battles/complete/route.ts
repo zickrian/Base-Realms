@@ -111,10 +111,10 @@ export async function POST(request: NextRequest) {
         .eq('user_id', user.id);
     }
 
-    // Update quest progress
-    await updateQuestProgress(user.id, 'play_games', 1);
+    // Update quest progress (no auto-claim for battle quests, user can claim manually)
+    await updateQuestProgress(user.id, 'play_games', 1, false);
     if (result === 'win') {
-      await updateQuestProgress(user.id, 'win_games', 1);
+      await updateQuestProgress(user.id, 'win_games', 1, false);
     }
 
     return NextResponse.json({
