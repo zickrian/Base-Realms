@@ -373,6 +373,48 @@
   font-weight: bold;
 }
 
+/* Claim Button */
+.claimButton {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border: 2px solid #15803d;
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow:
+    2px 2px 0 rgba(21, 128, 61, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  transition: all 0.15s ease;
+}
+
+.claimButton:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-1px);
+  box-shadow:
+    3px 3px 0 rgba(21, 128, 61, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.claimButton:active {
+  transform: translateY(0);
+  box-shadow:
+    1px 1px 0 rgba(21, 128, 61, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.claimButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Mobile Responsive */
 @media (max-width: 480px) {
   .menuBox {
@@ -435,6 +477,11 @@
 
   .rewardValue {
     font-size: 0.9rem;
+  }
+
+  .claimButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 1rem;
   }
 }
 

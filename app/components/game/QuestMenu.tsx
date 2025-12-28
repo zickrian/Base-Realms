@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, CheckCircle2, Gamepad2, Trophy, Gift } from 'lucide-react';
 import { useQuests } from '../../hooks/useQuests';
+import { usePlayerProfile } from '../../hooks/usePlayerProfile';
 import styles from './QuestMenu.module.css';
 
 interface QuestMenuProps {
@@ -25,6 +26,17 @@ const getQuestIcon = (questType: string) => {
 
 export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
   const { quests, loading, claimQuest } = useQuests();
+  const { refetch: refetchProfile } = usePlayerProfile();
+  
+  const handleClaimQuest = async (questId: string) => {
+    try {
+      await claimQuest(questId);
+      // Refetch profile to update XP/level display
+      await refetchProfile();
+    } catch (error) {
+      console.error('Failed to claim quest:', error);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -99,7 +111,7 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                   {isCompleted && quest.status === 'completed' && (
                     <button
                       className={styles.claimButton}
-                      onClick={() => claimQuest(quest.id)}
+                      onClick={() => handleClaimQuest(quest.id)}
                     >
                       Claim Reward
                     </button>

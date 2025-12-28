@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { useDailyPacks } from "../../hooks/useDailyPacks";
 import { useQuests } from "../../hooks/useQuests";
@@ -11,11 +12,13 @@ interface DailyPacksProps {
 }
 
 export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
-  const { packCount } = useDailyPacks();
-  const { quests } = useQuests();
+  const { packCount, loading: packsLoading } = useDailyPacks();
+  const { quests, loading: questsLoading } = useQuests();
   
-  // Count active/completed quests
-  const questCount = quests.filter(q => q.status === 'active' || q.status === 'completed').length;
+  // Count active/completed quests (useMemo for performance)
+  const questCount = React.useMemo(() => {
+    return quests.filter(q => q.status === 'active' || q.status === 'completed').length;
+  }, [quests]);
   return (
     <div className={styles.container}>
       <div className={styles.packsSection}>

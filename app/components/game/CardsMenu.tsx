@@ -83,11 +83,28 @@ export function CardsMenu() {
                 {/* Main Illustration Area */}
                 <div className={styles.cardIllustration}>
                   <div className={styles.glowEffect} />
-                  <img
-                    src={pack.imageUrl}
-                    alt={pack.name}
-                    className={styles.packImage}
-                  />
+                  {pack.imageUrl && (
+                    <img
+                      src={pack.imageUrl}
+                      alt={pack.name}
+                      className={styles.packImage}
+                      onError={(e) => {
+                        // Fallback jika image gagal load
+                        const target = e.target as HTMLImageElement;
+                        if (target) {
+                          target.style.display = 'none';
+                        }
+                      }}
+                      onLoad={(e) => {
+                        // Ensure image is visible when loaded
+                        const target = e.target as HTMLImageElement;
+                        if (target) {
+                          target.style.display = 'block';
+                        }
+                      }}
+                      loading="lazy"
+                    />
+                  )}
                 </div>
 
                 {/* Card Footer */}
@@ -126,11 +143,28 @@ export function CardsMenu() {
               {inventory.map((item) => (
                 <div key={item.id} className={styles.cardSlot}>
                   <div className={styles.cardInner}>
-                    <img
-                      src={item.cardTemplate.imageUrl}
-                      alt={item.cardTemplate.name}
-                      className={styles.cardImage}
-                    />
+                    {item.cardTemplate.imageUrl && (
+                      <img
+                        src={item.cardTemplate.imageUrl}
+                        alt={item.cardTemplate.name}
+                        className={styles.cardImage}
+                        onError={(e) => {
+                          // Fallback jika image gagal load
+                          const target = e.target as HTMLImageElement;
+                          if (target) {
+                            target.style.display = 'none';
+                          }
+                        }}
+                        onLoad={(e) => {
+                          // Ensure image is visible when loaded
+                          const target = e.target as HTMLImageElement;
+                          if (target) {
+                            target.style.display = 'block';
+                          }
+                        }}
+                        loading="lazy"
+                      />
+                    )}
                     {item.quantity > 1 && (
                       <div className={styles.cardQuantity}>{item.quantity}</div>
                     )}

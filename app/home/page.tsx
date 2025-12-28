@@ -27,18 +27,29 @@ export default function HomePage() {
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Initialize user session on mount
+  // Initialize user session and prefetch data on mount
   useEffect(() => {
     if (isConnected && address) {
-      // Call login API to ensure user exists in database
-      fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ walletAddress: address }),
-      }).catch(err => {
-        console.error('Failed to initialize session:', err);
+      // Parallel fetch: login + prefetch packs and quests
+      Promise.all([
+        // Login API
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ walletAddress: address }),
+        }),
+        // Prefetch card packs (no auth needed)
+        fetch('/api/cards/packs').catch(() => null),
+        // Prefetch quests (needs auth)
+        fetch('/api/quests', {
+          headers: {
+            'x-wallet-address': address,
+          },
+        }).catch(() => null),
+      ]).catch(err => {
+        console.error('Failed to initialize session or prefetch:', err);
       });
     }
   }, [isConnected, address]);
@@ -72,8 +83,30 @@ export default function HomePage() {
     setIsQuestMenuOpen(true);
   };
 
-  const handlePackClick = () => {
-    setIsCardModalOpen(true);
+  const handlePackClick = async () => {
+    if (!address) return;
+    
+    try {
+      // Claim daily pack first
+      const response = await fetch('/api/daily-packs', {
+        method: 'POST',
+        headers: {
+          'x-wallet-address': address,
+        },
+      });
+
+      if (response.ok) {
+        // Open card reveal modal after successful claim
+        setIsCardModalOpen(true);
+        // Quest progress will be updated automatically by the API
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to claim daily pack');
+      }
+    } catch (error: any) {
+      console.error('Failed to claim daily pack:', error);
+      alert('Failed to claim daily pack');
+    }
   };
 
   const renderArenaView = () => (

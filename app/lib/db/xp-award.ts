@@ -19,8 +19,16 @@ export async function awardXp(
     throw new Error('Player profile not found');
   }
 
-  // Calculate total XP
-  const currentTotalXp = (profile.level - 1) * profile.max_xp + profile.current_xp;
+  // Get level config to calculate total XP correctly
+  const { data: currentLevelConfig } = await supabaseAdmin
+    .from('level_config')
+    .select('total_xp_required')
+    .eq('level', profile.level)
+    .single();
+
+  // Calculate total XP: total_xp_required for current level + current_xp
+  const baseXpForLevel = currentLevelConfig?.total_xp_required || ((profile.level - 1) * 100);
+  const currentTotalXp = baseXpForLevel + profile.current_xp;
   const newTotalXp = currentTotalXp + xpAmount;
 
   // Calculate new level

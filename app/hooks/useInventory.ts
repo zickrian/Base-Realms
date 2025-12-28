@@ -41,17 +41,17 @@ export function useInventory() {
         }
 
         const data = await response.json();
-        const formatted = data.inventory.map((item: any) => ({
+        const formatted = (data.inventory || []).map((item: any) => ({
           id: item.id,
           cardTemplate: {
-            id: item.card_templates.id,
-            name: item.card_templates.name,
-            rarity: item.card_templates.rarity,
+            id: item.card_templates?.id || '',
+            name: item.card_templates?.name || '',
+            rarity: item.card_templates?.rarity || 'common',
             // Convert relative path to full Supabase Storage URL
-            imageUrl: getStorageUrl(item.card_templates.image_url),
-            description: item.card_templates.description,
+            imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+            description: item.card_templates?.description || null,
           },
-          quantity: item.quantity,
+          quantity: item.quantity || 1,
         }));
         setInventory(formatted);
         setError(null);
@@ -82,17 +82,17 @@ export function useInventory() {
           }
 
           const data = await response.json();
-          const formatted = data.inventory.map((item: any) => ({
+          const formatted = (data.inventory || []).map((item: any) => ({
             id: item.id,
             cardTemplate: {
-              id: item.card_templates.id,
-              name: item.card_templates.name,
-              rarity: item.card_templates.rarity,
+              id: item.card_templates?.id || '',
+              name: item.card_templates?.name || '',
+              rarity: item.card_templates?.rarity || 'common',
               // Convert relative path to full Supabase Storage URL
-              imageUrl: getStorageUrl(item.card_templates.image_url),
-              description: item.card_templates.description,
+              imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+              description: item.card_templates?.description || null,
             },
-            quantity: item.quantity,
+            quantity: item.quantity || 1,
           }));
           setInventory(formatted);
           setError(null);

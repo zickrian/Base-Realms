@@ -16,7 +16,7 @@ export async function updateQuestProgress(
     .from('user_quests')
     .select(`
       *,
-      quest_templates!inner(quest_type, reward_xp, reward_gold, reward_card_pack_id)
+      quest_templates!inner(quest_type, reward_xp, reward_card_pack_id)
     `)
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -54,13 +54,13 @@ export async function updateQuestProgress(
 export async function claimQuestReward(
   userId: string,
   questId: string
-): Promise<{ xpAwarded: number; goldAwarded: number | null; cardPackId: string | null }> {
+): Promise<{ xpAwarded: number; cardPackId: string | null }> {
   // Get quest with template
   const { data: quest, error: questError } = await supabaseAdmin
     .from('user_quests')
     .select(`
       *,
-      quest_templates!inner(reward_xp, reward_gold, reward_card_pack_id)
+      quest_templates!inner(reward_xp, reward_card_pack_id)
     `)
     .eq('id', questId)
     .eq('user_id', userId)
@@ -76,16 +76,14 @@ export async function claimQuestReward(
 
   const template = quest.quest_templates;
   let xpAwarded = 0;
-  let goldAwarded = template.reward_gold;
   const cardPackId = template.reward_card_pack_id;
 
   // Award XP
   if (template.reward_xp > 0) {
-    const result = await awardXp(userId, template.reward_xp);
+    await awardXp(userId, template.reward_xp);
     xpAwarded = template.reward_xp;
   }
 
-  // TODO: Award gold if gold system is implemented
   // TODO: Add card pack to inventory if reward_card_pack_id exists
 
   // Mark quest as claimed
@@ -99,7 +97,6 @@ export async function claimQuestReward(
 
   return {
     xpAwarded,
-    goldAwarded,
     cardPackId,
   };
 }

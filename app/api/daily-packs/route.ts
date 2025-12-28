@@ -160,6 +160,10 @@ export async function POST(request: NextRequest) {
       throw updateError;
     }
 
+    // Update quest progress for "open_packs" quest
+    const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
+    await updateQuestProgress(user.id, 'open_packs', 1);
+
     return NextResponse.json({
       success: true,
       packCount: updated.pack_count,

@@ -12,6 +12,10 @@ interface Quest {
   questType: string;
 }
 
+// Cache for quests per user (short cache for real-time updates)
+const questsCache: Map<string, { quests: Quest[]; time: number }> = new Map();
+const QUEST_CACHE_DURATION = 30 * 1000; // 30 seconds
+
 export function useQuests() {
   const { address, isConnected } = useAccount();
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -22,6 +26,28 @@ export function useQuests() {
     if (!isConnected || !address) {
       setQuests([]);
       setLoading(false);
+      return;
+    }
+
+    // Check cache first
+    const cached = questsCache.get(address);
+    const now = Date.now();
+    if (cached && (now - cached.time) < QUEST_CACHE_DURATION) {
+      setQuests(cached.quests);
+      setLoading(false);
+      // Still fetch in background for fresh data
+      fetch('/api/quests', {
+        headers: {
+          'x-wallet-address': address,
+        },
+      }).then(res => res.json()).then(data => {
+        if (data.quests) {
+          questsCache.set(address, { quests: data.quests, time: now });
+          setQuests(data.quests);
+        }
+      }).catch(() => {
+        // Ignore background fetch errors
+      });
       return;
     }
 
@@ -39,6 +65,10 @@ export function useQuests() {
         }
 
         const data = await response.json();
+        
+        // Update cache
+        questsCache.set(address, { quests: data.quests, time: now });
+        
         setQuests(data.quests);
         setError(null);
       } catch (err: any) {
@@ -69,7 +99,7 @@ export function useQuests() {
         throw new Error('Failed to claim quest');
       }
 
-      // Refetch quests
+      // Refetch quests and update cache
       const questsResponse = await fetch('/api/quests', {
         headers: {
           'x-wallet-address': address,
@@ -78,6 +108,7 @@ export function useQuests() {
 
       if (questsResponse.ok) {
         const data = await questsResponse.json();
+        questsCache.set(address, { quests: data.quests, time: Date.now() });
         setQuests(data.quests);
       }
     } catch (err: any) {
@@ -102,6 +133,7 @@ export function useQuests() {
           }
 
           const data = await response.json();
+          questsCache.set(address, { quests: data.quests, time: Date.now() });
           setQuests(data.quests);
           setError(null);
         } catch (err: any) {

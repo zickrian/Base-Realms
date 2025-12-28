@@ -30,25 +30,35 @@ export async function calculateLevelFromXp(totalXp: number): Promise<LevelInfo> 
     };
   }
 
+  // Sort by level ascending to find correct level
+  const sortedConfigs = [...levelConfigs].sort((a, b) => a.level - b.level);
+  
   // Find the level where totalXpRequired <= totalXp
   let currentLevel = 1;
-  let totalXpRequired = 0;
+  let baseXpForLevel = 0; // Base XP required to reach this level
+  let maxXpForLevel = 100; // XP needed to complete this level (always 100 per level)
   
-  for (const config of levelConfigs) {
-    if (config.total_xp_required <= totalXp) {
+  for (let i = 0; i < sortedConfigs.length; i++) {
+    const config = sortedConfigs[i];
+    const nextConfig = sortedConfigs[i + 1];
+    
+    // Check if totalXp is at or above this level's base XP
+    if (totalXp >= config.total_xp_required) {
       currentLevel = config.level;
-      totalXpRequired = config.total_xp_required;
+      baseXpForLevel = config.total_xp_required;
+      
+      // Max XP for current level is always 100 (required_xp)
+      maxXpForLevel = config.required_xp;
+    } else {
       break;
     }
   }
 
-  // Get max XP for current level
-  const currentLevelConfig = levelConfigs.find(lc => lc.level === currentLevel);
-  const nextLevelConfig = levelConfigs.find(lc => lc.level === currentLevel + 1);
-
-  const maxXp = nextLevelConfig?.total_xp_required || (currentLevel * 100);
-  const currentXp = totalXp - totalXpRequired;
-  const xpForNextLevel = maxXp - totalXp;
+  // Calculate current XP within the level (totalXp - base XP for this level)
+  const currentXp = totalXp - baseXpForLevel;
+  // Max XP is always 100 per level
+  const maxXp = maxXpForLevel;
+  const xpForNextLevel = maxXp - currentXp;
 
   return {
     level: currentLevel,

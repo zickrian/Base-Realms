@@ -26,12 +26,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get active quests
+    // Get active quests - select only needed fields for better performance
     const { data: quests, error: questsError } = await supabaseAdmin
       .from('user_quests')
       .select(`
-        *,
-        quest_templates(*)
+        id,
+        current_progress,
+        max_progress,
+        status,
+        quest_templates!inner(
+          title,
+          description,
+          quest_type,
+          reward_xp
+        )
       `)
       .eq('user_id', user.id)
       .in('status', ['active', 'completed'])
@@ -49,7 +57,7 @@ export async function GET(request: NextRequest) {
       currentProgress: quest.current_progress,
       maxProgress: quest.max_progress,
       reward: quest.quest_templates.reward_xp 
-        ? `${quest.quest_templates.reward_xp} XP${quest.quest_templates.reward_gold ? ` + ${quest.quest_templates.reward_gold} Gold` : ''}`
+        ? `${quest.quest_templates.reward_xp} XP`
         : '',
       status: quest.status,
       questType: quest.quest_templates.quest_type,
