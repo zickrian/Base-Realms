@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getStorageUrl } from '../utils/supabaseStorage';
 
 interface CardPack {
   id: string;
@@ -33,7 +34,8 @@ export function useCardPacks() {
           rarity: pack.rarity,
           priceIdrx: parseFloat(pack.price_idrx),
           priceEth: parseFloat(pack.price_eth),
-          imageUrl: pack.image_url,
+          // Convert relative path to full Supabase Storage URL
+          imageUrl: getStorageUrl(pack.image_url),
           description: pack.description,
           isActive: pack.is_active,
         }));

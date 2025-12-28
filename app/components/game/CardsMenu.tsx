@@ -111,26 +111,41 @@ export function CardsMenu() {
 
         <div className={styles.cardsGrid}>
           {inventoryLoading ? (
-            <div>Loading inventory...</div>
-          ) : inventory.length === 0 ? (
-            <div className={styles.cardEmpty}>
-              <span className={styles.cardEmptyLabel}>No cards yet</span>
-            </div>
-          ) : (
-            inventory.map((item) => (
-              <div key={item.id} className={styles.cardSlot}>
-                <div className={styles.cardInner}>
-                  <img
-                    src={item.cardTemplate.imageUrl}
-                    alt={item.cardTemplate.name}
-                    className={styles.cardImage}
-                  />
-                  {item.quantity > 1 && (
-                    <div className={styles.cardQuantity}>{item.quantity}</div>
-                  )}
+            <>
+              {[...Array(4)].map((_, index) => (
+                <div key={`loading-${index}`} className={styles.cardSlot}>
+                  <div className={styles.cardEmpty}>
+                    <span className={styles.cardEmptyLabel}>Loading...</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </>
+          ) : (
+            <>
+              {/* Display inventory items */}
+              {inventory.map((item) => (
+                <div key={item.id} className={styles.cardSlot}>
+                  <div className={styles.cardInner}>
+                    <img
+                      src={item.cardTemplate.imageUrl}
+                      alt={item.cardTemplate.name}
+                      className={styles.cardImage}
+                    />
+                    {item.quantity > 1 && (
+                      <div className={styles.cardQuantity}>{item.quantity}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {/* Fill remaining slots with empty frames */}
+              {[...Array(Math.max(0, 4 - inventory.length))].map((_, index) => (
+                <div key={`empty-${index}`} className={styles.cardSlot}>
+                  <div className={styles.cardEmpty}>
+                    <span className={styles.cardEmptyLabel}>EMPTY</span>
+                  </div>
+                </div>
+              ))}
+            </>
           )}
         </div>
       </section>

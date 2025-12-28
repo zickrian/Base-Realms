@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { getStorageUrl } from '../utils/supabaseStorage';
 
 interface InventoryCard {
   id: string;
@@ -46,7 +47,8 @@ export function useInventory() {
             id: item.card_templates.id,
             name: item.card_templates.name,
             rarity: item.card_templates.rarity,
-            imageUrl: item.card_templates.image_url,
+            // Convert relative path to full Supabase Storage URL
+            imageUrl: getStorageUrl(item.card_templates.image_url),
             description: item.card_templates.description,
           },
           quantity: item.quantity,
@@ -86,7 +88,8 @@ export function useInventory() {
               id: item.card_templates.id,
               name: item.card_templates.name,
               rarity: item.card_templates.rarity,
-              imageUrl: item.card_templates.image_url,
+              // Convert relative path to full Supabase Storage URL
+              imageUrl: getStorageUrl(item.card_templates.image_url),
               description: item.card_templates.description,
             },
             quantity: item.quantity,
