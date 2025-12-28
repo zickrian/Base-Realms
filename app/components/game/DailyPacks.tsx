@@ -1,6 +1,6 @@
 "use client";
 
-
+import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./DailyPacks.module.css";
 
 interface DailyPacksProps {
@@ -18,7 +18,7 @@ export function DailyPacks({ questCount, onQuestClick, packCount = 4, onPackClic
         <button className={styles.packButton} onClick={onPackClick}>
           {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
           <img
-            src="/game/icons/packs.png"
+            src={getGameIconUrl("packs.png")}
             alt="Daily Packs"
             width={60}
             height={60}
@@ -32,7 +32,7 @@ export function DailyPacks({ questCount, onQuestClick, packCount = 4, onPackClic
         <button className={styles.questButton} onClick={onQuestClick}>
           {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
           <img
-            src="/game/icons/quest-button.png"
+            src={getGameIconUrl("quest-button.png")}
             alt="Quests"
             width={60}
             height={60}

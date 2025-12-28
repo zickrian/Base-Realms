@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
+import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./HeaderBar.module.css";
 
 interface PlayerData {
@@ -98,7 +99,7 @@ export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
           {/* Level Badge */}
           <div className={styles.levelBadge}>
             <img
-              src="/game/icons/level-badge.png"
+              src={getGameIconUrl("level-badge.png")}
               alt="Level Badge"
               width={60}
               height={70}
@@ -135,7 +136,7 @@ export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
         {/* ETH */}
         <div className={styles.currencyItem}>
           <img
-            src="/game/icons/eth.svg"
+            src={getGameIconUrl("eth.svg")}
             alt="ETH"
             width={20}
             height={20}
@@ -145,7 +146,7 @@ export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
         {/* IDRX */}
         <div className={styles.currencyItem}>
           <img
-            src="/game/icons/idrx.svg"
+            src={getGameIconUrl("idrx.svg")}
             alt="IDRX"
             width={20}
             height={20}

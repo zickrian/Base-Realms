@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
+import { getStorageUrl } from "../utils/supabaseStorage";
 import styles from "./LandingContent.module.css";
 
 export function LandingContent() {
@@ -31,7 +32,7 @@ export function LandingContent() {
         <div className={styles.card}>
           <div className={styles.logoSection}>
             <Image
-              src="/logos_demo.png"
+              src={getStorageUrl("logos_demo.png")}
               alt="Logo"
               width={200}
               height={200}
@@ -59,7 +60,7 @@ export function LandingContent() {
         {/* Logo Section */}
         <div className={styles.logoSection}>
           <Image
-            src="/logos_demo.png"
+            src={getStorageUrl("logos_demo.png")}
             alt="Logo"
             width={200}
             height={200}

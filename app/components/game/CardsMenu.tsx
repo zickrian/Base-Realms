@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { getGameIconUrl } from '../../utils/supabaseStorage';
 import styles from "./CardsMenu.module.css";
 
 interface CardPack {
@@ -26,7 +27,7 @@ const packs: CardPack[] = [
     name: "FIRE & FURY",
     priceIdrx: 150,
     priceEth: 0.001,
-    image: "/game/icons/rare.png",
+    image: getGameIconUrl("rare.png"),
     description: "Unleash the power of Rare cards! This pack contains essential units to bolster your army's core strength.",
     rarity: "rare",
   },
@@ -35,7 +36,7 @@ const packs: CardPack[] = [
     name: "NATURE'S WRATH",
     priceIdrx: 150,
     priceEth: 0.001,
-    image: "/game/icons/epic.png",
+    image: getGameIconUrl("epic.png"),
     description: "Harness the forces of nature with Epic cards. Includes powerful beasts and spells to dominate the battlefield.",
     rarity: "epic",
   },
@@ -44,7 +45,7 @@ const packs: CardPack[] = [
     name: "ARCANE MYSTERIES",
     priceIdrx: 150,
     priceEth: 0.001,
-    image: "/game/icons/legend.png",
+    image: getGameIconUrl("legend.png"),
     description: "Unlock ancient secrets with Legendary cards. The ultimate pack for those seeking the most powerful heroes and artifacts.",
     rarity: "legendary",
   },
@@ -52,16 +53,16 @@ const packs: CardPack[] = [
 
 // Mock inventory data for layout
 const inventory: InventoryCard[] = [
-  { id: "knight", image: "/game/icons/cards.png", count: 3 },
-  { id: "archer", image: "/game/icons/cards.png", count: 3 },
-  { id: "golem", image: "/game/icons/cards.png", count: 1 },
-  { id: "dragon1", image: "/game/icons/cards.png", count: 1 },
-  { id: "mage1", image: "/game/icons/cards.png", count: 2 },
-  { id: "wyvern", image: "/game/icons/cards.png", count: 1 },
-  { id: "dwarf", image: "/game/icons/cards.png", count: 2 },
-  { id: "orc", image: "/game/icons/cards.png", count: 3 },
-  { id: "dragon2", image: "/game/icons/cards.png", count: 1 },
-  { id: "mage2", image: "/game/icons/cards.png", count: 2 },
+  { id: "knight", image: getGameIconUrl("cards.png"), count: 3 },
+  { id: "archer", image: getGameIconUrl("cards.png"), count: 3 },
+  { id: "golem", image: getGameIconUrl("cards.png"), count: 1 },
+  { id: "dragon1", image: getGameIconUrl("cards.png"), count: 1 },
+  { id: "mage1", image: getGameIconUrl("cards.png"), count: 2 },
+  { id: "wyvern", image: getGameIconUrl("cards.png"), count: 1 },
+  { id: "dwarf", image: getGameIconUrl("cards.png"), count: 2 },
+  { id: "orc", image: getGameIconUrl("cards.png"), count: 3 },
+  { id: "dragon2", image: getGameIconUrl("cards.png"), count: 1 },
+  { id: "mage2", image: getGameIconUrl("cards.png"), count: 2 },
   { id: "empty1", image: "", count: 0, empty: true },
   { id: "empty2", image: "", count: 0, empty: true },
 ];

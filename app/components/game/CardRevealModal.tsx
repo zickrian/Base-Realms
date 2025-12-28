@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./CardRevealModal.module.css";
 
 interface CardRevealModalProps {
@@ -79,7 +80,7 @@ export function CardRevealModal({ isOpen, onClose, onCardReveal }: CardRevealMod
             }`}
           >
             <img
-              src="/game/icons/card2.png"
+              src={getGameIconUrl("card2.png")}
               alt="Card 2"
               className={styles.cardImage}
             />
@@ -92,7 +93,7 @@ export function CardRevealModal({ isOpen, onClose, onCardReveal }: CardRevealMod
             }`}
           >
             <img
-              src="/game/icons/card1.png"
+              src={getGameIconUrl("card1.png")}
               alt="Card 1"
               className={styles.cardImage}
             />

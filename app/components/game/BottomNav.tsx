@@ -7,10 +7,12 @@ interface BottomNavProps {
   onNavigate?: (item: NavItem) => void;
 }
 
+import { getGameIconUrl } from '../../utils/supabaseStorage';
+
 const navItems: { id: NavItem; icon: string; label: string }[] = [
-  { id: 'cards', icon: '/game/icons/cards-icon.png', label: 'CARDS' },
-  { id: 'arena', icon: '/game/icons/swords.png', label: 'ARENA' },
-  { id: 'market', icon: '/game/icons/market.png', label: 'MARKET' },
+  { id: 'cards', icon: getGameIconUrl('cards-icon.png'), label: 'CARDS' },
+  { id: 'arena', icon: getGameIconUrl('swords.png'), label: 'ARENA' },
+  { id: 'market', icon: getGameIconUrl('market.png'), label: 'MARKET' },
 ];
 
 export function BottomNav({ activeItem, onNavigate }: BottomNavProps) {

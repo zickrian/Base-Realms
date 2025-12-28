@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useGameCanvas } from "@/app/hooks/useGameCanvas";
 import { GameAssets } from "@/app/utils/gameAssets";
+import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./StageDisplay.module.css";
 
 interface StageInfo {
@@ -20,7 +21,7 @@ export function StageDisplay({ stage }: StageDisplayProps) {
 
   // Load cloud image
   useEffect(() => {
-    GameAssets.loadImage('/game/icons/awan.png')
+    GameAssets.loadImage(getGameIconUrl('awan.png'))
       .then((cloud) => {
         console.log('Cloud image loaded:', { width: cloud.width, height: cloud.height });
         setCloudImage(cloud);

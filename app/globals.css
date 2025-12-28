@@ -1,5 +1,8 @@
 @layer base {
   :root {
+    /* Supabase Storage URL */
+    --supabase-storage-url: https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets;
+    
     /* Dark theme colors for pixel art style */
     --background: #1a1a2e;
     --foreground: #f5f5dc;
@@ -58,7 +61,7 @@
 
   body {
     color: var(--foreground);
-    background: url('/backround.png') no-repeat center center fixed;
+    background: url(https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/backround.png) no-repeat center center fixed;
     background-size: cover;
     font-family: var(--font-pixelify), var(--font-inter), sans-serif;
     -webkit-font-smoothing: antialiased;

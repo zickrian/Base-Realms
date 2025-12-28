@@ -1,5 +1,6 @@
 "use client";
 
+import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./BattleSection.module.css";
 
 interface BattleSectionProps {
@@ -18,7 +19,7 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }:
         <button key="stage-btn" className={styles.stageButton} onClick={onStageSelect}>
           <div className={styles.cardInner}>
             <img
-              src="/game/icons/stage-button.png"
+              src={getGameIconUrl("stage-button.png")}
               alt="Stats"
               className={styles.pannelIcon}
             />
@@ -37,7 +38,7 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }:
         <button key="pvp-btn" className={styles.pvpButton} onClick={() => { }}>
           <div className={styles.cardInnerPvP}>
             <img
-              src="/game/icons/swords.png"
+              src={getGameIconUrl("swords.png")}
               alt="PvP"
               className={styles.pannelIcon}
             />

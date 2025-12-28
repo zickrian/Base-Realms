@@ -4,7 +4,7 @@
   min-height: 100vh;
   max-width: 430px;
   margin: 0 auto;
-  background: url('/background.png') no-repeat center top;
+  background: url(https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/background.png) no-repeat center top;
   background-size: 100% auto;
   background-attachment: local;
   position: relative;
