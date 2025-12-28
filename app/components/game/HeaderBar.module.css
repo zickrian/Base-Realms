@@ -1,13 +1,13 @@
 .header {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: var(--spacing-sm);
   background: transparent;
   width: 100%;
   max-width: 100vw;
-  overflow: hidden;
+  overflow: visible;
   z-index: 50;
 }
 
@@ -19,6 +19,18 @@
   gap: 0;
   flex-shrink: 0;
   height: 80px;
+  overflow: visible;
+}
+
+/* Clickable area untuk toggle dropdown */
+.clickableArea {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  width: 200px;
 }
 
 .levelBadge {
@@ -89,6 +101,7 @@
   align-items: center;
   transform: perspective(1000px) rotateY(2deg) translateZ(2px);
   transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .xpProgressContainer:hover {

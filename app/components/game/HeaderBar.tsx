@@ -12,12 +12,13 @@ interface PlayerData {
 
 interface HeaderBarProps {
   player: PlayerData;
+  onSettingsClick?: () => void;
 }
 
 const IDRX_TOKEN_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22" as const;
 const BASE_CHAIN_ID = 8453; // Base Mainnet
 
-export function HeaderBar({ player }: HeaderBarProps) {
+export function HeaderBar({ player, onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
 
   // Get ETH balance
@@ -72,6 +73,12 @@ export function HeaderBar({ player }: HeaderBarProps) {
     setMounted(true);
   }, []);
 
+  const handleSettingsClick = () => {
+    if (onSettingsClick) {
+      onSettingsClick();
+    }
+  };
+
   // Prevent hydration mismatch
   if (!mounted) {
     return (
@@ -86,35 +93,38 @@ export function HeaderBar({ player }: HeaderBarProps) {
     <div className={styles.header}>
       {/* Player Stats Group (Left) */}
       <div className={styles.playerStats}>
-        {/* Level Badge */}
-        <div className={styles.levelBadge}>
-          <img
-            src="/game/icons/level-badge.png"
-            alt="Level Badge"
-            width={60}
-            height={70}
-            className={styles.levelBadgeImage}
-          />
-          <span className={styles.levelNumber}>{mockLevel}</span>
-        </div>
+        {/* Clickable area untuk membuka settings */}
+        <div className={styles.clickableArea} onClick={handleSettingsClick}>
+          {/* Level Badge */}
+          <div className={styles.levelBadge}>
+            <img
+              src="/game/icons/level-badge.png"
+              alt="Level Badge"
+              width={60}
+              height={70}
+              className={styles.levelBadgeImage}
+            />
+            <span className={styles.levelNumber}>{mockLevel}</span>
+          </div>
 
-        {/* Wallet & Progress Bar Section (Right of Badge) */}
-        <div className={styles.walletProgressSection}>
-          {/* Wallet Address - Text Only */}
-          <span className={styles.addressText}>{formatAddress(address)}</span>
+          {/* Wallet & Progress Bar Section (Right of Badge) */}
+          <div className={styles.walletProgressSection}>
+            {/* Wallet Address - Text Only */}
+            <span className={styles.addressText}>{formatAddress(address)}</span>
 
-          {/* XP Progress Bar - Custom 3D Style */}
-          <div className={styles.xpProgressContainer}>
-            <div className={styles.progressBarBackground}>
-              <div
-                className={styles.progressBarFill}
-                style={{ width: `${xpPercentage}%` }}
-              >
-                <div className={styles.progressBarShine}></div>
+            {/* XP Progress Bar - Custom 3D Style */}
+            <div className={styles.xpProgressContainer}>
+              <div className={styles.progressBarBackground}>
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: `${xpPercentage}%` }}
+                >
+                  <div className={styles.progressBarShine}></div>
+                </div>
               </div>
-            </div>
-            <div className={styles.xpContent}>
-              <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+              <div className={styles.xpContent}>
+                <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+              </div>
             </div>
           </div>
         </div>

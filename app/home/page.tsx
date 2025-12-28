@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
 import {
   HeaderBar,
   DailyPacks,
@@ -10,7 +12,9 @@ import {
   CardsMenu,
   QuestMenu,
   CardRevealModal,
+  SettingsMenu,
 } from "../components/game";
+import { LoadingState } from "../components/LoadingState";
 import styles from "./page.module.css";
 
 // Mock data untuk demo
@@ -25,11 +29,31 @@ const mockStageData = {
 };
 
 export default function HomePage() {
+  const router = useRouter();
+  const { isConnected, isConnecting } = useAccount();
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">(
     "arena"
   );
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Redirect to landing page if wallet is not connected
+  useEffect(() => {
+    if (!isConnecting && !isConnected) {
+      router.push("/");
+    }
+  }, [isConnected, isConnecting, router]);
+
+  // Show loading state while checking connection or connecting
+  if (isConnecting) {
+    return <LoadingState />;
+  }
+
+  // Don't render content if not connected (will redirect)
+  if (!isConnected) {
+    return <LoadingState />;
+  }
 
   const handleBattle = () => {
     console.log("Battle started!");
@@ -49,7 +73,10 @@ export default function HomePage() {
 
   const renderArenaView = () => (
     <>
-      <HeaderBar player={mockPlayerData} />
+      <HeaderBar 
+        player={mockPlayerData} 
+        onSettingsClick={() => setIsSettingsOpen(true)}
+      />
       <DailyPacks 
         questCount={3} 
         onQuestClick={handleQuestClick}
@@ -77,6 +104,10 @@ export default function HomePage() {
       <CardRevealModal 
         isOpen={isCardModalOpen} 
         onClose={() => setIsCardModalOpen(false)} 
+      />
+      <SettingsMenu 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
       />
     </div>
   );
