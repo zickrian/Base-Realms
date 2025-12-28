@@ -65,29 +65,13 @@ export function HeaderBar({ player }: HeaderBarProps) {
   const mockLevel = 67;
   const mockCurrentXP = 8700;
   const mockMaxXP = 9500;
+  const xpPercentage = (mockCurrentXP / mockMaxXP) * 100;
 
   return (
     <div className={styles.header}>
       {/* Player Stats Group (Left) */}
       <div className={styles.playerStats}>
-        {/* XP Progress Bar - Layer 1 (Behind) */}
-        <div className={styles.xpSection}>
-          <div className={styles.xpProgressContainer}>
-            <Image
-              src="/game/icons/progress-bar.png"
-              alt="Progress Bar"
-              width={168}
-              height={52}
-              className={styles.progressBarImage}
-            />
-            <div className={styles.xpContent}>
-              <span className={styles.addressText}>{formatAddress(address)}</span>
-              <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Level Badge - Layer 2 (Front) */}
+        {/* Level Badge */}
         <div className={styles.levelBadge}>
           <Image
             src="/game/icons/level-badge.png"
@@ -97,6 +81,27 @@ export function HeaderBar({ player }: HeaderBarProps) {
             className={styles.levelBadgeImage}
           />
           <span className={styles.levelNumber}>{mockLevel}</span>
+        </div>
+
+        {/* Wallet & Progress Bar Section (Right of Badge) */}
+        <div className={styles.walletProgressSection}>
+          {/* Wallet Address - Text Only */}
+          <span className={styles.addressText}>{formatAddress(address)}</span>
+          
+          {/* XP Progress Bar - Custom 3D Style */}
+          <div className={styles.xpProgressContainer}>
+            <div className={styles.progressBarBackground}>
+              <div 
+                className={styles.progressBarFill}
+                style={{ width: `${xpPercentage}%` }}
+              >
+                <div className={styles.progressBarShine}></div>
+              </div>
+            </div>
+            <div className={styles.xpContent}>
+              <span className={styles.xpText}>{mockCurrentXP} / {mockMaxXP}</span>
+            </div>
+          </div>
         </div>
       </div>
 
