@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 
 interface Quest {
@@ -22,65 +22,81 @@ export function useQuests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchQuests = useCallback(async (forceRefresh = false) => {
     if (!isConnected || !address) {
       setQuests([]);
       setLoading(false);
       return;
     }
 
-    // Check cache first
-    const cached = questsCache.get(address);
-    const now = Date.now();
-    if (cached && (now - cached.time) < QUEST_CACHE_DURATION) {
-      setQuests(cached.quests);
-      setLoading(false);
-      // Still fetch in background for fresh data
-      fetch('/api/quests', {
-        headers: {
-          'x-wallet-address': address,
-        },
-      }).then(res => res.json()).then(data => {
-        if (data.quests) {
-          questsCache.set(address, { quests: data.quests, time: now });
-          setQuests(data.quests);
-        }
-      }).catch(() => {
-        // Ignore background fetch errors
-      });
-      return;
-    }
-
-    const fetchQuests = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/quests', {
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = questsCache.get(address);
+      const now = Date.now();
+      if (cached && (now - cached.time) < QUEST_CACHE_DURATION) {
+        setQuests(cached.quests);
+        setLoading(false);
+        // Still fetch in background for fresh data
+        fetch('/api/quests', {
           headers: {
             'x-wallet-address': address,
           },
+        }).then(res => res.json()).then(data => {
+          if (data.quests) {
+            questsCache.set(address, { quests: data.quests, time: Date.now() });
+            setQuests(data.quests);
+          }
+        }).catch(() => {
+          // Ignore background fetch errors
         });
+        return;
+      }
+    }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch quests');
-        }
+    try {
+      setLoading(true);
+      const response = await fetch('/api/quests', {
+        headers: {
+          'x-wallet-address': address,
+        },
+      });
 
-        const data = await response.json();
-        
-        // Update cache
-        questsCache.set(address, { quests: data.quests, time: now });
-        
-        setQuests(data.quests);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        setQuests([]);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch quests');
+      }
+
+      const data = await response.json();
+      
+      // Update cache
+      questsCache.set(address, { quests: data.quests, time: Date.now() });
+      
+      setQuests(data.quests);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      setQuests([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [address, isConnected]);
+
+  useEffect(() => {
+    fetchQuests();
+  }, [fetchQuests]);
+
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (address && isConnected) {
+        fetchQuests(true);
       }
     };
 
-    fetchQuests();
-  }, [address, isConnected]);
+    window.addEventListener('refresh-quests-inventory', handleRefresh);
+    return () => {
+      window.removeEventListener('refresh-quests-inventory', handleRefresh);
+    };
+  }, [address, isConnected, fetchQuests]);
 
   const claimQuest = async (questId: string) => {
     if (!address || !isConnected) return;
@@ -117,33 +133,12 @@ export function useQuests() {
     }
   };
 
-  return { quests, loading, error, claimQuest, refetch: () => {
-    if (address && isConnected) {
-      const fetchQuests = async () => {
-        try {
-          setLoading(true);
-          const response = await fetch('/api/quests', {
-            headers: {
-              'x-wallet-address': address,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch quests');
-          }
-
-          const data = await response.json();
-          questsCache.set(address, { quests: data.quests, time: Date.now() });
-          setQuests(data.quests);
-          setError(null);
-        } catch (err: any) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchQuests();
-    }
-  } };
+  return { 
+    quests, 
+    loading, 
+    error, 
+    claimQuest, 
+    refetch: () => fetchQuests(true)
+  };
 }
 

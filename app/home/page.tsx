@@ -58,7 +58,7 @@ export default function HomePage() {
   // Initialize user session and prefetch data on mount
   useEffect(() => {
     if (isConnected && address) {
-      // Parallel fetch: login + prefetch packs and quests
+      // Parallel fetch: login + prefetch packs, quests, and inventory for instant loading
       Promise.all([
         // Login API
         fetch('/api/auth/login', {
@@ -70,8 +70,14 @@ export default function HomePage() {
         }),
         // Prefetch card packs (no auth needed)
         fetch('/api/cards/packs').catch(() => null),
-        // Prefetch quests (needs auth)
+        // Prefetch quests (needs auth) - cache will be used by useQuests hook
         fetch('/api/quests', {
+          headers: {
+            'x-wallet-address': address,
+          },
+        }).catch(() => null),
+        // Prefetch inventory (needs auth) - for instant display in CardsMenu
+        fetch('/api/cards/inventory', {
           headers: {
             'x-wallet-address': address,
           },
@@ -121,7 +127,7 @@ export default function HomePage() {
   const handleMint = async () => {
     if (!address || !isConnected) {
       setToast({
-        message: "Wallet tidak terhubung. Silakan hubungkan wallet Anda terlebih dahulu.",
+        message: "Wallet not connected. Please connect your wallet first.",
         type: "error",
         isVisible: true,
       });
@@ -131,7 +137,7 @@ export default function HomePage() {
     // Check if on Base Mainnet (chainId: 8453)
     if (chainId !== base.id) {
       setToast({
-        message: "Silakan pindah ke Base Network untuk melakukan minting.",
+        message: "Please switch to Base Network to perform minting.",
         type: "warning",
         isVisible: true,
       });
@@ -147,19 +153,19 @@ export default function HomePage() {
       });
       
       setToast({
-        message: "Transaksi sedang diproses. Mohon tunggu konfirmasi...",
+        message: "Transaction is being processed. Please wait for confirmation...",
         type: "info",
         isVisible: true,
       });
     } catch (err: any) {
-      let errorMessage = "Mint gagal. Silakan coba lagi.";
+      let errorMessage = "Minting failed. Please try again.";
       
       if (err.code === 4001) {
-        errorMessage = "Transaksi dibatalkan oleh pengguna.";
+        errorMessage = "Transaction cancelled by user.";
       } else if (err.message?.includes("user rejected")) {
-        errorMessage = "Transaksi ditolak oleh pengguna.";
+        errorMessage = "Transaction rejected by user.";
       } else if (err.message) {
-        errorMessage = `Mint gagal: ${err.message}`;
+        errorMessage = `Minting failed: ${err.message}`;
       }
       
       setToast({
@@ -174,57 +180,92 @@ export default function HomePage() {
   useEffect(() => {
     if (isSuccess && address) {
       // Update quest progress for "open free cards" quest and auto-claim
-      fetch('/api/quests/update-progress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-wallet-address': address,
-        },
-        body: JSON.stringify({
-          questType: 'open_packs',
+      Promise.all([
+        fetch('/api/quests/update-progress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-wallet-address': address,
+          },
+          body: JSON.stringify({
+            questType: 'open_packs',
+          }),
         }),
-      })
-      .then(async (response) => {
-        if (response.ok) {
-          const data = await response.json();
+        // Immediately refetch quests and inventory in parallel for instant UI update
+        fetch('/api/quests', {
+          headers: {
+            'x-wallet-address': address,
+          },
+        }).catch(() => null),
+        fetch('/api/cards/inventory', {
+          headers: {
+            'x-wallet-address': address,
+          },
+        }).catch(() => null),
+      ])
+      .then(async ([questProgressResponse, ...rest]) => {
+        // Trigger custom event for hooks to refetch
+        window.dispatchEvent(new CustomEvent('refresh-quests-inventory'));
+        
+        if (questProgressResponse.ok) {
+          const data = await questProgressResponse.json();
           // Show toast with quest completion and XP reward info
           if (data.questCompleted && data.xpAwarded > 0) {
             setToast({
-              message: `NFT berhasil di-mint! Quest 'Open Free Cards' telah terpenuhi dan Anda mendapat ${data.xpAwarded} XP!`,
+              message: `NFT minted successfully! Quest 'Open Free Cards' completed and you received ${data.xpAwarded} XP!`,
               type: "success",
               isVisible: true,
-              transactionHash: hash,
+              transactionHash: hash, // Use actual transaction hash from minting
             });
           } else {
             // Quest not completed yet or no XP reward
             setToast({
-              message: "NFT berhasil di-mint! Quest 'Open Free Cards' progress telah diupdate.",
+              message: "NFT minted successfully! Quest 'Open Free Cards' progress updated.",
               type: "success",
               isVisible: true,
-              transactionHash: hash,
+              transactionHash: hash, // Use actual transaction hash from minting
             });
           }
         } else {
           // Fallback if quest update fails
           setToast({
-            message: "NFT berhasil di-mint!",
+            message: "NFT minted successfully!",
             type: "success",
             isVisible: true,
-            transactionHash: hash,
+            transactionHash: hash, // Use actual transaction hash from minting
           });
         }
       })
       .catch(() => {
+        // Trigger refresh even if update fails
+        window.dispatchEvent(new CustomEvent('refresh-quests-inventory'));
         // Fallback if quest update fails
         setToast({
-          message: "NFT berhasil di-mint!",
+          message: "NFT minted successfully!",
           type: "success",
           isVisible: true,
-          transactionHash: hash,
+          transactionHash: hash, // Use actual transaction hash from minting
         });
       });
     }
   }, [isSuccess, address, hash]);
+
+  // Test function to view popup (development only)
+  const testToast = (type: "success" | "error" | "info" | "warning") => {
+    const messages = {
+      success: "NFT minted successfully! Quest 'Open Free Cards' completed and you received 25 XP!",
+      error: "Minting failed. Please try again.",
+      warning: "Please switch to Base Network to perform minting.",
+      info: "Transaction is being processed. Please wait for confirmation...",
+    };
+    
+    setToast({
+      message: messages[type],
+      type: type,
+      isVisible: true,
+      transactionHash: type === "success" ? "0x1234567890abcdef1234567890abcdef12345678" : undefined,
+    });
+  };
 
   const renderArenaView = () => (
     <>
@@ -241,6 +282,84 @@ export default function HomePage() {
         onStageSelect={handleStageSelect}
         isPvPEnabled={false}
       />
+      {/* Test buttons untuk development - hapus di production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{
+          position: 'fixed',
+          bottom: '100px',
+          right: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          zIndex: 9998,
+          background: 'rgba(0,0,0,0.7)',
+          padding: '12px',
+          borderRadius: '12px',
+          border: '1px solid rgba(255,255,255,0.2)'
+        }}>
+          <div style={{ color: 'white', fontSize: '12px', marginBottom: '4px', fontWeight: 'bold' }}>Test Toast:</div>
+          <button 
+            onClick={() => testToast('success')}
+            style={{
+              padding: '8px 12px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}
+          >
+            Success
+          </button>
+          <button 
+            onClick={() => testToast('error')}
+            style={{
+              padding: '8px 12px',
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}
+          >
+            Error
+          </button>
+          <button 
+            onClick={() => testToast('warning')}
+            style={{
+              padding: '8px 12px',
+              background: '#f59e0b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}
+          >
+            Warning
+          </button>
+          <button 
+            onClick={() => testToast('info')}
+            style={{
+              padding: '8px 12px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}
+          >
+            Info
+          </button>
+        </div>
+      )}
     </>
   );
 

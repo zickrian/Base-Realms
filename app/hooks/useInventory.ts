@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { getStorageUrl, getGameIconUrl } from '../utils/supabaseStorage';
 import { useNFTBalance } from './useNFTBalance';
@@ -22,52 +22,66 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchInventory = useCallback(async () => {
     if (!isConnected || !address) {
       setDbInventory([]);
       setLoading(false);
       return;
     }
 
-    const fetchInventory = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/cards/inventory', {
-          headers: {
-            'x-wallet-address': address,
-          },
-        });
+    try {
+      setLoading(true);
+      const response = await fetch('/api/cards/inventory', {
+        headers: {
+          'x-wallet-address': address,
+        },
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch inventory');
-        }
+      if (!response.ok) {
+        throw new Error('Failed to fetch inventory');
+      }
 
-        const data = await response.json();
-        const formatted = (data.inventory || []).map((item: any) => ({
-          id: item.id,
-          cardTemplate: {
-            id: item.card_templates?.id || '',
-            name: item.card_templates?.name || '',
-            rarity: item.card_templates?.rarity || 'common',
-            // Convert relative path to full Supabase Storage URL
-            imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
-            description: item.card_templates?.description || null,
-          },
-          quantity: item.quantity || 1,
-        }));
-        
-        setDbInventory(formatted);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        setDbInventory([]);
-      } finally {
-        setLoading(false);
+      const data = await response.json();
+      const formatted = (data.inventory || []).map((item: any) => ({
+        id: item.id,
+        cardTemplate: {
+          id: item.card_templates?.id || '',
+          name: item.card_templates?.name || '',
+          rarity: item.card_templates?.rarity || 'common',
+          // Convert relative path to full Supabase Storage URL
+          imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+          description: item.card_templates?.description || null,
+        },
+        quantity: item.quantity || 1,
+      }));
+      
+      setDbInventory(formatted);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      setDbInventory([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [address, isConnected]);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
+
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (address && isConnected) {
+        fetchInventory();
       }
     };
 
-    fetchInventory();
-  }, [address, isConnected]);
+    window.addEventListener('refresh-quests-inventory', handleRefresh);
+    return () => {
+      window.removeEventListener('refresh-quests-inventory', handleRefresh);
+    };
+  }, [address, isConnected, fetchInventory]);
 
   // Combine database inventory with NFT card using useMemo
   const inventory = useMemo(() => {
@@ -93,45 +107,11 @@ export function useInventory() {
   // Combine loading states
   const combinedLoading = loading || nftLoading;
 
-  return { inventory, loading: combinedLoading, error, refetch: () => {
-    if (address && isConnected) {
-      const fetchInventory = async () => {
-        try {
-          setLoading(true);
-          const response = await fetch('/api/cards/inventory', {
-            headers: {
-              'x-wallet-address': address,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch inventory');
-          }
-
-          const data = await response.json();
-          const formatted = (data.inventory || []).map((item: any) => ({
-            id: item.id,
-            cardTemplate: {
-              id: item.card_templates?.id || '',
-              name: item.card_templates?.name || '',
-              rarity: item.card_templates?.rarity || 'common',
-              // Convert relative path to full Supabase Storage URL
-              imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
-              description: item.card_templates?.description || null,
-            },
-            quantity: item.quantity || 1,
-          }));
-          
-          setDbInventory(formatted);
-          setError(null);
-        } catch (err: any) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchInventory();
-    }
-  } };
+  return { 
+    inventory, 
+    loading: combinedLoading, 
+    error, 
+    refetch: fetchInventory
+  };
 }
 
