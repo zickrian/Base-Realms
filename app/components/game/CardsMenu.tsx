@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import React from 'react';
 import styles from "./CardsMenu.module.css";
 
 interface CardPack {
@@ -9,6 +9,8 @@ interface CardPack {
   priceIdrx: number;
   priceEth: number;
   image: string;
+  description: string;
+  rarity?: string;
 }
 
 interface InventoryCard {
@@ -24,21 +26,27 @@ const packs: CardPack[] = [
     name: "FIRE & FURY",
     priceIdrx: 150,
     priceEth: 0.001,
-    image: "/game/icons/cards.png",
+    image: "/game/icons/rare.png",
+    description: "Unleash the power of Rare cards! This pack contains essential units to bolster your army's core strength.",
+    rarity: "rare",
   },
   {
     id: "nature",
     name: "NATURE'S WRATH",
     priceIdrx: 150,
     priceEth: 0.001,
-    image: "/game/icons/cards.png",
+    image: "/game/icons/epic.png",
+    description: "Harness the forces of nature with Epic cards. Includes powerful beasts and spells to dominate the battlefield.",
+    rarity: "epic",
   },
   {
     id: "arcane",
     name: "ARCANE MYSTERIES",
     priceIdrx: 150,
     priceEth: 0.001,
-    image: "/game/icons/cards.png",
+    image: "/game/icons/legend.png",
+    description: "Unlock ancient secrets with Legendary cards. The ultimate pack for those seeking the most powerful heroes and artifacts.",
+    rarity: "legendary",
   },
 ];
 
@@ -59,6 +67,16 @@ const inventory: InventoryCard[] = [
 ];
 
 export function CardsMenu() {
+  const [selectedPack, setSelectedPack] = React.useState<CardPack | null>(null);
+
+  const handleInfoClick = (pack: CardPack) => {
+    setSelectedPack(pack);
+  };
+
+  const closePopup = () => {
+    setSelectedPack(null);
+  };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>CARDS MENU</h1>
@@ -69,19 +87,30 @@ export function CardsMenu() {
 
         <div className={styles.packsRow}>
           {packs.map((pack) => (
-            <div key={pack.id} className={styles.packCard}>
-              <div className={styles.packImageWrapper}>
-                <Image
+            <div
+              key={pack.id}
+              className={`${styles.packCard} ${styles[pack.rarity || 'common']}`}
+            >
+              {/* Card Header Removed */}
+
+              {/* Main Illustration Area */}
+              <div className={styles.cardIllustration}>
+                <div className={styles.glowEffect} />
+                <img
                   src={pack.image}
                   alt={pack.name}
-                  width={80}
-                  height={100}
                   className={styles.packImage}
                 />
               </div>
-              <div className={styles.packName}>{pack.name}</div>
-              <div className={styles.packPrice}>
-                {pack.priceIdrx} IDRX / {pack.priceEth.toFixed(3)} ETH
+
+              {/* Card Footer */}
+              <div className={styles.cardFooter}>
+                <button
+                  className={styles.priceButton}
+                  onClick={() => handleInfoClick(pack)}
+                >
+                  {pack.priceEth.toFixed(3)} ETH
+                </button>
               </div>
             </div>
           ))}
@@ -102,11 +131,9 @@ export function CardsMenu() {
               ) : (
                 <>
                   <div className={styles.cardInner}>
-                    <Image
+                    <img
                       src={card.image}
                       alt={card.id}
-                      width={80}
-                      height={100}
                       className={styles.cardImage}
                     />
                   </div>
@@ -119,6 +146,30 @@ export function CardsMenu() {
       </section>
 
       <div className={styles.bottomSpacer} />
+
+      {/* Purchase Confirmation Popup */}
+      {selectedPack && (
+        <div className={styles.popupOverlay} onClick={closePopup}>
+          <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.popupTitle}>CONFIRM PURCHASE</h3>
+            <p className={styles.popupDescription}>
+              Are you sure you want to buy <strong>{selectedPack.name}</strong> for <strong>{selectedPack.priceEth} ETH</strong>?
+            </p>
+            <div className={styles.popupActions}>
+              <button className={styles.cancelButton} onClick={closePopup}>
+                CANCEL
+              </button>
+              <button className={styles.confirmButton} onClick={() => {
+                // TODO: Implement actual purchase logic here (mint NFT)
+                alert(`Minting ${selectedPack.name}...`);
+                closePopup();
+              }}>
+                CONFIRM
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

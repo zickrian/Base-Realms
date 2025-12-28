@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import styles from "./HeaderBar.module.css";
@@ -73,7 +72,7 @@ export function HeaderBar({ player }: HeaderBarProps) {
       <div className={styles.playerStats}>
         {/* Level Badge */}
         <div className={styles.levelBadge}>
-          <Image
+          <img
             src="/game/icons/level-badge.png"
             alt="Level Badge"
             width={60}
@@ -87,11 +86,11 @@ export function HeaderBar({ player }: HeaderBarProps) {
         <div className={styles.walletProgressSection}>
           {/* Wallet Address - Text Only */}
           <span className={styles.addressText}>{formatAddress(address)}</span>
-          
+
           {/* XP Progress Bar - Custom 3D Style */}
           <div className={styles.xpProgressContainer}>
             <div className={styles.progressBarBackground}>
-              <div 
+              <div
                 className={styles.progressBarFill}
                 style={{ width: `${xpPercentage}%` }}
               >
@@ -109,7 +108,7 @@ export function HeaderBar({ player }: HeaderBarProps) {
       <div className={styles.currencySection}>
         {/* ETH */}
         <div className={styles.currencyItem}>
-          <Image
+          <img
             src="/game/icons/eth.svg"
             alt="ETH"
             width={20}
@@ -119,7 +118,7 @@ export function HeaderBar({ player }: HeaderBarProps) {
         </div>
         {/* IDRX */}
         <div className={styles.currencyItem}>
-          <Image
+          <img
             src="/game/icons/idrx.svg"
             alt="IDRX"
             width={20}
