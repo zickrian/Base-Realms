@@ -107,16 +107,6 @@ export function HeaderBar({ player }: HeaderBarProps) {
 
       {/* Currency Display (Right) */}
       <div className={styles.currencySection}>
-        {/* IDRX */}
-        <div className={styles.currencyItem}>
-          <Image
-            src="/game/icons/idrx.svg"
-            alt="IDRX"
-            width={20}
-            height={20}
-          />
-          <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
-        </div>
         {/* ETH */}
         <div className={styles.currencyItem}>
           <Image
@@ -126,6 +116,16 @@ export function HeaderBar({ player }: HeaderBarProps) {
             height={20}
           />
           <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
+        </div>
+        {/* IDRX */}
+        <div className={styles.currencyItem}>
+          <Image
+            src="/game/icons/idrx.svg"
+            alt="IDRX"
+            width={20}
+            height={20}
+          />
+          <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
       </div>
     </div>

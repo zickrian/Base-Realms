@@ -205,6 +205,8 @@
   gap: 4px;
   align-items: flex-end;
   margin-right: 4px;
+  margin-top: 28px;
+  /* Offset untuk sejajar dengan progress bar */
 }
 
 .currencyItem {
@@ -222,19 +224,13 @@
 
 .currencyValue {
   font-family: var(--font-pixelify);
-  font-size: 0.85rem;
+  font-size: 0.6rem;
   color: #fff;
   font-weight: 500;
 }
 
 /* Responsive Breakpoints */
-@media (min-width: 480px) {
-  .currencySection {
-    flex-direction: row;
-    /* Side by side on larger screens */
-    gap: 12px;
-  }
-}
+/* Currency section always stacked vertically (ETH on top, IDRX below) */
 
 @media (max-width: 380px) {
 
