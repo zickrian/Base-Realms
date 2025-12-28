@@ -59,24 +59,25 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   };
 
   // Get level and XP from profile - ensure these come from current_xp in database
-  const level = profile?.level || 1;
-  const currentXP = profile?.currentXp ?? 0; // Use nullish coalescing to handle 0 values
-  const maxXP = profile?.maxXp ?? 100;
-  const xpPercentage = profile?.xpPercentage ?? 0;
+  // Explicitly check for profile data and use proper fallbacks
+  const level = profile && typeof profile.level === 'number' ? profile.level : 1;
+  const currentXP = profile && typeof profile.currentXp === 'number' ? profile.currentXp : 0;
+  const maxXP = profile && typeof profile.maxXp === 'number' ? profile.maxXp : 100;
+  const xpPercentage = profile && typeof profile.xpPercentage === 'number' ? profile.xpPercentage : 0;
 
   // Debug logging to verify current_xp is displayed
   useEffect(() => {
-    if (profile) {
-      console.log('HeaderBar - Profile from API:', profile);
-      console.log('HeaderBar - XP Values:', { 
-        currentXP, 
-        maxXP, 
-        xpPercentage, 
-        level,
-        note: 'currentXP should match current_xp from database'
-      });
-    }
-  }, [profile, currentXP, maxXP, xpPercentage, level]);
+    console.log('HeaderBar - Profile state:', { 
+      profile, 
+      profileLoading,
+      currentXP, 
+      maxXP, 
+      xpPercentage, 
+      level,
+      'isConnected': isConnected,
+      'address': address
+    });
+  }, [profile, profileLoading, currentXP, maxXP, xpPercentage, level, isConnected, address]);
 
   const [mounted, setMounted] = useState(false);
 
@@ -134,7 +135,9 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
                 </div>
               </div>
               <div className={styles.xpContent}>
-                <span className={styles.xpText}>{currentXP} / {maxXP}</span>
+                <span className={styles.xpText}>
+                  {profileLoading ? 'Loading...' : `${currentXP} / ${maxXP}`}
+                </span>
               </div>
             </div>
           </div>

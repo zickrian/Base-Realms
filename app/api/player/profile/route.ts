@@ -3,9 +3,12 @@ import { supabaseAdmin } from '@/app/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('=== Profile API Called ===');
     const walletAddress = request.headers.get('x-wallet-address');
+    console.log('Wallet address from header:', walletAddress);
 
     if (!walletAddress) {
+      console.error('No wallet address provided');
       return NextResponse.json(
         { error: 'Wallet address is required' },
         { status: 400 }
@@ -13,34 +16,67 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user
+    console.log('Looking for user with wallet:', walletAddress.toLowerCase());
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('wallet_address', walletAddress.toLowerCase())
       .single();
 
-    if (userError || !user) {
+    console.log('User query result:', { user, userError });
+
+    if (userError) {
+      console.error('User query error:', userError);
+      return NextResponse.json(
+        { error: `User not found: ${userError.message}` },
+        { status: 404 }
+      );
+    }
+
+    if (!user) {
+      console.error('User is null');
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Get player profile
+    console.log('Found user:', user.id);
+
+    // Get player profile - query without join first to avoid issues
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('player_profiles')
-      .select(`
-        *,
-        stages(id, name, stage_number)
-      `)
+      .select('*')
       .eq('user_id', user.id)
       .single();
 
+    console.log('Profile query result:', { profile, profileError });
+
     if (profileError) {
+      console.error('Profile query error:', profileError);
+      return NextResponse.json(
+        { error: `Profile not found: ${profileError.message}` },
+        { status: 404 }
+      );
+    }
+
+    if (!profile) {
+      console.error('Profile is null');
       return NextResponse.json(
         { error: 'Profile not found' },
         { status: 404 }
       );
+    }
+
+    // Get stage separately if needed
+    let stage = null;
+    if (profile.current_stage_id) {
+      const { data: stageData } = await supabaseAdmin
+        .from('stages')
+        .select('id, name, stage_number')
+        .eq('id', profile.current_stage_id)
+        .single();
+      stage = stageData;
     }
 
     // Calculate XP percentage
@@ -69,7 +105,7 @@ export async function GET(request: NextRequest) {
         totalBattles: profile.total_battles || 0,
         wins: profile.wins || 0,
         losses: profile.losses || 0,
-        stage: profile.stages,
+        stage: stage,
       },
     });
   } catch (error: any) {
