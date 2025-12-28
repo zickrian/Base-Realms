@@ -79,7 +79,7 @@ export function CardsMenu() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>CARDS MENU</h1>
+      {/* Title Removed */}
 
       {/* Cards Shop */}
       <section className={styles.shopContainer}>
@@ -137,7 +137,6 @@ export function CardsMenu() {
                       className={styles.cardImage}
                     />
                   </div>
-                  <span className={styles.cardCount}>x{card.count}</span>
                 </>
               )}
             </div>

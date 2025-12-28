@@ -19,6 +19,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -26,7 +27,7 @@
 
 /* Main Box - Parchment Style */
 .menuBox {
-  width: 100%;
+  width: 90%;
   max-width: 420px;
   max-height: 90vh;
   /* Parchment Background */
@@ -35,16 +36,16 @@
     linear-gradient(#e6d2a0 1px, transparent 1px),
     linear-gradient(90deg, #e6d2a0 1px, transparent 1px);
   background-size: 20px 20px;
-  
+
   /* Wooden Border */
   border: 8px solid #8b4513;
   border-radius: 8px;
-  
+
   box-shadow:
     inset 0 0 60px rgba(139, 69, 19, 0.15),
     0 10px 40px rgba(0, 0, 0, 0.5),
     0 0 0 2px rgba(139, 69, 19, 0.3);
-  
+
   display: flex;
   flex-direction: column;
   position: relative;
@@ -58,6 +59,7 @@
     transform: translateY(30px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -147,7 +149,7 @@
   border-radius: 8px;
   padding: 1rem;
   position: relative;
-  box-shadow: 
+  box-shadow:
     2px 2px 0 rgba(139, 69, 19, 0.15),
     inset 0 1px 2px rgba(255, 255, 255, 0.5);
   transition: all 0.2s ease;
@@ -171,6 +173,7 @@
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -179,7 +182,7 @@
 
 .questCard:hover {
   border-color: #8b4513;
-  box-shadow: 
+  box-shadow:
     4px 4px 0 rgba(139, 69, 19, 0.25),
     inset 0 1px 2px rgba(255, 255, 255, 0.5);
   transform: translateY(-2px);
@@ -240,9 +243,11 @@
   0% {
     transform: scale(0);
   }
+
   50% {
     transform: scale(1.2);
   }
+
   100% {
     transform: scale(1);
   }
@@ -263,7 +268,7 @@
   background: linear-gradient(135deg, #e6d2a0 0%, #d4c49d 100%);
   border: 2px solid #8b4513;
   border-radius: 6px;
-  box-shadow: 
+  box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.2),
     0 1px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -275,13 +280,13 @@
   top: 0;
   height: 100%;
   background: linear-gradient(135deg,
-    #f59e0b 0%,
-    #d97706 30%,
-    #b45309 50%,
-    #d97706 70%,
-    #f59e0b 100%);
+      #f59e0b 0%,
+      #d97706 30%,
+      #b45309 50%,
+      #d97706 70%,
+      #f59e0b 100%);
   border-radius: 4px;
-  box-shadow: 
+  box-shadow:
     inset 0 2px 4px rgba(255, 255, 255, 0.3),
     inset 0 -2px 4px rgba(0, 0, 0, 0.2),
     0 0 8px rgba(245, 158, 11, 0.4);
@@ -292,12 +297,12 @@
 
 .progressBarComplete {
   background: linear-gradient(135deg,
-    #22c55e 0%,
-    #16a34a 30%,
-    #15803d 50%,
-    #16a34a 70%,
-    #22c55e 100%);
-  box-shadow: 
+      #22c55e 0%,
+      #16a34a 30%,
+      #15803d 50%,
+      #16a34a 70%,
+      #22c55e 100%);
+  box-shadow:
     inset 0 2px 4px rgba(255, 255, 255, 0.3),
     inset 0 -2px 4px rgba(0, 0, 0, 0.2),
     0 0 12px rgba(34, 197, 94, 0.5);
@@ -310,9 +315,9 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%);
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%);
   animation: shine 2.5s infinite;
   z-index: 2;
 }
@@ -321,6 +326,7 @@
   0% {
     left: -100%;
   }
+
   100% {
     left: 100%;
   }
@@ -335,7 +341,7 @@
   font-size: 1rem;
   font-weight: bold;
   color: #3e1f08;
-  text-shadow: 
+  text-shadow:
     1px 1px 0 rgba(255, 255, 255, 0.8),
     0 0 4px rgba(0, 0, 0, 0.3);
   pointer-events: none;
