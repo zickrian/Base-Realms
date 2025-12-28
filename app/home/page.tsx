@@ -58,7 +58,7 @@ export default function HomePage() {
   // Initialize user session and prefetch data on mount
   useEffect(() => {
     if (isConnected && address) {
-      // Parallel fetch: login + prefetch packs, quests, and inventory for instant loading
+      // Parallel fetch: login + prefetch packs, quests, and sync NFT inventory
       Promise.all([
         // Login API
         fetch('/api/auth/login', {
@@ -76,8 +76,10 @@ export default function HomePage() {
             'x-wallet-address': address,
           },
         }).catch(() => null),
-        // Prefetch inventory (needs auth) - for instant display in CardsMenu
-        fetch('/api/cards/inventory', {
+        // Sync NFT from blockchain to database and fetch inventory
+        // This ensures NFT cards are synced when wallet connects
+        fetch('/api/cards/sync-nft', {
+          method: 'POST',
           headers: {
             'x-wallet-address': address,
           },
@@ -178,9 +180,24 @@ export default function HomePage() {
 
   // Show success message when transaction is confirmed and update quest progress
   useEffect(() => {
-    if (isSuccess && address) {
-      // Update quest progress for "open free cards" quest and auto-claim
+    if (isSuccess && address && hash) {
+      // Record mint transaction to database, update quest progress, and sync NFT
       Promise.all([
+        // Record mint transaction to user_purchases
+        fetch('/api/cards/record-mint', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-wallet-address': address,
+          },
+          body: JSON.stringify({
+            transactionHash: hash,
+          }),
+        }).catch((err) => {
+          console.error('Failed to record mint transaction:', err);
+          return null;
+        }),
+        // Update quest progress for "open free cards" quest and auto-claim
         fetch('/api/quests/update-progress', {
           method: 'POST',
           headers: {
@@ -191,23 +208,32 @@ export default function HomePage() {
             questType: 'open_packs',
           }),
         }),
-        // Immediately refetch quests and inventory in parallel for instant UI update
+        // Sync NFT from blockchain to database (includes new minted NFT)
+        fetch('/api/cards/sync-nft', {
+          method: 'POST',
+          headers: {
+            'x-wallet-address': address,
+          },
+        }).catch(() => null),
+        // Immediately refetch quests for instant UI update
         fetch('/api/quests', {
           headers: {
             'x-wallet-address': address,
           },
         }).catch(() => null),
-        fetch('/api/cards/inventory', {
-          headers: {
-            'x-wallet-address': address,
-          },
-        }).catch(() => null),
       ])
-      .then(async ([questProgressResponse, ...rest]) => {
+      .then(async ([mintRecordResponse, questProgressResponse, ...rest]) => {
         // Trigger custom event for hooks to refetch
         window.dispatchEvent(new CustomEvent('refresh-quests-inventory'));
         
-        if (questProgressResponse.ok) {
+        // Check if mint was recorded successfully
+        if (mintRecordResponse && mintRecordResponse.ok) {
+          console.log('Mint transaction recorded to database');
+        } else {
+          console.warn('Failed to record mint transaction to database');
+        }
+        
+        if (questProgressResponse && questProgressResponse.ok) {
           const data = await questProgressResponse.json();
           // Show toast with quest completion and XP reward info
           if (data.questCompleted && data.xpAwarded > 0) {

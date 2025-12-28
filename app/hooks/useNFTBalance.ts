@@ -1,16 +1,6 @@
 import { useAccount, useReadContract, useChainId } from 'wagmi';
 import { base } from 'wagmi/chains';
-
-const NFT_CONTRACT_ADDRESS = "0x2FFb8aA5176c1da165EAB569c3e4089e84EC5816" as const;
-const NFT_CONTRACT_ABI = [
-  {
-    name: "balanceOf",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "owner", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-] as const;
+import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI } from '../lib/blockchain/nftService';
 
 export function useNFTBalance() {
   const { address, isConnected } = useAccount();
