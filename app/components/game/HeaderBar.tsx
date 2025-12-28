@@ -59,25 +59,10 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   };
 
   // Get level and XP from profile - ensure these come from current_xp in database
-  // Explicitly check for profile data and use proper fallbacks
   const level = profile && typeof profile.level === 'number' ? profile.level : 1;
   const currentXP = profile && typeof profile.currentXp === 'number' ? profile.currentXp : 0;
   const maxXP = profile && typeof profile.maxXp === 'number' ? profile.maxXp : 100;
   const xpPercentage = profile && typeof profile.xpPercentage === 'number' ? profile.xpPercentage : 0;
-
-  // Debug logging to verify current_xp is displayed
-  useEffect(() => {
-    console.log('HeaderBar - Profile state:', { 
-      profile, 
-      profileLoading,
-      currentXP, 
-      maxXP, 
-      xpPercentage, 
-      level,
-      'isConnected': isConnected,
-      'address': address
-    });
-  }, [profile, profileLoading, currentXP, maxXP, xpPercentage, level, isConnected, address]);
 
   const [mounted, setMounted] = useState(false);
 

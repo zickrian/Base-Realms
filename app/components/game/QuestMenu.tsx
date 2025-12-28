@@ -30,12 +30,9 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
   
   const handleClaimQuest = async (questId: string) => {
     try {
-      console.log('Claiming quest:', questId);
       await claimQuest(questId);
-      console.log('Quest claimed, refetching profile...');
       // Refetch profile to update XP/level display
       await refetchProfile();
-      console.log('Profile refetched');
     } catch (error) {
       console.error('Failed to claim quest:', error);
     }
