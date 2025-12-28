@@ -9,6 +9,7 @@ import {
   BottomNav,
   CardsMenu,
   QuestMenu,
+  CardRevealModal,
 } from "../components/game";
 import styles from "./page.module.css";
 
@@ -28,6 +29,7 @@ export default function HomePage() {
     "arena"
   );
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
   const handleBattle = () => {
     console.log("Battle started!");
@@ -42,7 +44,7 @@ export default function HomePage() {
   };
 
   const handlePackClick = () => {
-    console.log("Daily packs clicked!");
+    setIsCardModalOpen(true);
   };
 
   const renderArenaView = () => (
@@ -72,6 +74,10 @@ export default function HomePage() {
       {/* TODO: implement market view */}
       <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
+      <CardRevealModal 
+        isOpen={isCardModalOpen} 
+        onClose={() => setIsCardModalOpen(false)} 
+      />
     </div>
   );
 }
