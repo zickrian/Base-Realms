@@ -13,6 +13,11 @@ import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI_VIEM } from '@/app/lib/blockchai
  * 4. Returns synced inventory
  */
 export async function POST(request: NextRequest) {
+  const syncApiStart = Date.now();
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:16',message:'sync-nft API start',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
@@ -24,11 +29,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user
+    const userQueryStart = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:30',message:'sync user query start',data:{walletAddress},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('wallet_address', walletAddress.toLowerCase())
       .single();
+
+    const userQueryEnd = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:37',message:'sync user query end',data:{duration:userQueryEnd-userQueryStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
 
     if (userError || !user) {
       return NextResponse.json(
@@ -39,6 +54,11 @@ export async function POST(request: NextRequest) {
 
     // Check NFT balance from blockchain
     let nftBalance = 0;
+    const blockchainStart = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:43',message:'blockchain call start',data:{walletAddress},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     try {
       const publicClient = createPublicClient({
         chain: base,
@@ -57,11 +77,21 @@ export async function POST(request: NextRequest) {
       console.error('Blockchain error:', blockchainError);
       // Continue with balance 0 if blockchain call fails
       // This allows the endpoint to still work if RPC is down
+    } finally {
+      const blockchainEnd = Date.now();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:59',message:'blockchain call end',data:{duration:blockchainEnd-blockchainStart,balance:nftBalance},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
     }
 
     // Find or create "Common Card" template with NFT source type
     // IMPORTANT: Use .maybeSingle() instead of .single() to handle case where multiple exist
     // If multiple exist, we'll take the first one and clean up duplicates
+    const templateQueryStart = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:66',message:'template query start',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     let { data: commonCardTemplate, error: templateError } = await supabaseAdmin
       .from('card_templates')
       .select('id')
@@ -72,6 +102,11 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const templateQueryEnd = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:78',message:'template query end',data:{duration:templateQueryEnd-templateQueryStart,found:!!commonCardTemplate},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
 
     // If no template found or error, create one
     if (templateError || !commonCardTemplate) {
@@ -201,6 +236,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Return updated inventory
+    const finalInventoryStart = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:205',message:'final inventory query start',data:{userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     const { data: inventory, error: inventoryError } = await supabaseAdmin
       .from('user_inventory')
       .select(`
@@ -210,9 +250,19 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .order('acquired_at', { ascending: false });
 
+    const finalInventoryEnd = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:217',message:'final inventory query end',data:{duration:finalInventoryEnd-finalInventoryStart,count:inventory?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+
     if (inventoryError) {
       throw inventoryError;
     }
+
+    const syncApiEnd = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:225',message:'sync-nft API end',data:{totalDuration:syncApiEnd-syncApiStart},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
 
     return NextResponse.json({
       success: true,

@@ -73,7 +73,9 @@ export function CardsMenu() {
           ) : packs.length === 0 ? (
             <div>No packs available</div>
           ) : (
-            packs.map((pack) => (
+            packs
+              .filter((pack) => pack.priceEth > 0 && pack.name !== 'Free Mint') // Exclude free mint and packs with price 0
+              .map((pack) => (
               <div
                 key={pack.id}
                 className={`${styles.packCard} ${styles[pack.rarity || 'common']}`}
