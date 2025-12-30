@@ -7,3 +7,10 @@ export { CardsMenu } from "./CardsMenu";
 export { QuestMenu } from "./QuestMenu";
 export { CardRevealModal } from "./CardRevealModal";
 export { SettingsMenu } from "./SettingsMenu";
+
+// Battle Arena Components
+export { HealthBar } from "./HealthBar";
+export { CharacterSprite } from "./CharacterSprite";
+export { LoadingScreen } from "./LoadingScreen";
+export { ResultModal } from "./ResultModal";
+export { BattleArena } from "./BattleArena";

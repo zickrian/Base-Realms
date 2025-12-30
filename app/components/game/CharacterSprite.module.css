@@ -1,0 +1,252 @@
+/* CharacterSprite Component - Character display with effects */
+
+.spriteContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Character sprite wrapper */
+.spriteWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Character sprite image */
+.sprite {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+  transition: transform 0.1s ease-out;
+}
+
+/* Mirror sprite for enemy (right side) */
+.mirrored {
+  transform: scaleX(-1);
+}
+
+/* Hit effect - red tint overlay */
+.hitEffect {
+  animation: hitFlash 0.3s ease-out, hitShake 0.3s ease-out;
+}
+
+@keyframes hitFlash {
+  0% {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(1) sepia(1) saturate(10) hue-rotate(-50deg);
+  }
+  50% {
+    filter: drop-shadow(0 4px 8px rgba(255, 0, 0, 0.8)) brightness(1.5) sepia(1) saturate(10) hue-rotate(-50deg);
+  }
+  100% {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(1);
+  }
+}
+
+@keyframes hitShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-3px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(3px);
+  }
+}
+
+/* Mirrored hit shake */
+.mirrored.hitEffect {
+  animation: hitFlash 0.3s ease-out, hitShakeMirrored 0.3s ease-out;
+}
+
+@keyframes hitShakeMirrored {
+  0%, 100% {
+    transform: scaleX(-1) translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: scaleX(-1) translateX(-3px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: scaleX(-1) translateX(3px);
+  }
+}
+
+/* Attack animation */
+.attacking {
+  animation: attackMove 0.4s ease-out;
+}
+
+@keyframes attackMove {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  30% {
+    transform: translateX(20px) scale(1.1);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Mirrored attack animation */
+.mirrored.attacking {
+  animation: attackMoveMirrored 0.4s ease-out;
+}
+
+@keyframes attackMoveMirrored {
+  0% {
+    transform: scaleX(-1) translateX(0) scale(1);
+  }
+  30% {
+    transform: scaleX(-1) translateX(-20px) scale(1.1);
+  }
+  100% {
+    transform: scaleX(-1) translateX(0) scale(1);
+  }
+}
+
+/* Damage number display */
+.damageNumber {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff4444;
+  text-shadow: 
+    2px 2px 0 #000000,
+    -2px -2px 0 #000000,
+    2px -2px 0 #000000,
+    -2px 2px 0 #000000;
+  animation: damageFloat 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes damageFloat {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-40px);
+  }
+}
+
+/* Character shadow */
+.shadow {
+  width: 80px;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+  margin-top: -10px;
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .sprite {
+    width: 80px;
+    height: 80px;
+  }
+
+  .shadow {
+    width: 60px;
+    height: 15px;
+  }
+
+  .damageNumber {
+    font-size: 18px;
+    top: -15px;
+  }
+
+  @keyframes attackMove {
+    0% {
+      transform: translateX(0) scale(1);
+    }
+    30% {
+      transform: translateX(12px) scale(1.05);
+    }
+    100% {
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes attackMoveMirrored {
+    0% {
+      transform: scaleX(-1) translateX(0) scale(1);
+    }
+    30% {
+      transform: scaleX(-1) translateX(-12px) scale(1.05);
+    }
+    100% {
+      transform: scaleX(-1) translateX(0) scale(1);
+    }
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .sprite {
+    width: 100px;
+    height: 100px;
+  }
+
+  .shadow {
+    width: 70px;
+    height: 18px;
+  }
+
+  .damageNumber {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 769px) {
+  .sprite {
+    width: 150px;
+    height: 150px;
+  }
+
+  .shadow {
+    width: 100px;
+    height: 25px;
+  }
+
+  .damageNumber {
+    font-size: 28px;
+    top: -25px;
+  }
+
+  @keyframes attackMove {
+    0% {
+      transform: translateX(0) scale(1);
+    }
+    30% {
+      transform: translateX(30px) scale(1.15);
+    }
+    100% {
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes attackMoveMirrored {
+    0% {
+      transform: scaleX(-1) translateX(0) scale(1);
+    }
+    30% {
+      transform: scaleX(-1) translateX(-30px) scale(1.15);
+    }
+    100% {
+      transform: scaleX(-1) translateX(0) scale(1);
+    }
+  }
+}

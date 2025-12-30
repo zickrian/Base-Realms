@@ -1,0 +1,244 @@
+/* LoadingScreen Component - Pixel-style loading screen */
+
+.loadingContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+  z-index: 1000;
+}
+
+/* Loading title */
+.loadingTitle {
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 24px;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: 40px;
+  text-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.5),
+    2px 2px 0 #000000;
+  animation: titlePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Loading bar container */
+.loadingBarContainer {
+  width: 280px;
+  height: 30px;
+  background: #1a1a2e;
+  border: 4px solid #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 
+    inset 0 4px 8px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading bar fill */
+.loadingBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    #4ade80 0%, 
+    #22c55e 50%, 
+    #4ade80 100%
+  );
+  background-size: 200% 100%;
+  animation: loadingGradient 1s linear infinite;
+  transition: width 0.3s ease-out;
+  position: relative;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+}
+
+@keyframes loadingGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* Shine effect on loading bar */
+.loadingBarFill::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+/* Loading percentage text */
+.loadingPercentage {
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #ffffff;
+  margin-top: 16px;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+/* Loading dots animation */
+.loadingDots {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  background: #ffd700;
+  border-radius: 2px;
+  animation: dotBounce 0.6s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes dotBounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Loading tip text */
+.loadingTip {
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #a0a0a0;
+  margin-top: 40px;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+/* Pixel art decorations */
+.pixelDecoration {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #ffd700;
+  opacity: 0.3;
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.pixelDecoration:nth-child(1) {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.pixelDecoration:nth-child(2) {
+  top: 30%;
+  right: 20%;
+  animation-delay: 0.5s;
+}
+
+.pixelDecoration:nth-child(3) {
+  bottom: 25%;
+  left: 25%;
+  animation-delay: 1s;
+}
+
+.pixelDecoration:nth-child(4) {
+  bottom: 35%;
+  right: 15%;
+  animation-delay: 1.5s;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .loadingTitle {
+    font-size: 18px;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+  }
+
+  .loadingBarContainer {
+    width: 220px;
+    height: 24px;
+  }
+
+  .loadingPercentage {
+    font-size: 12px;
+  }
+
+  .loadingTip {
+    font-size: 8px;
+    max-width: 250px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+@media (min-width: 769px) {
+  .loadingTitle {
+    font-size: 32px;
+    letter-spacing: 6px;
+    margin-bottom: 50px;
+  }
+
+  .loadingBarContainer {
+    width: 350px;
+    height: 36px;
+  }
+
+  .loadingPercentage {
+    font-size: 16px;
+  }
+
+  .loadingTip {
+    font-size: 12px;
+    max-width: 400px;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+  }
+}

@@ -42,7 +42,6 @@ export default function HomePage() {
   const { 
     isInitialized, 
     isLoading: storeLoading,
-    initializeGameData,
     refreshQuests,
     refreshInventory,
   } = useGameStore();

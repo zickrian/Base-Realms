@@ -1,0 +1,309 @@
+/* BattleArena Component - Main battle scene container */
+
+.arenaContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* Background image */
+.arenaBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  z-index: 0;
+}
+
+/* Dark overlay for better visibility */
+.arenaOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+  z-index: 1;
+}
+
+/* Content wrapper */
+.arenaContent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+}
+
+/* Health bars container */
+.healthBarsContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px;
+  width: 100%;
+}
+
+/* Characters container */
+.charactersContainer {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  position: relative;
+}
+
+/* Individual character wrapper */
+.characterWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Player character (left) */
+.playerCharacter {
+  margin-left: 20px;
+}
+
+/* Enemy character (right) */
+.enemyCharacter {
+  margin-right: 20px;
+}
+
+/* VS indicator in center */
+.vsIndicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 32px;
+  color: #ffd700;
+  text-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.8),
+    3px 3px 0 #000000;
+  opacity: 0.8;
+  animation: vsPulse 2s ease-in-out infinite;
+}
+
+@keyframes vsPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Turn indicator */
+.turnIndicator {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 16px;
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  text-shadow: 1px 1px 0 #000000;
+  animation: turnBlink 1s ease-in-out infinite;
+}
+
+@keyframes turnBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Battle action area */
+.battleActionArea {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Attack indicator arrow */
+.attackArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 40px;
+  animation: arrowMove 0.5s ease-in-out;
+  z-index: 10;
+}
+
+.attackArrowLeft {
+  left: 35%;
+  animation: arrowMoveRight 0.5s ease-in-out;
+}
+
+.attackArrowRight {
+  right: 35%;
+  animation: arrowMoveLeft 0.5s ease-in-out;
+}
+
+@keyframes arrowMoveRight {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-20px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(20px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(40px);
+  }
+}
+
+@keyframes arrowMoveLeft {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(20px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(-20px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-40px);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .healthBarsContainer {
+    padding: 12px 10px;
+  }
+
+  .charactersContainer {
+    padding: 0 10px;
+  }
+
+  .playerCharacter {
+    margin-left: 0;
+  }
+
+  .enemyCharacter {
+    margin-right: 0;
+  }
+
+  .vsIndicator {
+    font-size: 20px;
+  }
+
+  .turnIndicator {
+    font-size: 10px;
+    padding: 6px 12px;
+    bottom: 80px;
+  }
+
+  .attackArrow {
+    font-size: 28px;
+  }
+
+  .attackArrowLeft {
+    left: 30%;
+  }
+
+  .attackArrowRight {
+    right: 30%;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .healthBarsContainer {
+    padding: 14px 16px;
+  }
+
+  .charactersContainer {
+    padding: 0 30px;
+  }
+
+  .vsIndicator {
+    font-size: 26px;
+  }
+
+  .turnIndicator {
+    font-size: 12px;
+    bottom: 90px;
+  }
+
+  .attackArrow {
+    font-size: 34px;
+  }
+}
+
+@media (min-width: 769px) {
+  .healthBarsContainer {
+    padding: 20px 40px;
+  }
+
+  .charactersContainer {
+    padding: 0 80px;
+  }
+
+  .playerCharacter {
+    margin-left: 40px;
+  }
+
+  .enemyCharacter {
+    margin-right: 40px;
+  }
+
+  .vsIndicator {
+    font-size: 40px;
+  }
+
+  .turnIndicator {
+    font-size: 16px;
+    padding: 10px 20px;
+    bottom: 120px;
+  }
+
+  .attackArrow {
+    font-size: 48px;
+  }
+
+  .attackArrowLeft {
+    left: 38%;
+  }
+
+  .attackArrowRight {
+    right: 38%;
+  }
+}

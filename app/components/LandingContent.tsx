@@ -13,33 +13,44 @@ export function LandingContent() {
   const { isInitialized, isLoading: storeLoading } = useGameStore();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
 
+  // Determine if we should show loading screen
+  // Show loading when:
+  // 1. Wallet is connecting
+  // 2. Wallet connected but data not initialized yet
+  // 3. Wallet connected and currently loading data
+  const showLoading = isConnecting || (isConnected && (!isInitialized || storeLoading));
+
   // Update loading message based on state
   useEffect(() => {
     if (isConnecting) {
       setLoadingMessage("Connecting wallet...");
-    } else if (isConnected && !isInitialized && storeLoading) {
+    } else if (isConnected && !isInitialized && !storeLoading) {
+      // Connected but init hasn't started yet
+      setLoadingMessage("Preparing your adventure...");
+    } else if (isConnected && storeLoading) {
+      // Currently loading data
       setLoadingMessage("Loading your profile...");
       
-      // Update message after a delay
       const timer1 = setTimeout(() => {
         setLoadingMessage("Loading quests and inventory...");
-      }, 1000);
+      }, 1500);
       
       const timer2 = setTimeout(() => {
         setLoadingMessage("Almost ready...");
-      }, 2000);
+      }, 3000);
       
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
       };
-    } else if (isConnected && isInitialized && !storeLoading) {
+    } else if (isConnected && isInitialized) {
+      // All done, about to redirect
       setLoadingMessage("Ready! Entering game...");
     }
   }, [isConnecting, isConnected, isInitialized, storeLoading]);
 
-  // Show loading state when connecting or fetching data
-  if (isConnecting || (isConnected && (!isInitialized || storeLoading))) {
+  // Show loading state
+  if (showLoading) {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
@@ -67,7 +78,7 @@ export function LandingContent() {
     );
   }
 
-  // Show connect wallet form (when not connected or after logout)
+  // Show connect wallet form ONLY when not connected
   return (
     <div className={styles.container}>
       <div className={styles.card}>

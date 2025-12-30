@@ -75,10 +75,6 @@ export async function POST(request: NextRequest) {
 
     for (const [, quests] of questsByTemplate) {
       if (quests.length > 1) {
-        // Keep the most recent one (first in array due to order by started_at desc)
-        // Delete the rest
-        const [keep, ...remove] = quests;
-        
         // Prefer to keep claimed > completed > active
         const sortedByStatus = [...quests].sort((a, b) => {
           const statusOrder = { claimed: 0, completed: 1, active: 2 };

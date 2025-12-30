@@ -34,7 +34,6 @@ export function StageDisplay() {
       if (cloudImage) {
         const speed = 15;
         const canvasWidth = 430;
-        const canvasHeight = 350;
         
         cloudXRef.current -= speed * deltaTime;
         

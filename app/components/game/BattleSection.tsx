@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./BattleSection.module.css";
 
@@ -10,6 +11,15 @@ interface BattleSectionProps {
 }
 
 export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEnabled = false }: BattleSectionProps) {
+  const router = useRouter();
+
+  // Handle battle button click - navigate to battle page
+  const handleBattleClick = () => {
+    if (onBattle) {
+      onBattle();
+    }
+    router.push('/battle');
+  };
   return (
     <div className={styles.wrapper}>
       {/* Unified Base Card containing Stage, Battle, and PvP */}
@@ -28,7 +38,7 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEna
         </button>
 
         {/* Center: Battle Button */}
-        <button key="battle-btn" className={styles.battleButton} onClick={onBattle}>
+        <button key="battle-btn" className={styles.battleButton} onClick={handleBattleClick}>
           <div className={styles.battleContent}>
             <span className={styles.battleLabel} suppressHydrationWarning>BATTLE</span>
           </div>

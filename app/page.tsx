@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
@@ -12,8 +12,9 @@ export default function Home() {
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading, initializeGameData, reset } = useGameStore();
-  const [hasStartedFetch, setHasStartedFetch] = useState(false);
+  const initRef = useRef(false);
 
+  // Initialize MiniKit
   useEffect(() => {
     if (!isMiniAppReady) {
       setMiniAppReady();
@@ -23,16 +24,20 @@ export default function Home() {
   // Handle wallet disconnection - reset store and stay on landing page
   useEffect(() => {
     if (!isConnected && !isConnecting) {
-      // User disconnected wallet, reset all game data
       reset();
-      setHasStartedFetch(false);
+      initRef.current = false;
     }
   }, [isConnected, isConnecting, reset]);
 
   // Start fetching data when wallet is connected
   useEffect(() => {
-    if (isConnected && address && !hasStartedFetch && !isInitialized && !isLoading) {
-      setHasStartedFetch(true);
+    // Only start fetch if:
+    // 1. Wallet is connected with address
+    // 2. Not already initialized
+    // 3. Not currently loading
+    // 4. Haven't started init yet (prevent double fetch)
+    if (isConnected && address && !isInitialized && !isLoading && !initRef.current) {
+      initRef.current = true;
       
       // Call login API then initialize game data
       fetch('/api/auth/login', {
@@ -43,20 +48,22 @@ export default function Home() {
         .then(() => initializeGameData(address))
         .catch(err => {
           console.error('Login or data fetch failed:', err);
-          // Reset on error so user can retry
-          setHasStartedFetch(false);
+          initRef.current = false;
         });
     }
-  }, [isConnected, address, hasStartedFetch, isInitialized, isLoading, initializeGameData]);
+  }, [isConnected, address, isInitialized, isLoading, initializeGameData]);
 
-  // Redirect to home ONLY when all data is ready
+  // Redirect to home ONLY when fully initialized
   useEffect(() => {
-    if (isConnected && address && isInitialized && !isLoading && hasStartedFetch) {
-      // All data loaded, redirect to home
+    // Only redirect when:
+    // 1. Wallet is connected
+    // 2. Data is fully initialized (isInitialized = true)
+    // 3. Not currently loading anymore
+    if (isConnected && address && isInitialized && !isLoading) {
       router.push("/home");
     }
-  }, [isConnected, address, isInitialized, isLoading, hasStartedFetch, router]);
+  }, [isConnected, address, isInitialized, isLoading, router]);
 
-  // Always show LandingContent - it will handle the UI states
+  // Always show LandingContent - it handles all UI states
   return <LandingContent />;
 }

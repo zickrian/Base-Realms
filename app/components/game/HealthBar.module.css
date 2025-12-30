@@ -1,0 +1,190 @@
+/* HealthBar Component - Pixel-style health bar */
+
+.healthBarContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 3px solid #ffffff;
+  border-radius: 4px;
+  box-shadow: 
+    inset -4px -4px 0 rgba(0, 0, 0, 0.3),
+    inset 4px 4px 0 rgba(255, 255, 255, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.5);
+  min-width: 140px;
+  max-width: 180px;
+}
+
+/* Position variants */
+.left {
+  align-items: flex-start;
+}
+
+.right {
+  align-items: flex-end;
+}
+
+/* Character name */
+.characterName {
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #000000;
+}
+
+/* Stats row */
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+/* ATK display */
+.atkDisplay {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #ff6b6b;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.atkIcon {
+  font-size: 12px;
+}
+
+/* HP display */
+.hpDisplay {
+  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #4ade80;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+/* Health bar wrapper */
+.healthBarWrapper {
+  width: 100%;
+  height: 16px;
+  background: #1a1a2e;
+  border: 2px solid #ffffff;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Health bar fill */
+.healthBarFill {
+  height: 100%;
+  transition: width 0.3s ease-out, background-color 0.3s ease-out;
+  position: relative;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Health bar colors based on percentage */
+.healthHigh {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+}
+
+.healthMedium {
+  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+}
+
+.healthLow {
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+}
+
+/* Pixel shine effect on health bar */
+.healthBarFill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+}
+
+/* Animation for HP change */
+.animating .healthBarFill {
+  animation: hpPulse 0.3s ease-out;
+}
+
+@keyframes hpPulse {
+  0% {
+    filter: brightness(1.5);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .healthBarContainer {
+    min-width: 100px;
+    max-width: 130px;
+    padding: 6px 8px;
+  }
+
+  .characterName {
+    font-size: 9px;
+  }
+
+  .atkDisplay,
+  .hpDisplay {
+    font-size: 8px;
+  }
+
+  .healthBarWrapper {
+    height: 12px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .healthBarContainer {
+    min-width: 120px;
+    max-width: 150px;
+  }
+
+  .characterName {
+    font-size: 10px;
+  }
+
+  .atkDisplay,
+  .hpDisplay {
+    font-size: 9px;
+  }
+
+  .healthBarWrapper {
+    height: 14px;
+  }
+}
+
+@media (min-width: 769px) {
+  .healthBarContainer {
+    min-width: 160px;
+    max-width: 200px;
+    padding: 10px 14px;
+  }
+
+  .characterName {
+    font-size: 14px;
+  }
+
+  .atkDisplay,
+  .hpDisplay {
+    font-size: 11px;
+  }
+
+  .healthBarWrapper {
+    height: 18px;
+  }
+}
