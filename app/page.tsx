@@ -1,81 +1,118 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 import { LandingContent } from "./components/LandingContent";
 import { useGameStore } from "./stores/gameStore";
 
 export default function Home() {
+  const router = useRouter();
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading, initializeGameData, reset } = useGameStore();
   const initRef = useRef(false);
+  const redirectedRef = useRef(false);
   const wasConnectedRef = useRef(false);
+  const addressRef = useRef<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
-  // Initialize MiniKit
+  // Initialize MiniKit once
   useEffect(() => {
     if (!isMiniAppReady) {
       setMiniAppReady();
     }
   }, [setMiniAppReady, isMiniAppReady]);
 
+  // Memoized init function to prevent re-creation
+  const handleInitialize = useCallback(async (walletAddr: string) => {
+    // Prevent duplicate initialization
+    if (initRef.current) return;
+    initRef.current = true;
+    addressRef.current = walletAddr;
+    setInitError(null);
+
+    try {
+      // Login first
+      const loginRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: walletAddr }),
+      });
+
+      if (!loginRes.ok) {
+        throw new Error('Login failed');
+      }
+
+      // Then initialize game data
+      await initializeGameData(walletAddr);
+    } catch (err) {
+      console.error('Initialization failed:', err);
+      setInitError(err instanceof Error ? err.message : 'Failed to initialize');
+      initRef.current = false;
+      addressRef.current = null;
+    }
+  }, [initializeGameData]);
+
   // Handle wallet disconnection - show logout screen then reset
   useEffect(() => {
     if (!isConnected && !isConnecting) {
-      // If was previously connected, show logout animation
       if (wasConnectedRef.current) {
         setIsLoggingOut(true);
-        // Show logout message for 1.5 seconds then reset
         setTimeout(() => {
           reset();
           initRef.current = false;
+          redirectedRef.current = false;
+          addressRef.current = null;
+          setInitError(null);
           setIsLoggingOut(false);
         }, 1500);
       } else {
         reset();
         initRef.current = false;
+        redirectedRef.current = false;
+        addressRef.current = null;
+        setInitError(null);
       }
     }
-    // Track connection state
     if (isConnected) {
       wasConnectedRef.current = true;
     }
   }, [isConnected, isConnecting, reset]);
 
-  // Redirect function
-  const redirectToHome = useCallback(() => {
-    window.location.href = "/home";
-  }, []);
-
-  // PRIORITY 1: Redirect immediately if already connected and initialized
+  // Redirect when connected and initialized - only once
   useEffect(() => {
-    if (isConnected && address && isInitialized && !isLoading) {
-      redirectToHome();
+    if (isConnected && address && isInitialized && !isLoading && !redirectedRef.current) {
+      redirectedRef.current = true;
+      // Small delay to ensure all state is settled
+      const timer = setTimeout(() => {
+        router.replace("/home");
+      }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [isConnected, address, isInitialized, isLoading, redirectToHome]);
+  }, [isConnected, address, isInitialized, isLoading, router]);
 
-  // PRIORITY 2: Start fetching data when wallet is connected but not initialized
+  // Start fetching data when wallet is connected but not initialized
   useEffect(() => {
-    if (isConnected && address && !isInitialized && !isLoading && !initRef.current) {
-      initRef.current = true;
-      
-      fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address }),
-      })
-        .then(() => initializeGameData(address))
-        .then(() => {
-          redirectToHome();
-        })
-        .catch(err => {
-          console.error('Login or data fetch failed:', err);
-          initRef.current = false;
-        });
+    // Only initialize if:
+    // 1. Connected with address
+    // 2. Not yet initialized
+    // 3. Not currently loading
+    // 4. Haven't started init yet
+    // 5. No error
+    if (
+      isConnected && 
+      address && 
+      !isInitialized && 
+      !isLoading && 
+      !initRef.current && 
+      !initError
+    ) {
+      handleInitialize(address);
     }
-  }, [isConnected, address, isInitialized, isLoading, initializeGameData, redirectToHome]);
+  }, [isConnected, address, isInitialized, isLoading, initError, handleInitialize]);
 
-  return <LandingContent isLoggingOut={isLoggingOut} />;
+  return <LandingContent isLoggingOut={isLoggingOut} initError={initError} />;
 }

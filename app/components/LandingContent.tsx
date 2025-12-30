@@ -10,9 +10,10 @@ import styles from "./LandingContent.module.css";
 
 interface LandingContentProps {
   isLoggingOut?: boolean;
+  initError?: string | null;
 }
 
-export function LandingContent({ isLoggingOut = false }: LandingContentProps) {
+export function LandingContent({ isLoggingOut = false, initError = null }: LandingContentProps) {
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading: storeLoading } = useGameStore();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
@@ -21,6 +22,8 @@ export function LandingContent({ isLoggingOut = false }: LandingContentProps) {
   useEffect(() => {
     if (isLoggingOut) {
       setLoadingMessage("Logging out... See you soon!");
+    } else if (initError) {
+      setLoadingMessage("Connection failed. Please try again.");
     } else if (isConnecting) {
       setLoadingMessage("Connecting wallet...");
     } else if (isConnected && address) {
@@ -45,7 +48,7 @@ export function LandingContent({ isLoggingOut = false }: LandingContentProps) {
         setLoadingMessage("Ready! Entering game...");
       }
     }
-  }, [isLoggingOut, isConnecting, isConnected, address, isInitialized, storeLoading]);
+  }, [isLoggingOut, isConnecting, isConnected, address, isInitialized, storeLoading, initError]);
 
   // Show logout screen
   if (isLoggingOut) {
@@ -92,14 +95,27 @@ export function LandingContent({ isLoggingOut = false }: LandingContentProps) {
             />
           </div>
           <div className={styles.welcomeSection}>
-            <h1 className={styles.welcomeText}>Welcome Home!</h1>
+            <h1 className={styles.welcomeText}>
+              {initError ? "Oops!" : "Welcome Home!"}
+            </h1>
             <p className={styles.subtitle}>{loadingMessage}</p>
           </div>
-          <div className={styles.loadingDots}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+          {initError ? (
+            <div className={styles.buttonSection}>
+              <Wallet>
+                <ConnectWallet
+                  className={styles.connectButton}
+                  disconnectedLabel="Try Again"
+                />
+              </Wallet>
+            </div>
+          ) : (
+            <div className={styles.loadingDots}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          )}
         </div>
       </div>
     );

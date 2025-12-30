@@ -65,16 +65,25 @@ export default function HomePage() {
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
 
-  // Redirect if not connected or data not initialized
-  // User should NEVER reach this page without being fully initialized
+  // Redirect if not connected - but give time for state to settle
+  // Only redirect if definitely not connected (not during connecting phase)
   useEffect(() => {
-    if (!isConnecting && (!isConnected || !isInitialized)) {
-      // Redirect back to landing page if:
-      // - Not connected, OR
-      // - Connected but data not initialized (shouldn't happen, but safety check)
-      router.push("/");
-    }
-  }, [isConnected, isConnecting, isInitialized, router]);
+    // Don't redirect while connecting or loading - wait for state to settle
+    if (isConnecting || storeLoading) return;
+    
+    // If already initialized, don't redirect - user is good to go
+    if (isInitialized && isConnected) return;
+    
+    // Small delay to let wagmi state settle before deciding to redirect
+    const timer = setTimeout(() => {
+      // Double check after delay - if still not connected or not initialized, redirect
+      if (!isConnected || !isInitialized) {
+        router.replace("/");
+      }
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, [isConnected, isConnecting, isInitialized, storeLoading, router]);
 
   // Handle successful mint
   useEffect(() => {
@@ -206,8 +215,8 @@ export default function HomePage() {
   const renderCardsView = () => <CardsMenu />;
 
   // NOW conditional returns are safe - all hooks have been called
-  // If we reach here without being initialized, show loading and redirect will happen via useEffect
-  if (!isInitialized || storeLoading || isConnecting || !isConnected) {
+  // Show loading while connecting, loading store, or not yet initialized
+  if (isConnecting || storeLoading || !isInitialized || !isConnected) {
     return <LoadingState />;
   }
 
