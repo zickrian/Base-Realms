@@ -52,11 +52,63 @@
     --font-size-2xl: 1.5rem;
   }
 
-  html,
+  html {
+    max-width: 100vw;
+    overflow-x: hidden;
+    height: 100%;
+    width: 100%;
+    /* Prevent scroll on html level */
+  }
+
   body {
     max-width: 100vw;
     overflow-x: hidden;
-    min-height: 100vh;
+    overflow-y: hidden;
+    /* Prevent vertical scroll on mobile */
+    height: 100vh;
+    max-height: 100vh;
+    width: 100%;
+    position: relative;
+    /* Relative position for content */
+    /* Touch action to prevent pull-to-refresh on mobile */
+    touch-action: pan-x pan-y;
+    overscroll-behavior: none;
+    /* Prevent overscroll bounce on iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent scroll on mobile devices */
+  @media (max-width: 768px) {
+    html,
+    body {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      /* Prevent all scrolling on mobile */
+      touch-action: none;
+      /* Disable touch gestures that cause scroll */
+      overscroll-behavior: none;
+      /* Prevent overscroll bounce */
+      -webkit-overflow-scrolling: none;
+    }
+
+    /* Allow scroll only inside specific containers that need it */
+    [data-allow-scroll="true"] {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Prevent horizontal scroll on all elements */
+  * {
+    max-width: 100%;
+  }
+
+  /* Ensure images don't cause overflow */
+  img {
+    max-width: 100%;
+    height: auto;
   }
 
   body {

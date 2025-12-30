@@ -24,16 +24,17 @@ export function StageDisplay() {
       });
   }, []);
 
-  // Canvas setup
+  // Canvas setup - increased height to accommodate full cloud
   const canvasRef = useGameCanvas({
     width: 430,
-    height: 259,
+    height: 350, // Increased from 259 to ensure cloud is fully visible
     pixelArt: true,
     onUpdate: (ctx, deltaTime) => {
       // Draw cloud layer yang bergerak horizontal
       if (cloudImage) {
         const speed = 15;
         const canvasWidth = 430;
+        const canvasHeight = 350;
         
         cloudXRef.current -= speed * deltaTime;
         
@@ -41,23 +42,31 @@ export function StageDisplay() {
           cloudXRef.current += canvasWidth;
         }
         
-        const yOffset = -30;
-        const scaleY = canvasWidth / cloudImage.width;
-        const scaledHeight = cloudImage.height * scaleY;
+        // Calculate proper scaling to ensure cloud is fully visible
+        // Scale based on width to maintain aspect ratio
+        const scale = canvasWidth / cloudImage.width;
+        const scaledWidth = canvasWidth;
+        const scaledHeight = cloudImage.height * scale;
         
+        // Position cloud at top of canvas (yOffset = 0) to ensure full visibility
+        // Cloud will be drawn from top, and if it's taller than canvas, it will extend below
+        const yOffset = 0;
+        
+        // Draw first cloud - ensure it's fully visible
         ctx.drawImage(
           cloudImage, 
           cloudXRef.current, 
           yOffset, 
-          canvasWidth,
+          scaledWidth,
           scaledHeight
         );
         
+        // Draw second cloud for seamless loop
         ctx.drawImage(
           cloudImage, 
           cloudXRef.current + canvasWidth, 
           yOffset, 
-          canvasWidth,
+          scaledWidth,
           scaledHeight
         );
       }

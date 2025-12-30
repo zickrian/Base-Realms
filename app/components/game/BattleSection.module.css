@@ -3,9 +3,12 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  padding: 0 16px 24px 16px;
-  /* Added spacing from bottom and sides */
+  padding: 0 var(--spacing-md) 24px var(--spacing-md);
+  /* Reduced side padding */
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* --- Unified Base Card --- */
@@ -30,10 +33,14 @@
   border: 3px solid #004488;
   position: relative;
 
-  /* Constrain max width for better mobile view */
-  max-width: 100%;
-  transform: scale(0.9);
-  /* Global scale down slightly as requested */
+  /* Fit content instead of 100% width - prevents stretching */
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  /* Leave some margin on sides */
+  min-width: 280px;
+  /* Minimum width to fit all buttons */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Stage Button (Left Card Slot) */
@@ -52,6 +59,7 @@
   align-items: center;
   position: relative;
   transition: transform 0.1s;
+  flex-shrink: 0;
 }
 
 .stageButton:active {
@@ -75,7 +83,8 @@
 
 /* Battle Button (Yellow Center) */
 .battleButton {
-  width: 140px;
+  width: 120px;
+  /* Reduced from 140px */
   height: 64px;
   background: linear-gradient(180deg, #FFCC00 0%, #FFAA00 100%);
   border: 2px solid #FFDD44;
@@ -89,6 +98,7 @@
   justify-content: center;
   align-items: center;
   transition: transform 0.1s, filter 0.1s;
+  flex-shrink: 0;
 }
 
 .battleButton:hover {
@@ -108,13 +118,15 @@
 
 .battleLabel {
   font-family: var(--font-russo), sans-serif;
-  font-size: 26px;
+  font-size: 22px;
+  /* Reduced from 26px to fit better */
   color: #FFFFFF;
   text-transform: uppercase;
   text-shadow:
     0 2px 0 #884400,
     -1px -1px 0 #884400,
     1px 1px 0 #884400;
+  white-space: nowrap;
 }
 
 /* PvP Button (Right Card Slot) */
@@ -132,6 +144,7 @@
   justify-content: center;
   align-items: center;
   transition: transform 0.1s;
+  flex-shrink: 0;
 }
 
 .pvpButton:active {
@@ -169,4 +182,64 @@
   font-weight: bold;
   letter-spacing: 0.5px;
   line-height: 1;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 480px) {
+  .unifiedBaseCard {
+    min-width: 260px;
+    /* Smaller min-width for mobile */
+    gap: 6px;
+    /* Reduced gap */
+    padding: 6px;
+  }
+
+  .battleButton {
+    width: 110px;
+    /* Slightly smaller on mobile */
+  }
+
+  .battleLabel {
+    font-size: 20px;
+    /* Smaller font on mobile */
+  }
+
+  .stageButton,
+  .pvpButton {
+    width: 60px;
+    /* Slightly smaller buttons on mobile */
+    height: 60px;
+  }
+
+  .pannelIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .buttonLabel {
+    font-size: 9px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .unifiedBaseCard {
+    min-width: 240px;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .battleButton {
+    width: 100px;
+  }
+
+  .battleLabel {
+    font-size: 18px;
+  }
+
+  .stageButton,
+  .pvpButton {
+    width: 56px;
+    height: 56px;
+  }
 }

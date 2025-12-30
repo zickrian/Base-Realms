@@ -148,12 +148,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user already claimed today (only 1x per day)
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    
+    if (dailyPacks.last_claimed_at) {
+      const lastClaimed = new Date(dailyPacks.last_claimed_at);
+      // Check if last claim was today (in UTC)
+      if (lastClaimed >= todayStart) {
+        return NextResponse.json(
+          { error: 'You have already claimed your free daily pack today. Please come back tomorrow!' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Decrement pack count
     const { data: updated, error: updateError } = await supabaseAdmin
       .from('daily_packs')
       .update({
         pack_count: dailyPacks.pack_count - 1,
-        last_claimed_at: new Date().toISOString(),
+        last_claimed_at: now.toISOString(),
       })
       .eq('user_id', user.id)
       .select()

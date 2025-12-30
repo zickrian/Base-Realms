@@ -6,9 +6,10 @@
   padding: var(--spacing-sm);
   background: transparent;
   width: 100%;
-  max-width: 100vw;
-  overflow: visible;
+  max-width: 100%;
+  overflow: hidden;
   z-index: 50;
+  box-sizing: border-box;
 }
 
 /* Group Container for Badge & XP */

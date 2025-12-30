@@ -62,11 +62,16 @@ export default function HomePage() {
     isVisible: false,
   });
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
 
-  // Initialize game data on mount
+  // Initialize game data on mount (only if not already initialized from landing page)
+  // Data should already be fetched in LandingContent before redirect, but this is a fallback
   useEffect(() => {
     if (isConnected && address && !isInitialized) {
+      // Only fetch if data wasn't already loaded from landing page
+      // This prevents duplicate fetches
       fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -152,15 +157,7 @@ export default function HomePage() {
     }
   }, [isSuccess, address, hash, refreshQuests, refreshInventory]);
 
-  // Show loading state
-  if (isConnecting || (isConnected && !isInitialized && storeLoading)) {
-    return <LoadingState />;
-  }
-
-  if (!isConnected) {
-    return <LoadingState />;
-  }
-
+  // Define handlers BEFORE conditional returns (but after hooks)
   const handleBattle = () => {};
   const handleStageSelect = () => {};
   const handleQuestClick = () => setIsQuestMenuOpen(true);
@@ -220,6 +217,15 @@ export default function HomePage() {
   );
 
   const renderCardsView = () => <CardsMenu />;
+
+  // NOW conditional returns are safe - all hooks have been called
+  if (isConnecting || (isConnected && !isInitialized && storeLoading)) {
+    return <LoadingState />;
+  }
+
+  if (!isConnected) {
+    return <LoadingState />;
+  }
 
   return (
     <div className={styles.container}>

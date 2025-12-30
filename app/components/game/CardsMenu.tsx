@@ -55,7 +55,7 @@ export function CardsMenu() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-allow-scroll="true">
       {/* Cards Shop */}
       <section className={styles.shopContainer}>
         <h2 className={styles.sectionTitle}>CARDS SHOP</h2>

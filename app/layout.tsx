@@ -11,6 +11,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#1a1a2e",
+  viewportFit: "cover",
+  // Prevent zoom and ensure fixed viewport
 };
 
 export async function generateMetadata(): Promise<Metadata> {

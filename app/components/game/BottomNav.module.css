@@ -14,14 +14,20 @@
   z-index: 100;
   padding: 0;
   background: #0f172a;
-  /* If the user wants the bar to be effective, we might need a background behind buttons.
-     But let's assume buttons cover it. Keeping background on nav might show behind popped up button.
-     Let's keep background on nav for safety but maybe adjust?
-     Actually, if buttons touch, we don't need nav bg. Let's try matching the dark blue.
-  */
   box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
   filter: drop-shadow(0 -2px 5px rgba(0, 0, 0, 0.5));
-  /* Shadow for the whole shape */
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* On mobile, nav should be full width */
+@media (max-width: 430px) {
+  .nav {
+    max-width: 100vw;
+    width: 100vw;
+    left: 0;
+    transform: none;
+  }
 }
 
 .navItem {

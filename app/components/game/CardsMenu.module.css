@@ -7,7 +7,16 @@
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
   background: url(https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/background.png) no-repeat center top;
   background-size: 100% auto;
-  min-height: 100vh;
+  height: calc(100vh - 90px);
+  /* Account for bottom nav */
+  max-height: calc(100vh - 90px);
+  /* Fixed height to prevent scrolling */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Allow scroll only inside cards menu content if needed */
+  box-sizing: border-box;
 }
 
 /* Titles */
@@ -39,8 +48,10 @@
 /* Shop Container */
 .shopContainer {
   width: 100%;
-  max-width: 600px;
+  max-width: 100%;
+  padding: 0 var(--spacing-md);
   margin-bottom: 40px;
+  box-sizing: border-box;
 }
 
 /* Base Card Grid */
@@ -49,6 +60,9 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
 }
 
 @media (max-width: 768px) {
@@ -241,13 +255,14 @@
 }
 
 /* Inventory Section */
-/* Inventory Section */
 .inventoryContainer {
   width: 100%;
-  max-width: 600px;
+  max-width: 100%;
+  padding: 16px;
+  margin: 0 auto;
+  box-sizing: border-box;
   background: rgba(15, 23, 42, 0.6);
   /* Semi-transparent background */
-  padding: 16px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);

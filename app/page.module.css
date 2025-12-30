@@ -1,7 +1,10 @@
 .container {
   display: grid;
   grid-template-rows: auto 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: hidden;
+  overflow-x: hidden;
 }
 
 .headerWrapper {

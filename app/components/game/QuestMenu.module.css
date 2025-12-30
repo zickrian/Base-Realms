@@ -13,6 +13,8 @@
   justify-content: center;
   padding: 1rem;
   animation: fadeIn 0.2s ease-out;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 @keyframes fadeIn {

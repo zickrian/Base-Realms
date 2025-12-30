@@ -31,15 +31,47 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
   const handleLogout = async () => {
     try {
-      disconnect();
-      reset(); // Clear game store
+      // Close settings menu first
       onClose();
-      setTimeout(() => {
-        router.push("/");
-      }, 100);
+      
+      // Clear game store (removes all cached data)
+      reset();
+      
+      // Disconnect wallet (wagmi will update isConnected to false)
+      disconnect();
+      
+      // Clear any localStorage/sessionStorage that might cache connection state
+      // This ensures no stale data persists
+      if (typeof window !== 'undefined') {
+        // Clear wagmi connection cache
+        localStorage.removeItem('wagmi.wallet');
+        localStorage.removeItem('wagmi.connected');
+        sessionStorage.clear();
+      }
+      
+      // Wait longer to ensure disconnect state is fully propagated
+      // This prevents race condition where isConnected might still be true
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Force full page reload to root page
+      // This ensures:
+      // 1. Complete state reset (React components re-initialize)
+      // 2. Wagmi state is re-checked from scratch
+      // 3. No cached navigation state
+      // 4. User sees login form (LandingContent) since isConnected will be false
+      window.location.href = "/";
     } catch (error) {
       console.error("Error during logout:", error);
-      router.push("/");
+      // Ensure cleanup and redirect even on error
+      reset();
+      disconnect();
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('wagmi.wallet');
+        localStorage.removeItem('wagmi.connected');
+        sessionStorage.clear();
+      }
+      // Force redirect regardless of errors
+      window.location.href = "/";
     }
   };
 
