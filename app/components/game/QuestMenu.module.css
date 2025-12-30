@@ -497,9 +497,7 @@
 
   .questTitle {
     font-size: 1.1rem;
-  }
-
-  .questDescription {
+  }  .questDescription {
     font-size: 0.85rem;
   }
 }

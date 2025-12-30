@@ -91,7 +91,11 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
                 onChange={(e) => {
                   const newVolume = Number(e.target.value);
                   setVolume(newVolume);
-                  // Debounce save
+                  
+                  // Update volume real-time (immediate feedback)
+                  window.dispatchEvent(new CustomEvent('volume-change', { detail: newVolume }));
+                  
+                  // Debounce save to database
                   clearTimeout((window as any).volumeSaveTimeout);
                   (window as any).volumeSaveTimeout = setTimeout(() => {
                     setSaving(true);

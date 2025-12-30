@@ -17,6 +17,7 @@ import {
 } from "../components/game";
 import { LoadingState } from "../components/LoadingState";
 import { Toast } from "../components/Toast";
+import { useAmbientSound } from "../hooks/useAmbientSound";
 import styles from "./page.module.css";
 
 const CONTRACT_ADDRESS = "0x2FFb8aA5176c1da165EAB569c3e4089e84EC5816" as const;
@@ -31,6 +32,9 @@ const CONTRACT_ABI = [
 ] as const;
 
 export default function HomePage() {
+  // ALL HOOKS MUST BE CALLED FIRST, BEFORE ANY EARLY RETURNS
+  // This ensures consistent hook order across renders
+  
   const router = useRouter();
   const { isConnected, isConnecting, address } = useAccount();
   const chainId = useChainId();
@@ -54,6 +58,9 @@ export default function HomePage() {
     type: "info",
     isVisible: false,
   });
+
+  // Play ambient sound only on home page (when connected)
+  useAmbientSound(isConnected);
 
   // Initialize user session and prefetch data on mount
   useEffect(() => {
