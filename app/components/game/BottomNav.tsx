@@ -1,3 +1,7 @@
+"use client";
+
+import { getGameIconUrl } from '../../utils/supabaseStorage';
+import { useSoundEffect } from '../../hooks/useSoundEffect';
 import styles from "./BottomNav.module.css";
 
 type NavItem = 'cards' | 'arena' | 'market';
@@ -7,22 +11,29 @@ interface BottomNavProps {
   onNavigate?: (item: NavItem) => void;
 }
 
-import { getGameIconUrl } from '../../utils/supabaseStorage';
-
-const navItems: { id: NavItem; icon: string; label: string }[] = [
-  { id: 'cards', icon: getGameIconUrl('cards-icon.png'), label: 'CARDS' },
-  { id: 'arena', icon: getGameIconUrl('swords.png'), label: 'ARENA' },
-  { id: 'market', icon: getGameIconUrl('market.png'), label: 'MARKET' },
+const navItems: { id: NavItem; icon: string; label: string; sound: string }[] = [
+  { id: 'cards', icon: getGameIconUrl('cards-icon.png'), label: 'CARDS', sound: 'card.mp3' },
+  { id: 'arena', icon: getGameIconUrl('swords.png'), label: 'ARENA', sound: 'sword.mp3' },
+  { id: 'market', icon: getGameIconUrl('market.png'), label: 'MARKET', sound: 'coin.mp3' },
 ];
 
 export function BottomNav({ activeItem, onNavigate }: BottomNavProps) {
+  const { playSound } = useSoundEffect();
+
+  const handleClick = (item: NavItem, sound: string) => {
+    // Play sound effect
+    playSound(sound);
+    // Trigger navigation
+    onNavigate?.(item);
+  };
+
   return (
     <nav className={styles.nav}>
       {navItems.map((item) => (
         <button
           key={item.id}
           className={`${styles.navItem} ${activeItem === item.id ? styles.active : ''}`}
-          onClick={() => onNavigate?.(item.id)}
+          onClick={() => handleClick(item.id, item.sound)}
         >
           {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
           <img
