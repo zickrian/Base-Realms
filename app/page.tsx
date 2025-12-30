@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
-import { useRouter } from "next/navigation";
 import { LandingContent } from "./components/LandingContent";
 import { useGameStore } from "./stores/gameStore";
 
 export default function Home() {
-  const router = useRouter();
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading, initializeGameData, reset } = useGameStore();
   const initRef = useRef(false);
+  const wasConnectedRef = useRef(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Initialize MiniKit
   useEffect(() => {
@@ -21,11 +21,26 @@ export default function Home() {
     }
   }, [setMiniAppReady, isMiniAppReady]);
 
-  // Handle wallet disconnection - reset store
+  // Handle wallet disconnection - show logout screen then reset
   useEffect(() => {
     if (!isConnected && !isConnecting) {
-      reset();
-      initRef.current = false;
+      // If was previously connected, show logout animation
+      if (wasConnectedRef.current) {
+        setIsLoggingOut(true);
+        // Show logout message for 1.5 seconds then reset
+        setTimeout(() => {
+          reset();
+          initRef.current = false;
+          setIsLoggingOut(false);
+        }, 1500);
+      } else {
+        reset();
+        initRef.current = false;
+      }
+    }
+    // Track connection state
+    if (isConnected) {
+      wasConnectedRef.current = true;
     }
   }, [isConnected, isConnecting, reset]);
 
@@ -37,7 +52,6 @@ export default function Home() {
   // PRIORITY 1: Redirect immediately if already connected and initialized
   useEffect(() => {
     if (isConnected && address && isInitialized && !isLoading) {
-      // Use window.location for guaranteed redirect
       redirectToHome();
     }
   }, [isConnected, address, isInitialized, isLoading, redirectToHome]);
@@ -54,7 +68,6 @@ export default function Home() {
       })
         .then(() => initializeGameData(address))
         .then(() => {
-          // Force redirect after data is loaded
           redirectToHome();
         })
         .catch(err => {
@@ -64,5 +77,5 @@ export default function Home() {
     }
   }, [isConnected, address, isInitialized, isLoading, initializeGameData, redirectToHome]);
 
-  return <LandingContent />;
+  return <LandingContent isLoggingOut={isLoggingOut} />;
 }

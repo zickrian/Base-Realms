@@ -8,14 +8,20 @@ import { getGameIconUrl } from "../utils/supabaseStorage";
 import { useGameStore } from "../stores/gameStore";
 import styles from "./LandingContent.module.css";
 
-export function LandingContent() {
+interface LandingContentProps {
+  isLoggingOut?: boolean;
+}
+
+export function LandingContent({ isLoggingOut = false }: LandingContentProps) {
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading: storeLoading } = useGameStore();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
 
   // Update loading message based on state
   useEffect(() => {
-    if (isConnecting) {
+    if (isLoggingOut) {
+      setLoadingMessage("Logging out... See you soon!");
+    } else if (isConnecting) {
       setLoadingMessage("Connecting wallet...");
     } else if (isConnected && address) {
       if (!isInitialized && !storeLoading) {
@@ -39,10 +45,38 @@ export function LandingContent() {
         setLoadingMessage("Ready! Entering game...");
       }
     }
-  }, [isConnecting, isConnected, address, isInitialized, storeLoading]);
+  }, [isLoggingOut, isConnecting, isConnected, address, isInitialized, storeLoading]);
 
-  // ALWAYS show loading if wallet is connected or connecting
-  // This prevents the form from ever showing when wallet is connected
+  // Show logout screen
+  if (isLoggingOut) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.logoSection}>
+            <Image
+              src={getGameIconUrl("logos.png")}
+              alt="Logo"
+              width={500}
+              height={500}
+              className={styles.logo}
+              priority
+            />
+          </div>
+          <div className={styles.welcomeSection}>
+            <h1 className={styles.welcomeText}>Goodbye!</h1>
+            <p className={styles.subtitle}>{loadingMessage}</p>
+          </div>
+          <div className={styles.loadingDots}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen when connecting or connected
   if (isConnecting || (isConnected && address)) {
     return (
       <div className={styles.container}>
@@ -71,7 +105,7 @@ export function LandingContent() {
     );
   }
 
-  // Show connect wallet form ONLY when wallet is completely disconnected
+  // Show connect wallet form when disconnected
   return (
     <div className={styles.container}>
       <div className={styles.card}>
