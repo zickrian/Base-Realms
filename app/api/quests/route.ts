@@ -39,8 +39,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get active quests - select only needed fields for better performance
+    // Get active and completed quests - select only needed fields for better performance
     // Query is optimized with indexes on user_id, status, and expires_at
+    // IMPORTANT: Only show 'active' and 'completed' quests, NOT 'claimed' quests
+    // Claimed quests should disappear from the list until next day
     const { data: quests, error: questsError } = await supabaseAdmin
       .from('user_quests')
       .select(`
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
         current_progress,
         max_progress,
         status,
+        expires_at,
         quest_templates!inner(
           title,
           description,
@@ -56,7 +59,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('user_id', user.id)
-      .in('status', ['active', 'completed'])
+      .in('status', ['active', 'completed']) // Don't show claimed quests
       .order('started_at', { ascending: false })
       .limit(20); // Limit to prevent excessive data (daily quests are typically 4-5)
 

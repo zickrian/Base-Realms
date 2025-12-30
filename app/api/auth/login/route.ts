@@ -129,7 +129,8 @@ export async function POST(request: NextRequest) {
 
       const dailyQuestTemplateIds = dailyQuestTemplates?.map(t => t.id) || [];
 
-      // Delete expired daily quests (expires_at < today start) - this includes claimed quests from previous days
+      // Delete expired daily quests (expires_at < today start)
+      // This includes ALL quests from previous days (active, completed, claimed)
       if (dailyQuestTemplateIds.length > 0) {
         await supabaseAdmin
           .from('user_quests')
@@ -139,15 +140,16 @@ export async function POST(request: NextRequest) {
           .in('quest_template_id', dailyQuestTemplateIds);
       }
 
-      // Check if user has daily quests for today (expires_at >= today start)
+      // Check if user has ANY daily quests for today (including claimed ones)
+      // This prevents creating duplicate quests
       const { data: existingQuests } = await supabaseAdmin
         .from('user_quests')
-        .select('id, quest_templates!inner(quest_type, is_daily)')
+        .select('id, quest_template_id, status, quest_templates!inner(quest_type, is_daily)')
         .eq('user_id', currentUser.id)
         .eq('quest_templates.is_daily', true)
         .gte('expires_at', todayStart.toISOString());
 
-      // If no daily quests for today, create them
+      // If no daily quests for today at all, create them
       if (!existingQuests || existingQuests.length === 0) {
         const { data: questTemplates } = await supabaseAdmin
           .from('quest_templates')
@@ -157,10 +159,11 @@ export async function POST(request: NextRequest) {
 
         if (questTemplates && questTemplates.length > 0) {
           const userQuests = questTemplates.map(template => {
-            // Auto-complete daily_login quest
+            // Auto-complete daily_login quest ONLY on first login of the day
             const isDailyLogin = template.quest_type === 'daily_login';
-            const progress = isDailyLogin ? template.target_value : 0;
-            const status = isDailyLogin ? 'completed' as const : 'active' as const;
+            const shouldComplete = isDailyLogin && isFirstLoginToday;
+            const progress = shouldComplete ? template.target_value : 0;
+            const status = shouldComplete ? 'completed' as const : 'active' as const;
             
             return {
               user_id: currentUser.id,
@@ -168,8 +171,8 @@ export async function POST(request: NextRequest) {
               current_progress: progress,
               max_progress: template.target_value,
               status,
-              completed_at: isDailyLogin ? now.toISOString() : null,
-              expires_at: tomorrowMidnight.toISOString(), // Set to tomorrow midnight UTC
+              completed_at: shouldComplete ? now.toISOString() : null,
+              expires_at: tomorrowMidnight.toISOString(),
             };
           });
 
@@ -177,12 +180,9 @@ export async function POST(request: NextRequest) {
             .from('user_quests')
             .insert(userQuests);
         }
-      }
-      
-      // Always check and complete daily_login quest if first login today (separate from quest creation)
-      // This ensures daily_login quest is completed on first login of each day
-      if (isFirstLoginToday) {
-        // Find the daily_login quest template to get target_value
+      } else if (isFirstLoginToday) {
+        // Quests exist for today, check if we need to complete daily_login
+        // But ONLY if it's still in 'active' status (not completed or claimed)
         const { data: dailyLoginTemplate } = await supabaseAdmin
           .from('quest_templates')
           .select('id, target_value')
@@ -191,27 +191,21 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (dailyLoginTemplate) {
-          // Update all daily_login quests for today (both active and any that might exist)
-          // This handles the case where quest was created but not yet completed
-          const { data: dailyLoginQuests } = await supabaseAdmin
-            .from('user_quests')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('quest_template_id', dailyLoginTemplate.id)
-            .in('status', ['active', 'completed']) // Include completed in case it was just created
-            .gte('expires_at', todayStart.toISOString());
+          // Find if there's an active (not completed, not claimed) daily_login quest for today
+          const activeDailyLogin = existingQuests.find(
+            q => q.quest_template_id === dailyLoginTemplate.id && q.status === 'active'
+          );
 
-          if (dailyLoginQuests && dailyLoginQuests.length > 0) {
-            // Update all daily_login quests to completed
+          // ONLY complete if it's still active (not already completed or claimed)
+          if (activeDailyLogin) {
             await supabaseAdmin
               .from('user_quests')
               .update({
                 current_progress: dailyLoginTemplate.target_value,
-                max_progress: dailyLoginTemplate.target_value,
                 status: 'completed',
                 completed_at: now.toISOString(),
               })
-              .in('id', dailyLoginQuests.map(q => q.id));
+              .eq('id', activeDailyLogin.id);
           }
         }
       }

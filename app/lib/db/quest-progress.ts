@@ -21,6 +21,7 @@ interface UserQuest {
 /**
  * Update quest progress based on quest type
  * Returns array of completed quest IDs that were auto-claimed
+ * IMPORTANT: Only updates 'active' quests, not 'completed' or 'claimed' quests
  */
 export async function updateQuestProgress(
   userId: string,
@@ -28,7 +29,8 @@ export async function updateQuestProgress(
   increment: number = 1,
   autoClaim: boolean = false // Default to false - user must manually claim
 ): Promise<{ completedQuestIds: string[]; xpAwarded: number }> {
-  // Get active quests of this type
+  // Get ONLY active quests of this type
+  // Don't update completed or claimed quests
   const { data: quests, error } = await supabaseAdmin
     .from('user_quests')
     .select(`
@@ -36,7 +38,7 @@ export async function updateQuestProgress(
       quest_templates!inner(quest_type, reward_xp, reward_card_pack_id)
     `)
     .eq('user_id', userId)
-    .eq('status', 'active')
+    .eq('status', 'active') // ONLY active quests can be updated
     .eq('quest_templates.quest_type', questType);
 
   if (error || !quests || quests.length === 0) {
