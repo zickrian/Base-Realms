@@ -72,8 +72,9 @@ export function useQuests() {
       
       setQuests(data.quests);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
       setQuests([]);
     } finally {
       setLoading(false);
@@ -127,8 +128,9 @@ export function useQuests() {
         questsCache.set(address, { quests: data.quests, time: Date.now() });
         setQuests(data.quests);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
       throw err;
     }
   };

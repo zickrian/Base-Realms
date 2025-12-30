@@ -28,10 +28,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       user,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Session error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get session';
     return NextResponse.json(
-      { error: error.message || 'Failed to get session' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

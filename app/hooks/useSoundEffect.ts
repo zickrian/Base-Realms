@@ -18,20 +18,21 @@ export function useSoundEffect() {
     audioRefs.current.forEach((audio) => {
       audio.volume = volume;
     });
-  }, [settings?.soundVolume]);
+  }, [settings]);
 
   // Listen for real-time volume changes from settings menu (before database save)
   useEffect(() => {
-    const handleVolumeChange = (event: CustomEvent<number>) => {
-      const volume = event.detail / 100;
+    const handleVolumeChange = (event: Event) => {
+      const customEvent = event as CustomEvent<number>;
+      const volume = customEvent.detail / 100;
       audioRefs.current.forEach((audio) => {
         audio.volume = volume;
       });
     };
 
-    window.addEventListener('volume-change' as any, handleVolumeChange as EventListener);
+    window.addEventListener('volume-change', handleVolumeChange);
     return () => {
-      window.removeEventListener('volume-change' as any, handleVolumeChange as EventListener);
+      window.removeEventListener('volume-change', handleVolumeChange);
     };
   }, []);
 
@@ -58,7 +59,9 @@ export function useSoundEffect() {
         // Cleanup after play
         audio.addEventListener('ended', () => {
           // Keep audio element for reuse, just reset
-          audio.currentTime = 0;
+          if (audio) {
+            audio.currentTime = 0;
+          }
         });
       } else {
         // Update volume if settings changed

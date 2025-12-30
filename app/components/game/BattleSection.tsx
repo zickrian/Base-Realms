@@ -9,7 +9,7 @@ interface BattleSectionProps {
   isPvPEnabled?: boolean;
 }
 
-export function BattleSection({ onStageSelect, onBattle, isPvPEnabled = false }: BattleSectionProps) {
+export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEnabled = false }: BattleSectionProps) {
   return (
     <div className={styles.wrapper}>
       {/* Unified Base Card containing Stage, Battle, and PvP */}

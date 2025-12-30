@@ -115,10 +115,11 @@ export async function POST(request: NextRequest) {
       success: true,
       purchase,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Record mint error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to record mint transaction';
     return NextResponse.json(
-      { error: error.message || 'Failed to record mint transaction' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

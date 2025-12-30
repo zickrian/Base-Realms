@@ -35,17 +35,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Claim reward
+    // Claim reward - this updates XP in database
     const result = await claimQuestReward(user.id, questId);
+
+    // Get updated profile for realtime XP update
+    const { data: profile } = await supabaseAdmin
+      .from('player_profiles')
+      .select('level, current_xp, max_xp')
+      .eq('user_id', user.id)
+      .single();
+
+    const xpPercentage = profile && profile.max_xp > 0 
+      ? (profile.current_xp / profile.max_xp) * 100 
+      : 0;
 
     return NextResponse.json({
       success: true,
-      ...result,
+      xpAwarded: result.xpAwarded,
+      cardPackId: result.cardPackId,
+      // Include updated profile for realtime UI update
+      profile: profile ? {
+        level: profile.level,
+        currentXp: profile.current_xp,
+        maxXp: profile.max_xp,
+        xpPercentage: Math.round(xpPercentage * 100) / 100,
+      } : null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Claim quest error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to claim quest reward';
     return NextResponse.json(
-      { error: error.message || 'Failed to claim quest reward' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

@@ -27,15 +27,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Get daily packs
-    let { data: dailyPacks, error: packsError } = await supabaseAdmin
+    const { data: dailyPacks, error: packsError } = await supabaseAdmin
       .from('daily_packs')
       .select('*')
       .eq('user_id', user.id)
       .single();
 
+    let currentDailyPacks = dailyPacks;
+
     // Check if reset is needed
-    if (dailyPacks && dailyPacks.next_reset_at) {
-      const resetTime = new Date(dailyPacks.next_reset_at);
+    if (currentDailyPacks && currentDailyPacks.next_reset_at) {
+      const resetTime = new Date(currentDailyPacks.next_reset_at);
       const now = new Date();
 
       if (now >= resetTime) {
@@ -56,7 +58,7 @@ export async function GET(request: NextRequest) {
           .single();
 
         if (!updateError && updated) {
-          dailyPacks = updated;
+          currentDailyPacks = updated;
         }
       }
     }
@@ -81,19 +83,20 @@ export async function GET(request: NextRequest) {
         throw createError;
       }
 
-      dailyPacks = newPacks;
+      currentDailyPacks = newPacks;
     } else if (packsError) {
       throw packsError;
     }
 
     return NextResponse.json({
-      packCount: dailyPacks?.pack_count || 0,
-      nextResetAt: dailyPacks?.next_reset_at,
+      packCount: currentDailyPacks?.pack_count || 0,
+      nextResetAt: currentDailyPacks?.next_reset_at,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get daily packs error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get daily packs';
     return NextResponse.json(
-      { error: error.message || 'Failed to get daily packs' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -160,18 +163,20 @@ export async function POST(request: NextRequest) {
       throw updateError;
     }
 
-    // Update quest progress for "open_packs" quest and auto-claim
+    // Update quest progress for "open_packs" quest (NO auto-claim)
+    // User must manually claim the quest to get XP - XP will only enter progress bar after claim
     const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
-    await updateQuestProgress(user.id, 'open_packs', 1, true);
+    await updateQuestProgress(user.id, 'open_packs', 1, false);
 
     return NextResponse.json({
       success: true,
       packCount: updated.pack_count,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Claim daily pack error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to claim daily pack';
     return NextResponse.json(
-      { error: error.message || 'Failed to claim daily pack' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

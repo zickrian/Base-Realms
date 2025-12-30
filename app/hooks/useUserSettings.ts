@@ -38,8 +38,9 @@ export function useUserSettings() {
           notificationsEnabled: data.settings.notifications_enabled,
         });
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
         setSettings(null);
       } finally {
         setLoading(false);
@@ -53,7 +54,7 @@ export function useUserSettings() {
     if (!address || !isConnected) return;
 
     try {
-      const updateData: any = {};
+      const updateData: Record<string, number | boolean> = {};
       if (updates.soundVolume !== undefined) {
         updateData.soundVolume = updates.soundVolume;
       }
@@ -79,8 +80,9 @@ export function useUserSettings() {
         soundVolume: data.settings.sound_volume,
         notificationsEnabled: data.settings.notifications_enabled,
       });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
       throw err;
     }
   };

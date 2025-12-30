@@ -30,8 +30,9 @@ export function useDailyPacks() {
         const data = await response.json();
         setPackCount(data.packCount || 0);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
         setPackCount(0);
       } finally {
         setLoading(false);
@@ -58,8 +59,9 @@ export function useDailyPacks() {
 
       const data = await response.json();
       setPackCount(data.packCount);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
       throw err;
     }
   };
@@ -82,8 +84,9 @@ export function useDailyPacks() {
           const data = await response.json();
           setPackCount(data.packCount || 0);
           setError(null);
-        } catch (err: any) {
-          setError(err.message);
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          setError(errorMessage);
         } finally {
           setLoading(false);
         }

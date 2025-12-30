@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import { X, CheckCircle2, Gamepad2, Trophy, Gift } from 'lucide-react';
-import { useQuests } from '../../hooks/useQuests';
-import { usePlayerProfile } from '../../hooks/usePlayerProfile';
+import React, { useState } from 'react';
+import { X, CheckCircle2, Gamepad2, Trophy, Gift, Calendar } from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { useGameStore } from '../../stores/gameStore';
 import styles from './QuestMenu.module.css';
 
 interface QuestMenuProps {
@@ -19,22 +19,29 @@ const getQuestIcon = (questType: string) => {
       return <Trophy size={24} />;
     case 'open_packs':
       return <Gift size={24} />;
+    case 'daily_login':
+      return <Calendar size={24} />;
     default:
       return <Gift size={24} />;
   }
 };
 
 export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
-  const { quests, loading, claimQuest } = useQuests();
-  const { refetch: refetchProfile } = usePlayerProfile();
+  const { address } = useAccount();
+  const { quests, questsLoading, claimQuest } = useGameStore();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
   
   const handleClaimQuest = async (questId: string) => {
+    if (!address || claimingId) return;
+    
     try {
-      await claimQuest(questId);
-      // Refetch profile to update XP/level display
-      await refetchProfile();
+      setClaimingId(questId);
+      await claimQuest(address, questId);
+      // XP bar will update automatically via store
     } catch (error) {
       console.error('Failed to claim quest:', error);
+    } finally {
+      setClaimingId(null);
     }
   };
 
@@ -57,7 +64,7 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
 
         {/* Quest List */}
         <div className={styles.questList}>
-          {loading ? (
+          {questsLoading ? (
             <div>Loading quests...</div>
           ) : quests.length === 0 ? (
             <div>No quests available</div>
@@ -65,6 +72,8 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
             quests.map((quest) => {
               const progressPercentage = getProgressPercentage(quest.currentProgress, quest.maxProgress);
               const isCompleted = quest.status === 'completed' || quest.currentProgress >= quest.maxProgress;
+              const isClaimed = quest.status === 'claimed';
+              const isClaiming = claimingId === quest.id;
 
               return (
                 <div key={quest.id} className={styles.questCard}>
@@ -77,7 +86,7 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                       <h3 className={styles.questTitle}>{quest.title}</h3>
                       <p className={styles.questDescription}>{quest.description}</p>
                     </div>
-                    {isCompleted && (
+                    {(isCompleted || isClaimed) && (
                       <div className={styles.completedBadge}>
                         <CheckCircle2 size={20} />
                       </div>
@@ -88,7 +97,7 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                   <div className={styles.progressContainer}>
                     <div className={styles.progressBarBackground}>
                       <div 
-                        className={`${styles.progressBarFill} ${isCompleted ? styles.progressBarComplete : ''}`}
+                        className={`${styles.progressBarFill} ${isCompleted || isClaimed ? styles.progressBarComplete : ''}`}
                         style={{ width: `${progressPercentage}%` }}
                       >
                         <div className={styles.progressBarShine}></div>
@@ -107,14 +116,22 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                     </div>
                   )}
 
-                  {/* Claim Button */}
-                  {isCompleted && quest.status === 'completed' && (
+                  {/* Claim Button - only show if completed but not claimed */}
+                  {isCompleted && quest.status === 'completed' && !isClaimed && (
                     <button
                       className={styles.claimButton}
                       onClick={() => handleClaimQuest(quest.id)}
+                      disabled={isClaiming}
                     >
-                      Claim Reward
+                      {isClaiming ? 'Claiming...' : 'Claim Reward'}
                     </button>
+                  )}
+                  
+                  {/* Claimed indicator */}
+                  {isClaimed && (
+                    <div className={styles.claimedBadge}>
+                      ✓ Claimed
+                    </div>
                   )}
                 </div>
               );

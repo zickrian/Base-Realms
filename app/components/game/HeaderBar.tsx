@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
-import { usePlayerProfile } from "../../hooks/usePlayerProfile";
+import { useGameStore } from "../../stores/gameStore";
 import styles from "./HeaderBar.module.css";
 
 interface HeaderBarProps {
@@ -16,7 +16,8 @@ const BASE_CHAIN_ID = 8453; // Base Mainnet
 
 export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
-  const { profile, loading: profileLoading } = usePlayerProfile();
+  // Use cached profile from store instead of fetching independently
+  const { profile, profileLoading } = useGameStore();
 
   // Get ETH balance
   const { data: ethBalanceData } = useBalance({
@@ -58,11 +59,11 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  // Get level and XP from profile - ensure these come from current_xp in database
-  const level = profile && typeof profile.level === 'number' ? profile.level : 1;
-  const currentXP = profile && typeof profile.currentXp === 'number' ? profile.currentXp : 0;
-  const maxXP = profile && typeof profile.maxXp === 'number' ? profile.maxXp : 100;
-  const xpPercentage = profile && typeof profile.xpPercentage === 'number' ? profile.xpPercentage : 0;
+  // Get level and XP from cached profile in store
+  const level = profile?.level ?? 1;
+  const currentXP = profile?.currentXp ?? 0;
+  const maxXP = profile?.maxXp ?? 100;
+  const xpPercentage = profile?.xpPercentage ?? 0;
 
   const [mounted, setMounted] = useState(false);
 

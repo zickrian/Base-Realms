@@ -41,10 +41,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ stages: stages || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get stages error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get stages';
     return NextResponse.json(
-      { error: error.message || 'Failed to get stages' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

@@ -13,11 +13,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Find or create user
-    let { data: user, error: userError } = await supabaseAdmin
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('wallet_address', walletAddress.toLowerCase())
       .single();
+
+    let currentUser = user;
 
     if (userError && userError.code === 'PGRST116') {
       // User doesn't exist, create new user
@@ -34,13 +36,13 @@ export async function POST(request: NextRequest) {
         throw createError;
       }
 
-      user = newUser;
+      currentUser = newUser;
 
       // Create player profile
       await supabaseAdmin
         .from('player_profiles')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           level: 1,
           current_xp: 0,
           max_xp: 100,
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('user_settings')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           sound_volume: 50,
           notifications_enabled: true,
         });
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('daily_packs')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           pack_count: 4,
           next_reset_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         });
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
           const status = isDailyLogin ? 'completed' as const : 'active' as const;
           
           return {
-            user_id: user.id,
+            user_id: currentUser.id,
             quest_template_id: template.id,
             current_progress: progress,
             max_progress: template.target_value,
@@ -106,14 +108,14 @@ export async function POST(request: NextRequest) {
       const now = new Date();
       // Use UTC to avoid timezone issues
       const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-      const lastLogin = user.last_login_at ? new Date(user.last_login_at) : null;
+      const lastLogin = currentUser.last_login_at ? new Date(currentUser.last_login_at) : null;
       // Check if last login was before today (in UTC)
       const isFirstLoginToday = !lastLogin || lastLogin < todayStart;
 
       await supabaseAdmin
         .from('users')
         .update({ last_login_at: now.toISOString() })
-        .eq('id', user.id);
+        .eq('id', currentUser.id);
 
       // Calculate tomorrow midnight UTC for expires_at
       const tomorrowMidnight = new Date(todayStart);
@@ -127,12 +129,12 @@ export async function POST(request: NextRequest) {
 
       const dailyQuestTemplateIds = dailyQuestTemplates?.map(t => t.id) || [];
 
-      // Delete expired daily quests (expires_at < today start)
+      // Delete expired daily quests (expires_at < today start) - this includes claimed quests from previous days
       if (dailyQuestTemplateIds.length > 0) {
         await supabaseAdmin
           .from('user_quests')
           .delete()
-          .eq('user_id', user.id)
+          .eq('user_id', currentUser.id)
           .lt('expires_at', todayStart.toISOString())
           .in('quest_template_id', dailyQuestTemplateIds);
       }
@@ -141,7 +143,7 @@ export async function POST(request: NextRequest) {
       const { data: existingQuests } = await supabaseAdmin
         .from('user_quests')
         .select('id, quest_templates!inner(quest_type, is_daily)')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUser.id)
         .eq('quest_templates.is_daily', true)
         .gte('expires_at', todayStart.toISOString());
 
@@ -161,7 +163,7 @@ export async function POST(request: NextRequest) {
             const status = isDailyLogin ? 'completed' as const : 'active' as const;
             
             return {
-              user_id: user.id,
+              user_id: currentUser.id,
               quest_template_id: template.id,
               current_progress: progress,
               max_progress: template.target_value,
@@ -178,6 +180,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Always check and complete daily_login quest if first login today (separate from quest creation)
+      // This ensures daily_login quest is completed on first login of each day
       if (isFirstLoginToday) {
         // Find the daily_login quest template to get target_value
         const { data: dailyLoginTemplate } = await supabaseAdmin
@@ -188,13 +191,14 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (dailyLoginTemplate) {
-          // Update all active daily_login quests for today
+          // Update all daily_login quests for today (both active and any that might exist)
+          // This handles the case where quest was created but not yet completed
           const { data: dailyLoginQuests } = await supabaseAdmin
             .from('user_quests')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('user_id', currentUser.id)
             .eq('quest_template_id', dailyLoginTemplate.id)
-            .eq('status', 'active')
+            .in('status', ['active', 'completed']) // Include completed in case it was just created
             .gte('expires_at', todayStart.toISOString());
 
           if (dailyLoginQuests && dailyLoginQuests.length > 0) {
@@ -216,14 +220,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        wallet_address: user.wallet_address,
+        id: currentUser.id,
+        wallet_address: currentUser.wallet_address,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to login';
     return NextResponse.json(
-      { error: error.message || 'Failed to login' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

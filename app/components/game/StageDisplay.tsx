@@ -8,7 +8,7 @@ import { useStages } from "../../hooks/useStages";
 import styles from "./StageDisplay.module.css";
 
 export function StageDisplay() {
-  const { currentStage } = useStages();
+  const { currentStage: _currentStage } = useStages();
   const [cloudImage, setCloudImage] = useState<HTMLImageElement | null>(null);
   const cloudXRef = useRef<number>(0);
 
@@ -32,41 +32,32 @@ export function StageDisplay() {
     onUpdate: (ctx, deltaTime) => {
       // Draw cloud layer yang bergerak horizontal
       if (cloudImage) {
-        const speed = 15; // Kecepatan gerak (pixel per second) - diperlambat
+        const speed = 15;
         const canvasWidth = 430;
-        const canvasHeight = 259;
         
-        // Update posisi X (gerak kanan ke kiri)
         cloudXRef.current -= speed * deltaTime;
         
-        // Reset posisi untuk seamless loop
         if (cloudXRef.current <= -canvasWidth) {
           cloudXRef.current += canvasWidth;
         }
         
-        // Y position sedikit ke atas
         const yOffset = -30;
-        
-        // Scale height proporsional dengan width
-        // Width PERSIS canvasWidth untuk mengisi penuh tanpa gap
         const scaleY = canvasWidth / cloudImage.width;
         const scaledHeight = cloudImage.height * scaleY;
         
-        // Draw pertama - width PERSIS canvasWidth (tidak ada gap)
         ctx.drawImage(
           cloudImage, 
           cloudXRef.current, 
           yOffset, 
-          canvasWidth,  // Width PERSIS canvas width
+          canvasWidth,
           scaledHeight
         );
         
-        // Draw kedua untuk seamless loop - width PERSIS canvasWidth
         ctx.drawImage(
           cloudImage, 
           cloudXRef.current + canvasWidth, 
           yOffset, 
-          canvasWidth,  // Width PERSIS canvas width
+          canvasWidth,
           scaledHeight
         );
       }

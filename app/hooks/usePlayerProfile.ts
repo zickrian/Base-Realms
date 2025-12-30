@@ -53,8 +53,9 @@ export function usePlayerProfile() {
         } else {
           setError('Invalid profile data');
         }
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
         setProfile(null);
       } finally {
         setLoading(false);
@@ -87,8 +88,9 @@ export function usePlayerProfile() {
           setProfile(data.profile);
           setError(null);
         }
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

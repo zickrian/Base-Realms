@@ -3,6 +3,21 @@ import { awardXp } from './xp-award';
 
 export type QuestType = 'play_games' | 'win_games' | 'open_packs' | 'daily_login';
 
+// Types for database responses
+interface QuestTemplate {
+  quest_type: QuestType;
+  reward_xp: number;
+  reward_card_pack_id: string | null;
+}
+
+interface UserQuest {
+  id: string;
+  current_progress: number;
+  max_progress: number;
+  status: 'active' | 'completed' | 'claimed';
+  quest_templates: QuestTemplate;
+}
+
 /**
  * Update quest progress based on quest type
  * Returns array of completed quest IDs that were auto-claimed
@@ -11,7 +26,7 @@ export async function updateQuestProgress(
   userId: string,
   questType: QuestType,
   increment: number = 1,
-  autoClaim: boolean = true
+  autoClaim: boolean = false // Default to false - user must manually claim
 ): Promise<{ completedQuestIds: string[]; xpAwarded: number }> {
   // Get active quests of this type
   const { data: quests, error } = await supabaseAdmin
@@ -32,11 +47,17 @@ export async function updateQuestProgress(
   let totalXpAwarded = 0;
 
   // Update each quest
-  for (const quest of quests) {
+  for (const quest of quests as UserQuest[]) {
     const newProgress = Math.min(quest.current_progress + increment, quest.max_progress);
     const isCompleted = newProgress >= quest.max_progress;
 
-    const updateData: any = {
+    const updateData: {
+      current_progress: number;
+      updated_at: string;
+      status?: 'completed' | 'claimed';
+      completed_at?: string;
+      claimed_at?: string;
+    } = {
       current_progress: newProgress,
       updated_at: new Date().toISOString(),
     };

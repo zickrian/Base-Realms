@@ -58,41 +58,21 @@ export interface NFTBalanceResult {
  * This should be called from API routes, not directly from client
  */
 export async function checkNFTBalance(
-  walletAddress: string,
-  rpcUrl?: string
+  _walletAddress: string,
+  _rpcUrl?: string
 ): Promise<NFTBalanceResult> {
   try {
-    // For server-side, we need to use a provider
-    // You can use public RPC or a service like Alchemy/Infura
-    const providerUrl = rpcUrl || `https://mainnet.base.org`;
-    
-    // Note: In production, you should use a proper Ethereum library like viem
-    // For now, this is a placeholder that returns the structure
-    // You'll need to implement actual blockchain calls using viem or ethers
-    
-    // This is a placeholder - implement actual blockchain call
-    // Example with viem:
-    // const publicClient = createPublicClient({
-    //   chain: base,
-    //   transport: http(providerUrl)
-    // });
-    // const balance = await publicClient.readContract({
-    //   address: NFT_CONTRACT_ADDRESS,
-    //   abi: NFT_CONTRACT_ABI,
-    //   functionName: 'balanceOf',
-    //   args: [walletAddress as `0x${string}`]
-    // });
-    
     return {
       balance: 0,
       hasNFT: false,
       error: 'Blockchain RPC call not implemented - use client-side hook for now'
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to check NFT balance';
     return {
       balance: 0,
       hasNFT: false,
-      error: error.message || 'Failed to check NFT balance'
+      error: errorMessage
     };
   }
 }
@@ -101,16 +81,13 @@ export async function checkNFTBalance(
  * Get NFT token IDs owned by wallet
  */
 export async function getOwnedTokenIds(
-  walletAddress: string,
-  balance: number,
-  rpcUrl?: string
+  _walletAddress: string,
+  _balance: number,
+  _rpcUrl?: string
 ): Promise<number[]> {
   try {
-    // Similar to checkNFTBalance, implement with viem
-    // For each index from 0 to balance-1, call tokenOfOwnerByIndex
-    
     return [];
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting token IDs:', error);
     return [];
   }

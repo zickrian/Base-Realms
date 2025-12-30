@@ -10,6 +10,15 @@ interface Stage {
   isUnlocked: boolean;
 }
 
+interface StageApiResponse {
+  id: string;
+  name: string;
+  stage_number: number;
+  image_url: string | null;
+  required_level: number;
+  is_unlocked: boolean;
+}
+
 export function useStages() {
   const { address, isConnected } = useAccount();
   const [stages, setStages] = useState<Stage[]>([]);
@@ -53,7 +62,7 @@ export function useStages() {
         }
 
         const data = await response.json();
-        const formatted = data.stages.map((stage: any) => ({
+        const formatted = data.stages.map((stage: StageApiResponse) => ({
           id: stage.id,
           name: stage.name,
           stageNumber: stage.stage_number,
@@ -63,8 +72,9 @@ export function useStages() {
         }));
         setStages(formatted);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
         setStages([]);
       } finally {
         setLoading(false);

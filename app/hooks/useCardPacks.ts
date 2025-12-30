@@ -12,6 +12,17 @@ interface CardPack {
   isActive: boolean;
 }
 
+interface PackApiResponse {
+  id: string;
+  name: string;
+  rarity: string;
+  price_idrx: string | number;
+  price_eth: string | number;
+  image_url: string;
+  description: string;
+  is_active: boolean;
+}
+
 // Cache for packs (static data, can be cached)
 let packsCache: CardPack[] | null = null;
 let packsCacheTime: number = 0;
@@ -35,7 +46,7 @@ export function useCardPacks() {
       try {
         setLoading(true);
         const response = await fetch('/api/cards/packs', {
-          cache: 'force-cache', // Use browser cache
+          cache: 'force-cache',
         });
 
         if (!response.ok) {
@@ -43,26 +54,25 @@ export function useCardPacks() {
         }
 
         const data = await response.json();
-        const formatted = (data.packs || []).map((pack: any) => ({
+        const formatted = (data.packs || []).map((pack: PackApiResponse) => ({
           id: pack.id,
           name: pack.name || '',
           rarity: pack.rarity || 'common',
-          priceIdrx: parseFloat(pack.price_idrx || 0),
-          priceEth: parseFloat(pack.price_eth || 0),
-          // Convert relative path to full Supabase Storage URL
+          priceIdrx: parseFloat(String(pack.price_idrx || 0)),
+          priceEth: parseFloat(String(pack.price_eth || 0)),
           imageUrl: pack.image_url ? getStorageUrl(pack.image_url) : '',
           description: pack.description || '',
           isActive: pack.is_active !== false,
         }));
         
-        // Update cache
         packsCache = formatted;
         packsCacheTime = now;
         
         setPacks(formatted);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
         setPacks([]);
       } finally {
         setLoading(false);

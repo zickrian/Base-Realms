@@ -4,7 +4,7 @@ import { updateQuestProgress } from '@/app/lib/db/quest-progress';
 
 export async function POST(request: NextRequest) {
   try {
-    const { questType } = await request.json();
+    const { questType, autoClaim = false } = await request.json();
     const walletAddress = request.headers.get('x-wallet-address');
 
     if (!walletAddress) {
@@ -35,12 +35,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update quest progress and auto-claim if completed
+    // Update quest progress - autoClaim is now controlled by client
+    // For open_packs quest, user must manually claim to get XP
     const result = await updateQuestProgress(
       user.id, 
       questType as 'play_games' | 'win_games' | 'open_packs' | 'daily_login', 
       1,
-      true // auto-claim enabled
+      autoClaim // Only auto-claim if explicitly requested
     );
 
     return NextResponse.json({
@@ -50,10 +51,11 @@ export async function POST(request: NextRequest) {
       xpAwarded: result.xpAwarded,
       completedQuestIds: result.completedQuestIds,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update quest progress error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update quest progress';
     return NextResponse.json(
-      { error: error.message || 'Failed to update quest progress' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

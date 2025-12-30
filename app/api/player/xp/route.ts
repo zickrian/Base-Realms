@@ -51,10 +51,11 @@ export async function GET(request: NextRequest) {
       maxXp: profile.max_xp,
       xpPercentage: Math.round(xpPercentage * 100) / 100,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get XP error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get XP';
     return NextResponse.json(
-      { error: error.message || 'Failed to get XP' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -100,10 +101,11 @@ export async function POST(request: NextRequest) {
       success: true,
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Add XP error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to add XP';
     return NextResponse.json(
-      { error: error.message || 'Failed to add XP' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

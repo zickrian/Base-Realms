@@ -80,10 +80,11 @@ export async function GET(request: NextRequest) {
     // #endregion
 
     return NextResponse.json({ inventory: inventory || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get inventory error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get inventory';
     return NextResponse.json(
-      { error: error.message || 'Failed to get inventory' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

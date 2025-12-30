@@ -129,19 +129,21 @@ export async function POST(request: NextRequest) {
         .eq('id', existingInventory.id);
     }
 
-    // Update quest progress and auto-claim
+    // Update quest progress for "open_packs" quest (NO auto-claim)
+    // User must manually claim the quest to get XP - XP will only enter progress bar after claim
     const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
-    await updateQuestProgress(user.id, 'open_packs', 1, true);
+    await updateQuestProgress(user.id, 'open_packs', 1, false);
 
     return NextResponse.json({
       success: true,
       purchase,
       revealedCard: reveal,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Purchase card error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to purchase card pack';
     return NextResponse.json(
-      { error: error.message || 'Failed to purchase card pack' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

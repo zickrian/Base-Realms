@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (!profileError && profile) {
       // Update player stats
-      const updateData: any = {
+      const updateData: Record<string, number> = {
         total_battles: profile.total_battles + 1,
       };
       if (result === 'win') {
@@ -124,10 +124,11 @@ export async function POST(request: NextRequest) {
       levelUp: xpResult.leveledUp,
       newLevel: xpResult.newLevel,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Complete battle error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to complete battle';
     return NextResponse.json(
-      { error: error.message || 'Failed to complete battle' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

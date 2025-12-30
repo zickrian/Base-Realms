@@ -73,10 +73,11 @@ export async function GET(request: NextRequest) {
         stage: stage,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get profile error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get profile';
     return NextResponse.json(
-      { error: error.message || 'Failed to get profile' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

@@ -10,8 +10,8 @@ export interface GameCanvasOptions {
   onInit?: (ctx: CanvasRenderingContext2D) => void;
 }
 
-export function useGameCanvas(options: GameCanvasOptions): RefObject<HTMLCanvasElement> {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export function useGameCanvas(options: GameCanvasOptions): RefObject<HTMLCanvasElement | null> {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const lastTimeRef = useRef<number>(0);
   const optionsRef = useRef(options);
@@ -66,6 +66,7 @@ export function useGameCanvas(options: GameCanvasOptions): RefObject<HTMLCanvasE
         cancelAnimationFrame(animationRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.width, options.height, options.pixelArt]);
 
   return canvasRef;

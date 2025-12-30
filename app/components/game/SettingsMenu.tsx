@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Volume2, Bell, LogOut } from 'lucide-react';
 import { useDisconnect, useAccount } from 'wagmi';
-import { useUserSettings } from '../../hooks/useUserSettings';
+import { useGameStore } from '../../stores/gameStore';
 import styles from './SettingsMenu.module.css';
 
 interface SettingsMenuProps {
@@ -15,13 +15,13 @@ interface SettingsMenuProps {
 export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
   const router = useRouter();
   const { disconnect } = useDisconnect();
-  const { isConnected } = useAccount();
-  const { settings, loading, updateSettings } = useUserSettings();
+  const { address, isConnected } = useAccount();
+  const { settings, settingsLoading, updateSettings, reset } = useGameStore();
   const [volume, setVolume] = useState(50);
   const [notifications, setNotifications] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Sync with database settings
+  // Sync with store settings
   useEffect(() => {
     if (settings) {
       setVolume(settings.soundVolume);
@@ -31,27 +31,18 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
   const handleLogout = async () => {
     try {
-      // Disconnect wallet
       disconnect();
-      
-      // Close settings menu
+      reset(); // Clear game store
       onClose();
-      
-      // Clear any localStorage items related to session if needed
-      // (wagmi handles wallet connection state automatically)
-      
-      // Redirect to landing page after a brief delay to ensure disconnect completes
       setTimeout(() => {
         router.push("/");
       }, 100);
     } catch (error) {
       console.error("Error during logout:", error);
-      // Still redirect even if there's an error
       router.push("/");
     }
   };
 
-  // Auto-close and redirect if wallet gets disconnected while menu is open
   useEffect(() => {
     if (isOpen && !isConnected) {
       onClose();
@@ -61,10 +52,37 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
   if (!isOpen) return null;
 
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    window.dispatchEvent(new CustomEvent('volume-change', { detail: newVolume }));
+    
+    // Debounce save
+    const windowWithTimeout = window as Window & { volumeSaveTimeout?: ReturnType<typeof setTimeout> };
+    clearTimeout(windowWithTimeout.volumeSaveTimeout);
+    windowWithTimeout.volumeSaveTimeout = setTimeout(() => {
+      if (address) {
+        setSaving(true);
+        updateSettings(address, { soundVolume: newVolume }).finally(() => {
+          setSaving(false);
+        });
+      }
+    }, 300);
+  };
+
+  const handleNotificationsToggle = () => {
+    const newNotifications = !notifications;
+    setNotifications(newNotifications);
+    if (address) {
+      setSaving(true);
+      updateSettings(address, { notificationsEnabled: newNotifications }).finally(() => {
+        setSaving(false);
+      });
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.menuBox}>
-        {/* Header */}
         <div className={styles.header}>
           <div className={styles.title}>Settings</div>
           <button className={styles.closeButton} onClick={onClose}>
@@ -72,9 +90,7 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
           </button>
         </div>
 
-        {/* Settings Content */}
         <div className={styles.settingsContent}>
-          {/* Sound Volume Section */}
           <div className={styles.settingSection}>
             <div className={styles.settingHeader}>
               <div className={styles.settingIcon}>
@@ -88,30 +104,14 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
                 min="0"
                 max="100"
                 value={volume}
-                onChange={(e) => {
-                  const newVolume = Number(e.target.value);
-                  setVolume(newVolume);
-                  
-                  // Update volume real-time (immediate feedback)
-                  window.dispatchEvent(new CustomEvent('volume-change', { detail: newVolume }));
-                  
-                  // Debounce save to database
-                  clearTimeout((window as any).volumeSaveTimeout);
-                  (window as any).volumeSaveTimeout = setTimeout(() => {
-                    setSaving(true);
-                    updateSettings({ soundVolume: newVolume }).finally(() => {
-                      setSaving(false);
-                    });
-                  }, 300);
-                }}
+                onChange={(e) => handleVolumeChange(Number(e.target.value))}
                 className={styles.volumeSlider}
-                disabled={loading || saving}
+                disabled={settingsLoading || saving}
               />
               <div className={styles.volumeValue}>{volume}%</div>
             </div>
           </div>
 
-          {/* Notifications Section */}
           <div className={styles.settingSection}>
             <div className={styles.settingHeader}>
               <div className={styles.settingIcon}>
@@ -121,24 +121,15 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
             </div>
             <button
               className={`${styles.toggleSwitch} ${notifications ? styles.toggleActive : ''}`}
-              onClick={() => {
-                const newNotifications = !notifications;
-                setNotifications(newNotifications);
-                setSaving(true);
-                updateSettings({ notificationsEnabled: newNotifications }).finally(() => {
-                  setSaving(false);
-                });
-              }}
-              disabled={loading || saving}
+              onClick={handleNotificationsToggle}
+              disabled={settingsLoading || saving}
             >
               <div className={styles.toggleThumb}></div>
             </button>
           </div>
 
-          {/* Divider */}
           <div className={styles.divider}></div>
 
-          {/* Logout Button */}
           <button className={styles.logoutButton} onClick={handleLogout}>
             <LogOut size={20} />
             <span>Logout</span>
@@ -148,4 +139,3 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
     </div>
   );
 };
-

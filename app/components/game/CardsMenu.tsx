@@ -2,19 +2,16 @@
 
 import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
-import { getGameIconUrl } from '../../utils/supabaseStorage';
-import { useCardPacks } from '../../hooks/useCardPacks';
-import { useInventory } from '../../hooks/useInventory';
+import { useGameStore, CardPack } from '../../stores/gameStore';
 import styles from "./CardsMenu.module.css";
 
 export function CardsMenu() {
   const { address } = useAccount();
-  const { packs, loading: packsLoading } = useCardPacks();
-  const { inventory, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
-  const [selectedPack, setSelectedPack] = useState<any>(null);
+  const { cardPacks, inventory, packsLoading, inventoryLoading, refreshInventory } = useGameStore();
+  const [selectedPack, setSelectedPack] = useState<CardPack | null>(null);
   const [purchasing, setPurchasing] = useState(false);
 
-  const handleInfoClick = (pack: any) => {
+  const handleInfoClick = (pack: CardPack) => {
     setSelectedPack(pack);
   };
 
@@ -35,7 +32,7 @@ export function CardsMenu() {
         },
         body: JSON.stringify({
           packId: selectedPack.id,
-          paymentMethod: 'eth', // Default to ETH for now
+          paymentMethod: 'eth',
         }),
       });
 
@@ -44,16 +41,14 @@ export function CardsMenu() {
         throw new Error(error.error || 'Purchase failed');
       }
 
-      const data = await response.json();
+      // Refresh inventory from store
+      await refreshInventory(address);
       
-      // Refetch inventory
-      await refetchInventory();
-      
-      // Close popup and show success
       closePopup();
       alert(`Successfully purchased ${selectedPack.name}!`);
-    } catch (error: any) {
-      alert(`Purchase failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Purchase failed: ${errorMessage}`);
     } finally {
       setPurchasing(false);
     }
@@ -61,8 +56,6 @@ export function CardsMenu() {
 
   return (
     <div className={styles.container}>
-      {/* Title Removed */}
-
       {/* Cards Shop */}
       <section className={styles.shopContainer}>
         <h2 className={styles.sectionTitle}>CARDS SHOP</h2>
@@ -70,46 +63,40 @@ export function CardsMenu() {
         <div className={styles.packsRow}>
           {packsLoading ? (
             <div>Loading packs...</div>
-          ) : packs.length === 0 ? (
+          ) : cardPacks.length === 0 ? (
             <div>No packs available</div>
           ) : (
-            packs
-              .filter((pack) => pack.priceEth > 0 && pack.name !== 'Free Mint') // Exclude free mint and packs with price 0
+            cardPacks
+              .filter((pack) => pack.priceEth > 0 && pack.name !== 'Free Mint')
               .map((pack) => (
               <div
                 key={pack.id}
                 className={`${styles.packCard} ${styles[pack.rarity || 'common']}`}
               >
-                {/* Card Header Removed */}
-
-                {/* Main Illustration Area */}
                 <div className={styles.cardIllustration}>
                   <div className={styles.glowEffect} />
-                  {pack.imageUrl && (
+                  {pack.imageUrl ? (
                     <img
                       src={pack.imageUrl}
                       alt={pack.name}
                       className={styles.packImage}
                       onError={(e) => {
-                        // Fallback jika image gagal load
                         const target = e.target as HTMLImageElement;
-                        if (target) {
-                          target.style.display = 'none';
-                        }
+                        console.error('Failed to load pack image:', pack.name, pack.imageUrl);
+                        if (target) target.style.display = 'none';
                       }}
                       onLoad={(e) => {
-                        // Ensure image is visible when loaded
                         const target = e.target as HTMLImageElement;
-                        if (target) {
-                          target.style.display = 'block';
-                        }
+                        if (target) target.style.display = 'block';
                       }}
                       loading="lazy"
                     />
+                  ) : (
+                    <div className={styles.packImagePlaceholder}>
+                      <span>No Image</span>
+                    </div>
                   )}
                 </div>
-
-                {/* Card Footer */}
                 <div className={styles.cardFooter}>
                   <button
                     className={styles.priceButton}
@@ -141,7 +128,6 @@ export function CardsMenu() {
             </>
           ) : (
             <>
-              {/* Display inventory items */}
               {inventory.map((item) => (
                 <div key={item.id} className={styles.cardSlot}>
                   <div className={styles.cardInner}>
@@ -151,18 +137,12 @@ export function CardsMenu() {
                         alt={item.cardTemplate.name}
                         className={styles.cardImage}
                         onError={(e) => {
-                          // Fallback jika image gagal load
                           const target = e.target as HTMLImageElement;
-                          if (target) {
-                            target.style.display = 'none';
-                          }
+                          if (target) target.style.display = 'none';
                         }}
                         onLoad={(e) => {
-                          // Ensure image is visible when loaded
                           const target = e.target as HTMLImageElement;
-                          if (target) {
-                            target.style.display = 'block';
-                          }
+                          if (target) target.style.display = 'block';
                         }}
                         loading="lazy"
                       />
@@ -173,7 +153,6 @@ export function CardsMenu() {
                   </div>
                 </div>
               ))}
-              {/* Fill remaining slots with empty frames */}
               {[...Array(Math.max(0, 4 - inventory.length))].map((_, index) => (
                 <div key={`empty-${index}`} className={styles.cardSlot}>
                   <div className={styles.cardEmpty}>
@@ -214,5 +193,3 @@ export function CardsMenu() {
     </div>
   );
 }
-
-

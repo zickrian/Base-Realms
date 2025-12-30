@@ -53,10 +53,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ settings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get settings error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get settings';
     return NextResponse.json(
-      { error: error.message || 'Failed to get settings' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -89,7 +90,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Build update object
-    const updateData: any = {};
+    const updateData: Record<string, number | boolean> = {};
     if (soundVolume !== undefined) {
       if (soundVolume < 0 || soundVolume > 100) {
         return NextResponse.json(
@@ -116,10 +117,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ settings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update settings error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update settings';
     return NextResponse.json(
-      { error: error.message || 'Failed to update settings' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

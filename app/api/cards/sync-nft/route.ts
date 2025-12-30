@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       });
 
       nftBalance = Number(balance);
-    } catch (blockchainError: any) {
+    } catch (blockchainError: unknown) {
       console.error('Blockchain error:', blockchainError);
       // Continue with balance 0 if blockchain call fails
       // This allows the endpoint to still work if RPC is down
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:66',message:'template query start',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
     // #endregion
     
-    let { data: commonCardTemplate, error: templateError } = await supabaseAdmin
+    const { data: commonCardTemplate, error: templateError } = await supabaseAdmin
       .from('card_templates')
       .select('id')
       .eq('rarity', 'common')
@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sync-nft/route.ts:78',message:'template query end',data:{duration:templateQueryEnd-templateQueryStart,found:!!commonCardTemplate},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
     // #endregion
+
+    let cardTemplateId = commonCardTemplate?.id;
 
     // If no template found or error, create one
     if (templateError || !commonCardTemplate) {
@@ -137,9 +139,9 @@ export async function POST(request: NextRequest) {
           .delete()
           .in('card_template_id', deleteIds);
         
-        commonCardTemplate = { id: keepId };
+        cardTemplateId = keepId;
       } else if (existingTemplates && existingTemplates.length === 1) {
-        commonCardTemplate = existingTemplates[0];
+        cardTemplateId = existingTemplates[0].id;
       } else {
         // Create new template if none exists
         const { data: newTemplate, error: createError } = await supabaseAdmin
@@ -160,19 +162,19 @@ export async function POST(request: NextRequest) {
           throw new Error('Failed to create common card template');
         }
 
-        commonCardTemplate = newTemplate;
+        cardTemplateId = newTemplate.id;
       }
     }
 
     // Sync NFT balance to inventory
     // IMPORTANT: Use upsert to prevent duplicates and ensure only one entry per user+template
-    if (nftBalance > 0) {
+    if (nftBalance > 0 && cardTemplateId) {
       // Check for existing inventory entries (might be multiple due to previous bug)
       const { data: existingInventories } = await supabaseAdmin
         .from('user_inventory')
         .select('*')
         .eq('user_id', user.id)
-        .eq('card_template_id', commonCardTemplate.id);
+        .eq('card_template_id', cardTemplateId);
 
       // If multiple entries exist, delete all and create fresh one
       if (existingInventories && existingInventories.length > 1) {
@@ -180,14 +182,14 @@ export async function POST(request: NextRequest) {
           .from('user_inventory')
           .delete()
           .eq('user_id', user.id)
-          .eq('card_template_id', commonCardTemplate.id);
+          .eq('card_template_id', cardTemplateId);
         
         // Create single entry
         await supabaseAdmin
           .from('user_inventory')
           .insert({
             user_id: user.id,
-            card_template_id: commonCardTemplate.id,
+            card_template_id: cardTemplateId,
             quantity: nftBalance,
             blockchain_synced_at: new Date().toISOString(),
             last_sync_balance: nftBalance,
@@ -220,19 +222,19 @@ export async function POST(request: NextRequest) {
           .from('user_inventory')
           .insert({
             user_id: user.id,
-            card_template_id: commonCardTemplate.id,
+            card_template_id: cardTemplateId,
             quantity: nftBalance,
             blockchain_synced_at: new Date().toISOString(),
             last_sync_balance: nftBalance,
           });
       }
-    } else {
+    } else if (cardTemplateId) {
       // If balance is 0, remove ALL NFT card entries from inventory (cleanup duplicates)
       await supabaseAdmin
         .from('user_inventory')
         .delete()
         .eq('user_id', user.id)
-        .eq('card_template_id', commonCardTemplate.id);
+        .eq('card_template_id', cardTemplateId);
     }
 
     // Return updated inventory
@@ -269,10 +271,11 @@ export async function POST(request: NextRequest) {
       nftBalance,
       inventory: inventory || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Sync NFT error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to sync NFT inventory';
     return NextResponse.json(
-      { error: error.message || 'Failed to sync NFT inventory' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

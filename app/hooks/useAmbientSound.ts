@@ -108,30 +108,29 @@ export function useAmbientSound(enabled: boolean = true) {
       audio.src = '';
       audioRef.current = null;
     };
-  }, [enabled, userInteracted, settings?.soundVolume]);
+  }, [enabled, userInteracted, settings]);
 
   // Update volume when settings change (real-time)
   useEffect(() => {
     if (audioRef.current && settings) {
       const newVolume = settings.soundVolume / 100;
       audioRef.current.volume = newVolume;
-      console.log('Ambient sound volume updated:', settings.soundVolume, '%'); // Debug
     }
-  }, [settings?.soundVolume]);
+  }, [settings]);
 
   // Listen for real-time volume changes from settings menu (before database save)
   useEffect(() => {
-    const handleVolumeChange = (event: CustomEvent<number>) => {
+    const handleVolumeChange = (event: Event) => {
+      const customEvent = event as CustomEvent<number>;
       if (audioRef.current) {
-        const newVolume = event.detail / 100;
+        const newVolume = customEvent.detail / 100;
         audioRef.current.volume = newVolume;
-        console.log('Ambient sound volume updated (real-time):', event.detail, '%'); // Debug
       }
     };
 
-    window.addEventListener('volume-change' as any, handleVolumeChange as EventListener);
+    window.addEventListener('volume-change', handleVolumeChange);
     return () => {
-      window.removeEventListener('volume-change' as any, handleVolumeChange as EventListener);
+      window.removeEventListener('volume-change', handleVolumeChange);
     };
   }, []);
 

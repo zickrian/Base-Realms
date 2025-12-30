@@ -47,10 +47,11 @@ export async function POST(request: NextRequest) {
       success: true,
       battle,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Start battle error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to start battle';
     return NextResponse.json(
-      { error: error.message || 'Failed to start battle' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
