@@ -111,11 +111,11 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
       </div>
       <div className={styles.currencySection}>
         <div className={styles.currencyItem}>
-          <img src={getGameIconUrl("eth.svg")} alt="ETH" width={20} height={20} />
+          <img src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
           <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
         </div>
         <div className={styles.currencyItem}>
-          <img src={getGameIconUrl("idrx.svg")} alt="IDRX" width={20} height={20} />
+          <img src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
           <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
       </div>
