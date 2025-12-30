@@ -13,22 +13,13 @@ export function LandingContent() {
   const { isInitialized, isLoading: storeLoading } = useGameStore();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
 
-  // Determine if we should show loading screen
-  // Show loading when:
-  // 1. Wallet is connecting
-  // 2. Wallet connected but data not initialized yet
-  // 3. Wallet connected and currently loading data
-  const showLoading = isConnecting || (isConnected && (!isInitialized || storeLoading));
-
   // Update loading message based on state
   useEffect(() => {
     if (isConnecting) {
       setLoadingMessage("Connecting wallet...");
     } else if (isConnected && !isInitialized && !storeLoading) {
-      // Connected but init hasn't started yet
       setLoadingMessage("Preparing your adventure...");
     } else if (isConnected && storeLoading) {
-      // Currently loading data
       setLoadingMessage("Loading your profile...");
       
       const timer1 = setTimeout(() => {
@@ -43,14 +34,15 @@ export function LandingContent() {
         clearTimeout(timer1);
         clearTimeout(timer2);
       };
-    } else if (isConnected && isInitialized) {
-      // All done, about to redirect
+    } else if (isConnected && isInitialized && !storeLoading) {
       setLoadingMessage("Ready! Entering game...");
     }
   }, [isConnecting, isConnected, isInitialized, storeLoading]);
 
-  // Show loading state
-  if (showLoading) {
+  // IMPORTANT: If wallet is connected, ALWAYS show loading screen
+  // Never show the connect form when wallet is already connected
+  // The redirect to /home will happen from page.tsx
+  if (isConnecting || isConnected) {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
@@ -78,11 +70,10 @@ export function LandingContent() {
     );
   }
 
-  // Show connect wallet form ONLY when not connected
+  // Show connect wallet form ONLY when wallet is NOT connected
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        {/* Logo Section */}
         <div className={styles.logoSection}>
           <Image
             src={getGameIconUrl("logos.png")}
@@ -94,13 +85,11 @@ export function LandingContent() {
           />
         </div>
 
-        {/* Welcome Message */}
         <div className={styles.welcomeSection}>
           <h1 className={styles.welcomeText}>Welcome to the Game!</h1>
           <p className={styles.subtitle}>Connect your wallet to start playing</p>
         </div>
 
-        {/* Connect Button */}
         <div className={styles.buttonSection}>
           <Wallet>
             <ConnectWallet
@@ -110,14 +99,12 @@ export function LandingContent() {
           </Wallet>
         </div>
 
-        {/* Alternative Wallet Link */}
         <div className={styles.alternativeSection}>
           <a href="#" className={styles.alternativeLink}>
             use another wallet
           </a>
         </div>
 
-        {/* Wallet Recommendation Section */}
         <div className={styles.recommendationSection}>
           <p className={styles.recommendationTitle}>
             ...or don&apos;t have a wallet yet?

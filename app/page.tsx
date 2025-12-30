@@ -13,6 +13,7 @@ export default function Home() {
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading, initializeGameData, reset } = useGameStore();
   const initRef = useRef(false);
+  const redirectRef = useRef(false);
 
   // Initialize MiniKit
   useEffect(() => {
@@ -26,20 +27,23 @@ export default function Home() {
     if (!isConnected && !isConnecting) {
       reset();
       initRef.current = false;
+      redirectRef.current = false;
     }
   }, [isConnected, isConnecting, reset]);
 
-  // Start fetching data when wallet is connected
+  // Redirect to home when wallet is connected and data is ready
   useEffect(() => {
-    // Only start fetch if:
-    // 1. Wallet is connected with address
-    // 2. Not already initialized
-    // 3. Not currently loading
-    // 4. Haven't started init yet (prevent double fetch)
+    if (isConnected && address && isInitialized && !isLoading && !redirectRef.current) {
+      redirectRef.current = true;
+      router.replace("/home");
+    }
+  }, [isConnected, address, isInitialized, isLoading, router]);
+
+  // Start fetching data when wallet is connected but not initialized
+  useEffect(() => {
     if (isConnected && address && !isInitialized && !isLoading && !initRef.current) {
       initRef.current = true;
       
-      // Call login API then initialize game data
       fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,17 +57,5 @@ export default function Home() {
     }
   }, [isConnected, address, isInitialized, isLoading, initializeGameData]);
 
-  // Redirect to home ONLY when fully initialized
-  useEffect(() => {
-    // Only redirect when:
-    // 1. Wallet is connected
-    // 2. Data is fully initialized (isInitialized = true)
-    // 3. Not currently loading anymore
-    if (isConnected && address && isInitialized && !isLoading) {
-      router.push("/home");
-    }
-  }, [isConnected, address, isInitialized, isLoading, router]);
-
-  // Always show LandingContent - it handles all UI states
   return <LandingContent />;
 }
