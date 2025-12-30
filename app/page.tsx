@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,6 @@ export default function Home() {
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading, initializeGameData, reset } = useGameStore();
   const initRef = useRef(false);
-  const redirectRef = useRef(false);
 
   // Initialize MiniKit
   useEffect(() => {
@@ -22,24 +21,28 @@ export default function Home() {
     }
   }, [setMiniAppReady, isMiniAppReady]);
 
-  // Handle wallet disconnection - reset store and stay on landing page
+  // Handle wallet disconnection - reset store
   useEffect(() => {
     if (!isConnected && !isConnecting) {
       reset();
       initRef.current = false;
-      redirectRef.current = false;
     }
   }, [isConnected, isConnecting, reset]);
 
-  // Redirect to home when wallet is connected and data is ready
-  useEffect(() => {
-    if (isConnected && address && isInitialized && !isLoading && !redirectRef.current) {
-      redirectRef.current = true;
-      router.replace("/home");
-    }
-  }, [isConnected, address, isInitialized, isLoading, router]);
+  // Redirect function
+  const redirectToHome = useCallback(() => {
+    window.location.href = "/home";
+  }, []);
 
-  // Start fetching data when wallet is connected but not initialized
+  // PRIORITY 1: Redirect immediately if already connected and initialized
+  useEffect(() => {
+    if (isConnected && address && isInitialized && !isLoading) {
+      // Use window.location for guaranteed redirect
+      redirectToHome();
+    }
+  }, [isConnected, address, isInitialized, isLoading, redirectToHome]);
+
+  // PRIORITY 2: Start fetching data when wallet is connected but not initialized
   useEffect(() => {
     if (isConnected && address && !isInitialized && !isLoading && !initRef.current) {
       initRef.current = true;
@@ -50,12 +53,16 @@ export default function Home() {
         body: JSON.stringify({ walletAddress: address }),
       })
         .then(() => initializeGameData(address))
+        .then(() => {
+          // Force redirect after data is loaded
+          redirectToHome();
+        })
         .catch(err => {
           console.error('Login or data fetch failed:', err);
           initRef.current = false;
         });
     }
-  }, [isConnected, address, isInitialized, isLoading, initializeGameData]);
+  }, [isConnected, address, isInitialized, isLoading, initializeGameData, redirectToHome]);
 
   return <LandingContent />;
 }

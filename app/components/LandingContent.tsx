@@ -9,7 +9,7 @@ import { useGameStore } from "../stores/gameStore";
 import styles from "./LandingContent.module.css";
 
 export function LandingContent() {
-  const { isConnected, isConnecting } = useAccount();
+  const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading: storeLoading } = useGameStore();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
 
@@ -17,32 +17,33 @@ export function LandingContent() {
   useEffect(() => {
     if (isConnecting) {
       setLoadingMessage("Connecting wallet...");
-    } else if (isConnected && !isInitialized && !storeLoading) {
-      setLoadingMessage("Preparing your adventure...");
-    } else if (isConnected && storeLoading) {
-      setLoadingMessage("Loading your profile...");
-      
-      const timer1 = setTimeout(() => {
-        setLoadingMessage("Loading quests and inventory...");
-      }, 1500);
-      
-      const timer2 = setTimeout(() => {
-        setLoadingMessage("Almost ready...");
-      }, 3000);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    } else if (isConnected && isInitialized && !storeLoading) {
-      setLoadingMessage("Ready! Entering game...");
+    } else if (isConnected && address) {
+      if (!isInitialized && !storeLoading) {
+        setLoadingMessage("Preparing your adventure...");
+      } else if (storeLoading) {
+        setLoadingMessage("Loading your profile...");
+        
+        const timer1 = setTimeout(() => {
+          setLoadingMessage("Loading quests and inventory...");
+        }, 1500);
+        
+        const timer2 = setTimeout(() => {
+          setLoadingMessage("Almost ready...");
+        }, 3000);
+        
+        return () => {
+          clearTimeout(timer1);
+          clearTimeout(timer2);
+        };
+      } else if (isInitialized && !storeLoading) {
+        setLoadingMessage("Ready! Entering game...");
+      }
     }
-  }, [isConnecting, isConnected, isInitialized, storeLoading]);
+  }, [isConnecting, isConnected, address, isInitialized, storeLoading]);
 
-  // IMPORTANT: If wallet is connected, ALWAYS show loading screen
-  // Never show the connect form when wallet is already connected
-  // The redirect to /home will happen from page.tsx
-  if (isConnecting || isConnected) {
+  // ALWAYS show loading if wallet is connected or connecting
+  // This prevents the form from ever showing when wallet is connected
+  if (isConnecting || (isConnected && address)) {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
@@ -70,7 +71,7 @@ export function LandingContent() {
     );
   }
 
-  // Show connect wallet form ONLY when wallet is NOT connected
+  // Show connect wallet form ONLY when wallet is completely disconnected
   return (
     <div className={styles.container}>
       <div className={styles.card}>
