@@ -2,11 +2,15 @@
 
 import styles from "./LoadingState.module.css";
 
-export function LoadingState() {
+interface LoadingStateProps {
+  message?: string;
+}
+
+export function LoadingState({ message = "Loading..." }: LoadingStateProps) {
   return (
     <div className={styles.container}>
       <div className={styles.spinner}></div>
-      <p className={styles.text}>Connecting wallet...</p>
+      <p className={styles.text}>{message}</p>
     </div>
   );
 }

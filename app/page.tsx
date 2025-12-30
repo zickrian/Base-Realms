@@ -11,7 +11,7 @@ import { useGameStore } from "./stores/gameStore";
 export default function Home() {
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const { isConnected, isConnecting } = useAccount();
-  const { isInitialized } = useGameStore();
+  const { isInitialized, isLoading } = useGameStore();
 
   useEffect(() => {
     if (!isMiniAppReady) {
@@ -19,18 +19,20 @@ export default function Home() {
     }
   }, [setMiniAppReady, isMiniAppReady]);
 
-  // Show loading state while connecting
+  // Show loading state while connecting wallet
   if (isConnecting) {
     return <LoadingState />;
   }
 
-  // Only redirect to home if connected AND data is already initialized
-  // If connected but not initialized, LandingContent will handle the fetch and redirect
-  if (isConnected && isInitialized) {
+  // CRITICAL: Only redirect to home if connected AND all data is fully initialized AND not loading
+  // This prevents showing home page before data is ready
+  if (isConnected && isInitialized && !isLoading) {
     return <HomeRedirect />;
   }
 
-  // Show landing page if not connected OR if connected but data not yet fetched
-  // LandingContent will handle the fetch process and redirect when ready
+  // Show landing page for all other cases:
+  // - Not connected: show connect button
+  // - Connected but loading: show loading state with progress
+  // - Connected but not initialized: start fetch process
   return <LandingContent />;
 }

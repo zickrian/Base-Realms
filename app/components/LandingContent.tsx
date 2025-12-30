@@ -33,12 +33,18 @@ export function LandingContent() {
         body: JSON.stringify({ walletAddress: address }),
       })
       .then(async () => {
-        setLoadingMessage("Loading game data...");
+        setLoadingMessage("Loading your profile...");
+        
+        // Small delay to show the message
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setLoadingMessage("Loading quests and inventory...");
         
         // Step 2: Initialize and fetch ALL game data
         // This will fetch: profile, quests, settings, card packs, inventory
         await initializeGameData(address);
         // initializeGameData will set isInitialized to true when done
+        
+        setLoadingMessage("Almost ready...");
       })
       .catch(err => {
         console.error('Login or data fetch failed:', err);
@@ -54,18 +60,25 @@ export function LandingContent() {
 
   // Step 2: Redirect to home ONLY after all data is fetched and initialized
   useEffect(() => {
+    // CRITICAL: Only redirect when ALL conditions are met:
+    // 1. Wallet is connected
+    // 2. Address exists
+    // 3. Data is initialized (all fetches completed)
+    // 4. Store is not loading anymore
+    // 5. Fetch process has started (prevents premature redirect)
     if (isConnected && address && isInitialized && !storeLoading && hasStartedFetch) {
-      setLoadingMessage("Ready!");
+      setLoadingMessage("Ready! Entering game...");
       // All data is now fetched and cached in the store
-      // Wait a moment for UI to update, then redirect
+      // Small delay to show "Ready" message, then redirect
       setTimeout(() => {
         router.push("/home");
-      }, 300);
+      }, 500);
     }
   }, [isConnected, address, isInitialized, storeLoading, hasStartedFetch, router]);
 
   // Show connected state with loading message
-  if (isConnected && (isLoading || !isInitialized)) {
+  // This screen shows while we're fetching all game data
+  if (isConnected && (isLoading || !isInitialized || storeLoading)) {
     return (
       <div className={styles.container}>
         <div className={styles.card}>

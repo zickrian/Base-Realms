@@ -66,28 +66,16 @@ export default function HomePage() {
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
 
-  // Initialize game data on mount (only if not already initialized from landing page)
-  // Data should already be fetched in LandingContent before redirect, but this is a fallback
+  // Redirect if not connected or data not initialized
+  // User should NEVER reach this page without being fully initialized
   useEffect(() => {
-    if (isConnected && address && !isInitialized) {
-      // Only fetch if data wasn't already loaded from landing page
-      // This prevents duplicate fetches
-      fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address }),
-      })
-        .then(() => initializeGameData(address))
-        .catch(console.error);
-    }
-  }, [isConnected, address, isInitialized, initializeGameData]);
-
-  // Redirect if not connected
-  useEffect(() => {
-    if (!isConnecting && !isConnected) {
+    if (!isConnecting && (!isConnected || !isInitialized)) {
+      // Redirect back to landing page if:
+      // - Not connected, OR
+      // - Connected but data not initialized (shouldn't happen, but safety check)
       router.push("/");
     }
-  }, [isConnected, isConnecting, router]);
+  }, [isConnected, isConnecting, isInitialized, router]);
 
   // Handle successful mint
   useEffect(() => {
@@ -219,11 +207,8 @@ export default function HomePage() {
   const renderCardsView = () => <CardsMenu />;
 
   // NOW conditional returns are safe - all hooks have been called
-  if (isConnecting || (isConnected && !isInitialized && storeLoading)) {
-    return <LoadingState />;
-  }
-
-  if (!isConnected) {
+  // If we reach here without being initialized, show loading and redirect will happen via useEffect
+  if (!isInitialized || storeLoading || isConnecting || !isConnected) {
     return <LoadingState />;
   }
 

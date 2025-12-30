@@ -151,7 +151,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    set({ isLoading: true, error: null, profileLoading: true, questsLoading: true, settingsLoading: true, packsLoading: true, inventoryLoading: true });
+    set({ 
+      isLoading: true, 
+      error: null, 
+      profileLoading: true, 
+      questsLoading: true, 
+      settingsLoading: true, 
+      packsLoading: true, 
+      inventoryLoading: true,
+      isInitialized: false, // Explicitly set to false during loading
+    });
 
     try {
       // Fetch all data in parallel for fastest load
@@ -177,7 +186,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         }),
       ]);
 
-      // Process responses
+      // Process responses - wait for ALL to complete
       const [profileData, questsData, settingsData, packsData, inventoryData] = await Promise.all([
         profileRes.ok ? profileRes.json() : null,
         questsRes.ok ? questsRes.json() : null,
@@ -234,6 +243,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         quantity: item.quantity || 1,
       }));
 
+      // CRITICAL: Only set isInitialized to true AFTER all data is processed and set
+      // This ensures components won't render until everything is ready
       set({
         profile: profileData?.profile || null,
         quests: questsData?.quests || [],
@@ -243,16 +254,16 @@ export const useGameStore = create<GameState>((set, get) => ({
         } : null,
         cardPacks: formattedPacks,
         inventory: formattedInventory,
-        isInitialized: true,
-        isLoading: false,
         profileLoading: false,
         questsLoading: false,
         settingsLoading: false,
         packsLoading: false,
         inventoryLoading: false,
+        isLoading: false,
+        isInitialized: true, // Set to true LAST, after all data is ready
       });
 
-      // Background sync NFT (non-blocking)
+      // Background sync NFT (non-blocking, happens after initialization)
       fetch('/api/cards/sync-nft', {
         method: 'POST',
         headers: { 'x-wallet-address': walletAddress },
@@ -268,6 +279,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         settingsLoading: false,
         packsLoading: false,
         inventoryLoading: false,
+        isInitialized: false, // Keep false on error
       });
     }
   },
