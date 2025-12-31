@@ -27,12 +27,14 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
 }) => {
   const [showDamage, setShowDamage] = useState(false);
   const [currentDamage, setCurrentDamage] = useState<number | null>(null);
+  const [damageKey, setDamageKey] = useState(0);
 
   // Show damage number when hit
   useEffect(() => {
     if (isHit && damageAmount) {
       setCurrentDamage(damageAmount);
       setShowDamage(true);
+      setDamageKey(prev => prev + 1);
 
       // Hide damage number after animation
       const timer = setTimeout(() => {
@@ -57,7 +59,11 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
       <div className={styles.spriteWrapper}>
         {/* Damage number */}
         {showDamage && currentDamage && (
-          <div className={styles.damageNumber} data-testid="damage-number">
+          <div
+            key={damageKey}
+            className={styles.damageNumber}
+            data-testid="damage-number"
+          >
             -{currentDamage}
           </div>
         )}
@@ -67,8 +73,8 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         <img
           src={DRAGON_SPRITE_URL}
           alt={position === 'left' ? 'Player Dragon' : 'Enemy Dragon'}
-          width={150}
-          height={150}
+          width={240}
+          height={240}
           className={spriteClasses}
         />
       </div>

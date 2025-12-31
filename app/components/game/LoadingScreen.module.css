@@ -1,4 +1,5 @@
 /* LoadingScreen Component - Pixel-style loading screen */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 .loadingContainer {
   position: absolute;
@@ -10,64 +11,74 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+  background: #000;
   z-index: 1000;
+  overflow: hidden;
+}
+
+/* Background Image with Blur */
+.loadingContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/battle/gladiator.png');
+  background-size: cover;
+  background-position: center;
+  filter: blur(4px) brightness(0.4);
+  z-index: -1;
 }
 
 /* Loading title */
 .loadingTitle {
-  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
-  font-size: 24px;
-  color: #ffffff;
+  font-family: 'VT323', monospace;
+  font-size: 48px;
+  color: #ffd700;
   text-transform: uppercase;
   letter-spacing: 4px;
   margin-bottom: 40px;
   text-shadow:
-    0 0 10px rgba(255, 215, 0, 0.5),
-    2px 2px 0 #000000;
-  animation: titlePulse 1.5s ease-in-out infinite;
+    4px 4px 0 #3e1f08,
+    -2px -2px 0 #000;
+  animation: titlePulse 2s ease-in-out infinite;
 }
 
 @keyframes titlePulse {
 
   0%,
   100% {
-    opacity: 1;
     transform: scale(1);
+    opacity: 1;
   }
 
   50% {
+    transform: scale(1.05);
     opacity: 0.8;
-    transform: scale(1.02);
   }
 }
 
-/* Loading bar container */
+/* Loading bar container - RPG Style */
 .loadingBarContainer {
-  width: 280px;
-  height: 30px;
-  background: #1a1a2e;
-  border: 4px solid #ffffff;
+  width: 300px;
+  height: 32px;
+  background: #2c1810;
+  border: 4px solid #854d0e;
   border-radius: 4px;
-  overflow: hidden;
   position: relative;
-  box-shadow:
-    inset 0 4px 8px rgba(0, 0, 0, 0.5),
-    0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  padding: 2px;
 }
 
 /* Loading bar fill */
 .loadingBarFill {
   height: 100%;
-  background: linear-gradient(90deg,
-      #4ade80 0%,
-      #22c55e 50%,
-      #4ade80 100%);
+  background: linear-gradient(90deg, #d97706 0%, #fbbf24 50%, #d97706 100%);
   background-size: 200% 100%;
-  animation: loadingGradient 1s linear infinite;
+  animation: loadingGradient 1.5s linear infinite;
   transition: width 0.3s ease-out;
-  position: relative;
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
 }
 
 @keyframes loadingGradient {
@@ -84,21 +95,35 @@
 .loadingBarFill::after {
   content: '';
   position: absolute;
-  top: 4px;
-  left: 8px;
-  right: 8px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%);
+  transform: skewX(-20deg) translateX(-150%);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: skewX(-20deg) translateX(-150%);
+  }
+
+  100% {
+    transform: skewX(-20deg) translateX(300%);
+  }
 }
 
 /* Loading percentage text */
 .loadingPercentage {
-  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
-  font-size: 14px;
-  color: #ffffff;
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: #fff;
   margin-top: 16px;
-  text-shadow: 1px 1px 0 #000000;
+  text-shadow: 2px 2px 0 #000;
 }
 
 /* Loading dots animation */
@@ -112,7 +137,7 @@
   width: 12px;
   height: 12px;
   background: #ffd700;
-  border-radius: 2px;
+  box-shadow: 2px 2px 0 #000;
   animation: dotBounce 0.6s ease-in-out infinite;
 }
 
@@ -129,125 +154,46 @@
   0%,
   100% {
     transform: translateY(0);
-    opacity: 0.5;
   }
 
   50% {
     transform: translateY(-10px);
-    opacity: 1;
   }
 }
 
 /* Loading tip text */
 .loadingTip {
-  font-family: var(--font-pixelify), 'Press Start 2P', monospace;
-  font-size: 10px;
-  color: #a0a0a0;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #d1d5db;
   margin-top: 40px;
   text-align: center;
   max-width: 300px;
-  line-height: 1.6;
+  line-height: 1.4;
+  text-shadow: 1px 1px 0 #000;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Pixel art decorations */
-.pixelDecoration {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #ffd700;
-  opacity: 0.3;
-  animation: twinkle 2s ease-in-out infinite;
-}
-
-.pixelDecoration:nth-child(1) {
-  top: 20%;
-  left: 15%;
-  animation-delay: 0s;
-}
-
-.pixelDecoration:nth-child(2) {
-  top: 30%;
-  right: 20%;
-  animation-delay: 0.5s;
-}
-
-.pixelDecoration:nth-child(3) {
-  bottom: 25%;
-  left: 25%;
-  animation-delay: 1s;
-}
-
-.pixelDecoration:nth-child(4) {
-  bottom: 35%;
-  right: 15%;
-  animation-delay: 1.5s;
-}
-
-@keyframes twinkle {
-
-  0%,
-  100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.6;
-    transform: scale(1.2);
-  }
-}
-
-/* Responsive styles */
+/* Responsive */
 @media (max-width: 480px) {
   .loadingTitle {
-    font-size: 18px;
-    letter-spacing: 2px;
-    margin-bottom: 30px;
+    font-size: 36px;
   }
 
   .loadingBarContainer {
-    width: 220px;
-    height: 24px;
+    width: 240px;
+    height: 28px;
   }
 
   .loadingPercentage {
-    font-size: 12px;
+    font-size: 20px;
   }
 
   .loadingTip {
-    font-size: 8px;
-    max-width: 250px;
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-  }
-}
-
-@media (min-width: 769px) {
-  .loadingTitle {
-    font-size: 32px;
-    letter-spacing: 6px;
-    margin-bottom: 50px;
-  }
-
-  .loadingBarContainer {
-    width: 350px;
-    height: 36px;
-  }
-
-  .loadingPercentage {
     font-size: 16px;
-  }
-
-  .loadingTip {
-    font-size: 12px;
-    max-width: 400px;
-  }
-
-  .dot {
-    width: 14px;
-    height: 14px;
+    max-width: 260px;
   }
 }
