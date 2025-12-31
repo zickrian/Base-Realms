@@ -30,10 +30,10 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
   const { address } = useAccount();
   const { quests, questsLoading, claimQuest } = useGameStore();
   const [claimingId, setClaimingId] = useState<string | null>(null);
-  
+
   const handleClaimQuest = async (questId: string) => {
     if (!address || claimingId) return;
-    
+
     try {
       setClaimingId(questId);
       await claimQuest(address, questId);
@@ -56,7 +56,7 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
       <div className={styles.menuBox}>
         {/* Header */}
         <div className={styles.header}>
-          <div className={styles.title}>Daily Quests</div>
+          <div className={styles.title}>Quest Log</div>
           <button className={styles.closeButton} onClick={onClose}>
             <X size={24} />
           </button>
@@ -88,21 +88,17 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                     </div>
                     {(isCompleted || isClaimed) && (
                       <div className={styles.completedBadge}>
-                        <CheckCircle2 size={20} />
+                        <CheckCircle2 size={24} />
                       </div>
                     )}
                   </div>
 
                   {/* Progress Bar */}
                   <div className={styles.progressContainer}>
-                    <div className={styles.progressBarBackground}>
-                      <div 
-                        className={`${styles.progressBarFill} ${isCompleted || isClaimed ? styles.progressBarComplete : ''}`}
-                        style={{ width: `${progressPercentage}%` }}
-                      >
-                        <div className={styles.progressBarShine}></div>
-                      </div>
-                    </div>
+                    <div
+                      className={`${styles.progressBarFill} ${isCompleted || isClaimed ? styles.progressBarComplete : ''}`}
+                      style={{ width: `${progressPercentage}%` }}
+                    />
                     <div className={styles.progressText}>
                       <span>{quest.currentProgress} / {quest.maxProgress}</span>
                     </div>
@@ -123,14 +119,14 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                       onClick={() => handleClaimQuest(quest.id)}
                       disabled={isClaiming}
                     >
-                      {isClaiming ? 'Claiming...' : 'Claim Reward'}
+                      {isClaiming ? 'Claiming...' : 'CLAIM'}
                     </button>
                   )}
-                  
+
                   {/* Claimed indicator */}
                   {isClaimed && (
                     <div className={styles.claimedBadge}>
-                      ✓ Claimed
+                      Claimed
                     </div>
                   )}
                 </div>
