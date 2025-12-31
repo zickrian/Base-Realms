@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi";
 import { base } from "wagmi/chains";
@@ -38,14 +38,18 @@ export default function HomePage() {
   const chainId = useChainId();
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-  
-  const { 
-    isInitialized, 
+
+  const {
+    isInitialized,
     isLoading: storeLoading,
     refreshQuests,
     refreshInventory,
   } = useGameStore();
-  
+
+  // Refs to prevent race conditions and multiple redirects
+  const hasEverBeenReady = useRef(false);
+  const redirectAttempted = useRef(false);
+
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">("arena");
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
@@ -65,23 +69,39 @@ export default function HomePage() {
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
 
-  // Redirect if not connected - but give time for state to settle
-  // Only redirect if definitely not connected (not during connecting phase)
+  // Track when user has been fully ready (prevents unnecessary redirects on state flickers)
+  useEffect(() => {
+    if (isConnected && isInitialized && !storeLoading) {
+      hasEverBeenReady.current = true;
+    }
+  }, [isConnected, isInitialized, storeLoading]);
+
+  // Redirect if not connected - with better protection against race conditions
   useEffect(() => {
     // Don't redirect while connecting or loading - wait for state to settle
     if (isConnecting || storeLoading) return;
-    
-    // If already initialized, don't redirect - user is good to go
+
+    // If user was ever ready on this page, don't redirect on temporary state flickers
+    if (hasEverBeenReady.current && isConnected) return;
+
+    // If already initialized and connected, user is good to go
     if (isInitialized && isConnected) return;
-    
-    // Small delay to let wagmi state settle before deciding to redirect
+
+    // Prevent multiple redirect attempts
+    if (redirectAttempted.current) return;
+
+    // Longer delay to let wagmi state fully settle before deciding to redirect
     const timer = setTimeout(() => {
-      // Double check after delay - if still not connected or not initialized, redirect
+      // Triple check after delay - only redirect if truly not ready
       if (!isConnected || !isInitialized) {
-        router.replace("/");
+        // Only redirect if we haven't been ready before (prevents logout flash)
+        if (!hasEverBeenReady.current) {
+          redirectAttempted.current = true;
+          router.replace("/");
+        }
       }
-    }, 200);
-    
+    }, 500); // Increased delay for better stability
+
     return () => clearTimeout(timer);
   }, [isConnected, isConnecting, isInitialized, storeLoading, router]);
 
@@ -154,8 +174,8 @@ export default function HomePage() {
   }, [isSuccess, address, hash, refreshQuests, refreshInventory]);
 
   // Define handlers BEFORE conditional returns (but after hooks)
-  const handleBattle = () => {};
-  const handleStageSelect = () => {};
+  const handleBattle = () => { };
+  const handleStageSelect = () => { };
   const handleQuestClick = () => setIsQuestMenuOpen(true);
   const handlePackClick = () => setIsCardModalOpen(true);
 
@@ -184,7 +204,7 @@ export default function HomePage() {
         abi: CONTRACT_ABI,
         functionName: "mint",
       });
-      
+
       setToast({
         message: "Transaction is being processed. Please wait for confirmation...",
         type: "info",
@@ -216,7 +236,11 @@ export default function HomePage() {
 
   // NOW conditional returns are safe - all hooks have been called
   // Show loading while connecting, loading store, or not yet initialized
-  if (isConnecting || storeLoading || !isInitialized || !isConnected) {
+  // BUT if user has ever been ready, don't show loading (prevents flash on state flickers)
+  const shouldShowLoading = !hasEverBeenReady.current &&
+    (isConnecting || storeLoading || !isInitialized || !isConnected);
+
+  if (shouldShowLoading) {
     return <LoadingState />;
   }
 
@@ -226,8 +250,8 @@ export default function HomePage() {
       {activeNav === "cards" && renderCardsView()}
       <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
-      <CardRevealModal 
-        isOpen={isCardModalOpen} 
+      <CardRevealModal
+        isOpen={isCardModalOpen}
         onClose={() => setIsCardModalOpen(false)}
         onMint={handleMint}
         isMinting={isPending || isConfirming}
