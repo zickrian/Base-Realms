@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+
 import styles from './CharacterSprite.module.css';
 import { getStorageUrl } from '../../utils/supabaseStorage';
 
@@ -63,14 +63,13 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         )}
 
         {/* Character sprite */}
-        <Image
+
+        <img
           src={DRAGON_SPRITE_URL}
           alt={position === 'left' ? 'Player Dragon' : 'Enemy Dragon'}
           width={150}
           height={150}
           className={spriteClasses}
-          priority
-          unoptimized // For GIF animation support
         />
       </div>
 

@@ -1,7 +1,7 @@
 /* LoadingScreen Component - Pixel-style loading screen */
 
 .loadingContainer {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -22,17 +22,20 @@
   text-transform: uppercase;
   letter-spacing: 4px;
   margin-bottom: 40px;
-  text-shadow: 
+  text-shadow:
     0 0 10px rgba(255, 215, 0, 0.5),
     2px 2px 0 #000000;
   animation: titlePulse 1.5s ease-in-out infinite;
 }
 
 @keyframes titlePulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.8;
     transform: scale(1.02);
@@ -48,7 +51,7 @@
   border-radius: 4px;
   overflow: hidden;
   position: relative;
-  box-shadow: 
+  box-shadow:
     inset 0 4px 8px rgba(0, 0, 0, 0.5),
     0 4px 12px rgba(0, 0, 0, 0.5);
 }
@@ -56,11 +59,10 @@
 /* Loading bar fill */
 .loadingBarFill {
   height: 100%;
-  background: linear-gradient(90deg, 
-    #4ade80 0%, 
-    #22c55e 50%, 
-    #4ade80 100%
-  );
+  background: linear-gradient(90deg,
+      #4ade80 0%,
+      #22c55e 50%,
+      #4ade80 100%);
   background-size: 200% 100%;
   animation: loadingGradient 1s linear infinite;
   transition: width 0.3s ease-out;
@@ -72,6 +74,7 @@
   0% {
     background-position: 0% 50%;
   }
+
   100% {
     background-position: 200% 50%;
   }
@@ -122,10 +125,13 @@
 }
 
 @keyframes dotBounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
     opacity: 0.5;
   }
+
   50% {
     transform: translateY(-10px);
     opacity: 1;
@@ -178,10 +184,13 @@
 }
 
 @keyframes twinkle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.2;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.6;
     transform: scale(1.2);

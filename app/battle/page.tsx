@@ -79,7 +79,9 @@ export default function BattlePage() {
 
   return (
     <div className={styles.battlePageContainer} data-testid="battle-page">
-      {renderContent()}
+      <div className={styles.mobileFrame}>
+        {renderContent()}
+      </div>
     </div>
   );
 }

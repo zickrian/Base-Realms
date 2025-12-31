@@ -27,19 +27,17 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
   // Auto-close countdown
   useEffect(() => {
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          handleClose();
-          return 0;
-        }
-        return prev - 1;
-      });
+    if (countdown <= 0) {
+      handleClose();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => prev - 1);
     }, 1000);
 
-    return () => clearInterval(countdownInterval);
-  }, [handleClose]);
+    return () => clearTimeout(timer);
+  }, [countdown, handleClose]);
 
   const isVictory = result === 'victory';
 

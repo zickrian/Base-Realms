@@ -42,22 +42,35 @@
   0% {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(1) sepia(1) saturate(10) hue-rotate(-50deg);
   }
+
   50% {
     filter: drop-shadow(0 4px 8px rgba(255, 0, 0, 0.8)) brightness(1.5) sepia(1) saturate(10) hue-rotate(-50deg);
   }
+
   100% {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(1);
   }
 }
 
 @keyframes hitShake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-3px);
   }
-  20%, 40%, 60%, 80% {
+
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(3px);
   }
 }
@@ -68,13 +81,24 @@
 }
 
 @keyframes hitShakeMirrored {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scaleX(-1) translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: scaleX(-1) translateX(-3px);
   }
-  20%, 40%, 60%, 80% {
+
+  20%,
+  40%,
+  60%,
+  80% {
     transform: scaleX(-1) translateX(3px);
   }
 }
@@ -88,9 +112,11 @@
   0% {
     transform: translateX(0) scale(1);
   }
+
   30% {
     transform: translateX(20px) scale(1.1);
   }
+
   100% {
     transform: translateX(0) scale(1);
   }
@@ -105,9 +131,11 @@
   0% {
     transform: scaleX(-1) translateX(0) scale(1);
   }
+
   30% {
     transform: scaleX(-1) translateX(-20px) scale(1.1);
   }
+
   100% {
     transform: scaleX(-1) translateX(0) scale(1);
   }
@@ -123,14 +151,14 @@
   font-size: 24px;
   font-weight: bold;
   color: #ff4444;
-  text-shadow: 
+  text-shadow:
     2px 2px 0 #000000,
     -2px -2px 0 #000000,
     2px -2px 0 #000000,
     -2px 2px 0 #000000;
   animation: damageFloat 1s ease-out forwards;
   pointer-events: none;
-  z-index: 10;
+  z-index: 1000;
 }
 
 @keyframes damageFloat {
@@ -138,6 +166,7 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+
   100% {
     opacity: 0;
     transform: translateX(-50%) translateY(-40px);
@@ -153,100 +182,38 @@
 }
 
 /* Responsive styles */
+/* Responsive styles - simplified for mobile-first container */
 @media (max-width: 480px) {
   .sprite {
-    width: 80px;
-    height: 80px;
+    width: 200px;
+    height: 200px;
   }
 
   .shadow {
-    width: 60px;
-    height: 15px;
+    width: 130px;
+    height: 35px;
   }
 
   .damageNumber {
     font-size: 18px;
     top: -15px;
   }
-
-  @keyframes attackMove {
-    0% {
-      transform: translateX(0) scale(1);
-    }
-    30% {
-      transform: translateX(12px) scale(1.05);
-    }
-    100% {
-      transform: translateX(0) scale(1);
-    }
-  }
-
-  @keyframes attackMoveMirrored {
-    0% {
-      transform: scaleX(-1) translateX(0) scale(1);
-    }
-    30% {
-      transform: scaleX(-1) translateX(-12px) scale(1.05);
-    }
-    100% {
-      transform: scaleX(-1) translateX(0) scale(1);
-    }
-  }
 }
 
-@media (min-width: 481px) and (max-width: 768px) {
-  .sprite {
-    width: 100px;
-    height: 100px;
-  }
+/* Treat everything else like mobile/tablet mixed (since max width is 430px) */
+/* Actually, since we force max-width 430px, we should just use the small sizes or let them be slightly larger if space permits */
+/* But the container is max 430px. So effectively we are always in "mobile" territory regarding available space. */
 
-  .shadow {
-    width: 70px;
-    height: 18px;
-  }
-
-  .damageNumber {
-    font-size: 20px;
-  }
+.sprite {
+  width: 250px;
+  height: 250px;
 }
 
-@media (min-width: 769px) {
-  .sprite {
-    width: 150px;
-    height: 150px;
-  }
+.shadow {
+  width: 160px;
+  height: 40px;
+}
 
-  .shadow {
-    width: 100px;
-    height: 25px;
-  }
-
-  .damageNumber {
-    font-size: 28px;
-    top: -25px;
-  }
-
-  @keyframes attackMove {
-    0% {
-      transform: translateX(0) scale(1);
-    }
-    30% {
-      transform: translateX(30px) scale(1.15);
-    }
-    100% {
-      transform: translateX(0) scale(1);
-    }
-  }
-
-  @keyframes attackMoveMirrored {
-    0% {
-      transform: scaleX(-1) translateX(0) scale(1);
-    }
-    30% {
-      transform: scaleX(-1) translateX(-30px) scale(1.15);
-    }
-    100% {
-      transform: scaleX(-1) translateX(0) scale(1);
-    }
-  }
+.damageNumber {
+  font-size: 20px;
 }

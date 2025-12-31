@@ -8,7 +8,7 @@
   background: rgba(0, 0, 0, 0.7);
   border: 3px solid #ffffff;
   border-radius: 4px;
-  box-shadow: 
+  box-shadow:
     inset -4px -4px 0 rgba(0, 0, 0, 0.3),
     inset 4px 4px 0 rgba(255, 255, 255, 0.1),
     0 4px 8px rgba(0, 0, 0, 0.5);
@@ -121,12 +121,14 @@
   0% {
     filter: brightness(1.5);
   }
+
   100% {
     filter: brightness(1);
   }
 }
 
 /* Responsive styles */
+/* Responsive styles - adjusted for mobile frame */
 @media (max-width: 480px) {
   .healthBarContainer {
     min-width: 100px;
@@ -148,43 +150,22 @@
   }
 }
 
-@media (min-width: 481px) and (max-width: 768px) {
-  .healthBarContainer {
-    min-width: 120px;
-    max-width: 150px;
-  }
-
-  .characterName {
-    font-size: 10px;
-  }
-
-  .atkDisplay,
-  .hpDisplay {
-    font-size: 9px;
-  }
-
-  .healthBarWrapper {
-    height: 14px;
-  }
+/* Default styles for "mobile" context */
+.healthBarContainer {
+  min-width: 110px;
+  max-width: 140px;
+  padding: 8px 10px;
 }
 
-@media (min-width: 769px) {
-  .healthBarContainer {
-    min-width: 160px;
-    max-width: 200px;
-    padding: 10px 14px;
-  }
+.characterName {
+  font-size: 10px;
+}
 
-  .characterName {
-    font-size: 14px;
-  }
+.atkDisplay,
+.hpDisplay {
+  font-size: 9px;
+}
 
-  .atkDisplay,
-  .hpDisplay {
-    font-size: 11px;
-  }
-
-  .healthBarWrapper {
-    height: 18px;
-  }
+.healthBarWrapper {
+  height: 14px;
 }
