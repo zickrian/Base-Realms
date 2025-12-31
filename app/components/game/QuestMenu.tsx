@@ -45,14 +45,14 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
     }
   };
 
-  if (!isOpen) return null;
+  // if (!isOpen) return null; // Removed to prevent unmount crashing
 
   const getProgressPercentage = (current: number, max: number) => {
     return Math.min((current / max) * 100, 100);
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ display: isOpen ? 'flex' : 'none' }}>
       <div className={styles.menuBox}>
         {/* Header */}
         <div className={styles.header}>

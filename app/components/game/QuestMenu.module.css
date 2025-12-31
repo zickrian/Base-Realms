@@ -47,8 +47,8 @@
   box-shadow: none;
 
   /* Padding to ensure content stays inside the "paper" area of the image 
-     Adjust these based on the actual image margins */
-  padding: 60px 40px 40px 40px;
+     Adjusted to keep content strictly within the safe area */
+  padding: 90px 60px 60px 60px;
 
   display: flex;
   flex-direction: column;
@@ -106,8 +106,8 @@
   cursor: pointer;
   transition: transform 0.1s;
   position: absolute;
-  top: 40px;
-  right: 30px;
+  top: 75px;
+  right: 50px;
 }
 
 .closeButton:hover {
@@ -319,8 +319,8 @@
 @media (max-width: 480px) {
   .menuBox {
     background-size: 100% 100%;
-    padding: 50px 20px 30px 20px;
-    /* Tighter padding for mobile */
+    padding: 85px 45px 55px 45px;
+    /* Tighter padding for mobile but safe from edges */
     width: 95%;
   }
 
@@ -329,8 +329,8 @@
   }
 
   .closeButton {
-    top: 30px;
-    right: 20px;
+    top: 50px;
+    right: 40px;
   }
 
   .questTitle {
