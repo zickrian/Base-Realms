@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // If cardTemplateId is null or undefined, deselect (set to null)
     if (!cardTemplateId) {
-      const { data: profile, error: profileError } = await supabaseAdmin
+      const { data: _profile, error: profileError } = await supabaseAdmin
         .from('player_profiles')
         .update({ selected_card_id: null })
         .eq('user_id', user.id)
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update player profile with selected card
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: _profile, error: profileError } = await supabaseAdmin
       .from('player_profiles')
       .update({ selected_card_id: cardTemplateId })
       .eq('user_id', user.id)
