@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi";
-import { base } from "wagmi/chains";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import {
   HeaderBar,
   DailyPacks,
@@ -18,7 +17,9 @@ import {
 import { LoadingState } from "../components/LoadingState";
 import { Toast } from "../components/Toast";
 import { useAmbientSound } from "../hooks/useAmbientSound";
+import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useGameStore } from "../stores/gameStore";
+import type { Rarity } from "../lib/blockchain/nftService";
 import styles from "./page.module.css";
 
 const CONTRACT_ADDRESS = "0x2FFb8aA5176c1da165EAB569c3e4089e84EC5816" as const;
@@ -35,7 +36,6 @@ const CONTRACT_ABI = [
 export default function HomePage() {
   const router = useRouter();
   const { isConnected, isConnecting, address } = useAccount();
-  const chainId = useChainId();
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -54,6 +54,14 @@ export default function HomePage() {
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMintingInProgress, setIsMintingInProgress] = useState(false);
+  const [revealCardData, setRevealCardData] = useState<{
+    id: string;
+    name: string;
+    rarity: Rarity;
+    imageUrl: string;
+    contractAddress: string;
+  } | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
@@ -64,6 +72,8 @@ export default function HomePage() {
     type: "info",
     isVisible: false,
   });
+
+  const { packCount, loading: packsLoading, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // This ensures React Hooks rules are followed
@@ -177,7 +187,47 @@ export default function HomePage() {
   const handleBattle = () => { };
   const handleStageSelect = () => { };
   const handleQuestClick = () => setIsQuestMenuOpen(true);
-  const handlePackClick = () => setIsCardModalOpen(true);
+  
+  const handlePackClick = async () => {
+    if (!address || !isConnected) {
+      setToast({
+        message: "Wallet not connected. Please connect your wallet first.",
+        type: "error",
+        isVisible: true,
+      });
+      return;
+    }
+
+    // Check pack count - jangan buka modal kalau tidak ada pack
+    if (packCount <= 0) {
+      setToast({
+        message: "No daily packs available. Come back tomorrow!",
+        type: "info",
+        isVisible: true,
+      });
+      return;
+    }
+
+    // Check if already minting to prevent double minting
+    if (isMintingInProgress) {
+      setToast({
+        message: "Minting already in progress. Please wait...",
+        type: "info",
+        isVisible: true,
+      });
+      return;
+    }
+
+    // For daily pack, we'll use common card template
+    setRevealCardData({
+      id: 'daily-common',
+      name: 'Common Card',
+      rarity: 'common',
+      imageUrl: 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/commoncards.png',
+      contractAddress: '0x2ffb8aa5176c1da165eab569c3e4089e84ec5816',
+    });
+    setIsCardModalOpen(true);
+  };
 
   const handleMint = () => {
     if (!address || !isConnected) {
@@ -189,15 +239,7 @@ export default function HomePage() {
       return;
     }
 
-    if (chainId !== base.id) {
-      setToast({
-        message: "Please switch to Base Network to perform minting.",
-        type: "warning",
-        isVisible: true,
-      });
-      return;
-    }
-
+    // OnchainKit sudah handle Base chain dari awal, langsung mint
     try {
       writeContract({
         address: CONTRACT_ADDRESS,
@@ -252,9 +294,50 @@ export default function HomePage() {
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
-        onClose={() => setIsCardModalOpen(false)}
-        onMint={handleMint}
-        isMinting={isPending || isConfirming}
+        onClose={() => {
+          setIsCardModalOpen(false);
+          setRevealCardData(null);
+          setIsMintingInProgress(false);
+          // Refresh data after closing
+          refetchDailyPacks();
+          if (address) {
+            refreshInventory(address);
+            refreshQuests(address);
+          }
+        }}
+        cardData={revealCardData || undefined}
+        walletAddress={address}
+        onMintSuccess={async (transactionHash) => {
+          setIsMintingInProgress(true);
+          // After successful mint, claim the pack from backend
+          try {
+            await claimPack();
+            setToast({
+              message: "Card minted successfully! Added to your inventory.",
+              type: "success",
+              isVisible: true,
+              transactionHash,
+            });
+          } catch (error) {
+            console.error('Failed to claim pack:', error);
+            setToast({
+              message: "Card minted, but failed to update pack count.",
+              type: "warning",
+              isVisible: true,
+              transactionHash,
+            });
+          } finally {
+            setIsMintingInProgress(false);
+          }
+        }}
+        onMintError={(error) => {
+          setIsMintingInProgress(false);
+          setToast({
+            message: error || "Failed to mint card. Please try again.",
+            type: "error",
+            isVisible: true,
+          });
+        }}
       />
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <Toast

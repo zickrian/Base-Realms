@@ -3,9 +3,28 @@
  * Handles NFT contract interactions and balance checking
  */
 
-export const NFT_CONTRACT_ADDRESS = "0x2FFb8aA5176c1da165EAB569c3e4089e84EC5816" as const;
+// Contract addresses for each rarity
+export const NFT_CONTRACTS = {
+  common: "0x2ffb8aa5176c1da165eab569c3e4089e84ec5816" as const,
+  rare: "0x38826ec522f130354652bc16284645b0c832c341" as const,
+  epic: "0xcA36Cf2e444C209209F0c62127fAA37ae1bE62C9" as const,
+  legendary: "0xe199DeC5DdE8007a17BED43f1723bea41Ba5dADd" as const,
+} as const;
 
-// ABI format compatible with viem
+export const NFT_CONTRACT_ADDRESS = NFT_CONTRACTS.common;
+
+// Back card image - SAME for all rarities (shown before flip)
+export const BACK_CARD_IMAGE = "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/backcards.png" as const;
+
+// Front card images for each rarity (shown after flip)
+export const FRONT_CARD_IMAGES = {
+  common: "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/commoncards.png",
+  rare: "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/rarecards.png",
+  epic: "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/epiccards.png",
+  legendary: "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/legendcards.png",
+} as const;
+
+// ABI format compatible with viem - including mint function
 export const NFT_CONTRACT_ABI = [
   {
     name: "balanceOf",
@@ -23,6 +42,13 @@ export const NFT_CONTRACT_ABI = [
       { name: "index", type: "uint256" }
     ],
     outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "mint",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "to", type: "address" }],
+    outputs: [],
   },
 ] as const;
 
@@ -45,12 +71,145 @@ export const NFT_CONTRACT_ABI_VIEM = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [{ name: "to", type: "address" }],
+    name: "mint",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ] as const;
 
 export interface NFTBalanceResult {
   balance: number;
   hasNFT: boolean;
   error?: string;
+}
+
+export interface MintResult {
+  success: boolean;
+  transactionHash?: string;
+  error?: string;
+}
+
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+/**
+ * Get contract address for specific rarity
+ */
+export function getContractAddress(rarity: Rarity): string {
+  return NFT_CONTRACTS[rarity];
+}
+
+/**
+ * Get back card image - ALWAYS the same regardless of rarity
+ */
+export function getBackCardImage(): string {
+  return BACK_CARD_IMAGE;
+}
+
+/**
+ * Get front card image based on rarity (shown after flip)
+ */
+export function getFrontCardImage(rarity: Rarity): string {
+  return FRONT_CARD_IMAGES[rarity];
+}
+
+/**
+ * Check if user owns NFT from specific contract address
+ * This is a client-side check using window.ethereum
+ */
+export async function checkNFTOwnership(
+  walletAddress: string,
+  contractAddress: string
+): Promise<NFTBalanceResult> {
+  try {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      return {
+        balance: 0,
+        hasNFT: false,
+        error: 'Wallet not connected'
+      };
+    }
+
+    // Use viem for reading (if available on client)
+    const { createPublicClient, http } = await import('viem');
+    const { base } = await import('viem/chains');
+
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http(),
+    });
+
+    const balance = await publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: NFT_CONTRACT_ABI_VIEM,
+      functionName: 'balanceOf',
+      args: [walletAddress as `0x${string}`],
+    });
+
+    return {
+      balance: Number(balance),
+      hasNFT: Number(balance) > 0,
+    };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to check NFT ownership';
+    return {
+      balance: 0,
+      hasNFT: false,
+      error: errorMessage
+    };
+  }
+}
+
+/**
+ * Mint NFT card using connected wallet
+ * This must be called from client-side with user's wallet connected
+ */
+export async function mintNFTCard(
+  contractAddress: string,
+  walletAddress: string
+): Promise<MintResult> {
+  try {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      return {
+        success: false,
+        error: 'Wallet not connected. Please connect your wallet first.'
+      };
+    }
+
+    // Use viem for minting
+    // OnchainKit sudah set wallet ke Base dari awal, langsung gunakan wallet yang terconnect
+    const { createWalletClient, custom } = await import('viem');
+    const { base } = await import('viem/chains');
+
+    const walletClient = createWalletClient({
+      chain: base,
+      transport: custom(window.ethereum),
+    });
+
+    // Use the already connected wallet address directly (no popup)
+    // Call mint function on the contract
+    const hash = await walletClient.writeContract({
+      address: contractAddress as `0x${string}`,
+      abi: NFT_CONTRACT_ABI_VIEM,
+      functionName: 'mint',
+      args: [walletAddress as `0x${string}`],
+      account: walletAddress as `0x${string}`,
+    });
+
+    return {
+      success: true,
+      transactionHash: hash,
+    };
+  } catch (error: unknown) {
+    console.error('Minting error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to mint NFT card';
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
 }
 
 /**
