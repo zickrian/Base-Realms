@@ -5,6 +5,7 @@
   align-items: center;
   justify-content: center;
   background: transparent;
+  background-color: transparent;
   padding: var(--spacing-lg);
   position: relative;
   overflow: visible; /* Changed from hidden to visible to show full cloud */
@@ -12,6 +13,8 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  /* Ensure fully transparent - no background that could cut images */
+  opacity: 1;
 }
 
 .stageTitle {

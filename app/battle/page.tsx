@@ -39,7 +39,7 @@ export default function BattlePage() {
         setPhase('error');
         // Redirect back to home after 2 seconds
         setTimeout(() => {
-          router.push('/home');
+          router.replace('/home');
         }, 2000);
         return;
       }
@@ -52,7 +52,7 @@ export default function BattlePage() {
       setError('Wallet not connected');
       setPhase('error');
       setTimeout(() => {
-        router.push('/home');
+        router.replace('/home');
       }, 2000);
     }
   }, [address, profile, router]);
@@ -71,7 +71,7 @@ export default function BattlePage() {
         setError('No card selected. Please select a card from your inventory.');
         setPhase('error');
         setTimeout(() => {
-          router.push('/home');
+          router.replace('/home');
         }, 2000);
         return;
       }
@@ -91,10 +91,10 @@ export default function BattlePage() {
     }
   }, [initBattle, address, profile, router]);
 
-  // Handle battle end - navigate back to home
+  // Handle battle end - navigate back to home (use replace to avoid back button issues)
   const handleBattleEnd = useCallback(() => {
     resetBattle();
-    router.push('/home');
+    router.replace('/home');
   }, [resetBattle, router]);
 
   // Handle retry on error

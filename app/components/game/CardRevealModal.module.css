@@ -41,13 +41,19 @@
   cursor: pointer;
   transform-style: preserve-3d;
   transform: rotateY(0deg);
-  animation: cardAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cardAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Ensure card appears with animation when state changes to card2 */
+  opacity: 1;
 }
 
 @keyframes cardAppear {
   from {
-    transform: rotateY(0deg) scale(0.8);
+    transform: rotateY(0deg) scale(0.5);
     opacity: 0;
+  }
+  50% {
+    transform: rotateY(0deg) scale(1.05);
+    opacity: 0.8;
   }
   to {
     transform: rotateY(0deg) scale(1);
@@ -184,6 +190,32 @@
 }
 
 .clickHint p {
+  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.successMessage {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 185, 129, 0.9);
+  color: #ffffff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: pulse 2s ease-in-out infinite;
+  font-family: var(--font-pixelify);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  font-weight: bold;
+}
+
+.successMessage p {
   margin: 0;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
@@ -333,6 +365,20 @@
   background: rgba(165, 42, 42, 0.2);
   color: #3e1f08;
   border: 2px solid #a52a2a;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  image-rendering: pixelated;
+}
+
+.successIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(94, 156, 111, 0.2);
+  color: #3e1f08;
+  border: 2px solid #5e9c6f;
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
   image-rendering: pixelated;
 }

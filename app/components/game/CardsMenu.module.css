@@ -32,17 +32,23 @@
 
 .sectionTitle {
   font-family: var(--font-russo);
-  font-size: 18px;
+  font-size: 16px;
   color: #f1f5f9;
   text-transform: uppercase;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   text-align: center;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   border-bottom: none;
   padding-bottom: 0;
   display: block;
-  width: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Prevent text overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Shop Container */
@@ -74,6 +80,29 @@
 @media (max-width: 480px) {
   .packsRow {
     gap: 8px;
+  }
+  
+  /* Mobile adjustments for inventory */
+  .inventoryContainer {
+    padding: 10px;
+  }
+  
+  .cardsGrid {
+    gap: 6px;
+  }
+  
+  .sectionTitle {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .useButton {
+    font-size: 9px;
+    padding: 5px 6px;
+  }
+  
+  .cardSlotWrapper {
+    gap: 4px;
   }
 }
 
@@ -258,7 +287,7 @@
 .inventoryContainer {
   width: 100%;
   max-width: 100%;
-  padding: 16px;
+  padding: 12px;
   margin: 0 auto;
   box-sizing: border-box;
   background: rgba(15, 23, 42, 0.6);
@@ -266,18 +295,30 @@
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
+  /* Ensure container doesn't overflow */
+  overflow: hidden;
 }
 
 .cardsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Prevent grid from overflowing */
+  min-width: 0;
 }
 
 .cardSlotWrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
+  /* Prevent wrapper from overflowing */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .cardSlot {
@@ -293,6 +334,13 @@
   justify-content: center;
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
   transition: transform 0.1s, border-color 0.2s;
+  /* Ensure consistent size - no size changes on selection */
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .cardSlotSelected {
@@ -300,6 +348,13 @@
   box-shadow: 
     inset 0 0 12px rgba(0, 0, 0, 0.8),
     0 0 12px rgba(16, 185, 129, 0.4);
+  /* Ensure no size change - use same dimensions */
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 
@@ -322,6 +377,11 @@
   height: 90%;
   object-fit: contain;
   filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
+  /* Ensure image doesn't change size when card is selected */
+  max-width: 90%;
+  max-height: 90%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .cardCount {
@@ -367,13 +427,13 @@
 
 .useButton {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 8px;
   background: #3b82f6;
   border: 2px solid #1e40af;
   color: #ffffff;
   font-family: var(--font-pixelify);
   font-weight: bold;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   cursor: pointer;
   box-shadow: 
@@ -382,6 +442,13 @@
   transition: all 0.15s ease;
   border-radius: 0;
   text-align: center;
+  box-sizing: border-box;
+  /* Ensure button doesn't overflow */
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .useButton:hover:not(:disabled) {
@@ -421,9 +488,10 @@
 
 .emptyButtonPlaceholder {
   width: 100%;
-  min-height: 40px;
-  /* Match useButton height (padding 8px top + 8px bottom + line-height ~24px + border 2px top + 2px bottom) */
+  min-height: 32px;
+  /* Match useButton height (padding 6px top + 6px bottom + line-height ~20px + border 2px top + 2px bottom) */
   box-sizing: border-box;
+  max-width: 100%;
 }
 
 .bottomSpacer {

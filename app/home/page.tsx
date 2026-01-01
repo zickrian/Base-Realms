@@ -42,6 +42,7 @@ export default function HomePage() {
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
+  const [showAlreadyClaimedPopup, setShowAlreadyClaimedPopup] = useState(false);
   const [revealCardData, setRevealCardData] = useState<{
     id: string;
     name: string;
@@ -168,11 +169,8 @@ export default function HomePage() {
 
     // Check pack count - jangan buka modal kalau tidak ada pack
     if (freshPackCount <= 0) {
-      setToast({
-        message: "You have already claimed your free daily pack today. Please come back tomorrow!",
-        type: "info",
-        isVisible: true,
-      });
+      // Show popup instead of toast for better visibility
+      setShowAlreadyClaimedPopup(true);
       return;
     }
 
@@ -230,78 +228,68 @@ export default function HomePage() {
         cardData={revealCardData || undefined}
         walletAddress={address}
         onMintSuccess={async (transactionHash) => {
+          // Set minting in progress flag
           setIsMintingInProgress(true);
           
-          // After successful mint, claim the pack from backend
-          // This will update quest progress and mark pack as claimed for today
-          try {
-            // Claim pack - this will:
-            // 1. Update last_claimed_at to prevent another claim today
-            // 2. Update quest progress for 'open_packs'
-            // 3. Decrement pack_count
-            await claimPack();
-            
-            // Record mint transaction
-            if (address) {
-              try {
-                await fetch('/api/cards/record-mint', {
+          // Run backend operations in background without blocking UI
+          // Card reveal should continue regardless of backend operations
+          (async () => {
+            try {
+              // Claim pack - this will:
+              // 1. Update last_claimed_at to prevent another claim today
+              // 2. Update quest progress for 'open_packs'
+              // 3. Decrement pack_count
+              await claimPack();
+              
+              // Record mint transaction (non-blocking)
+              if (address) {
+                fetch('/api/cards/record-mint', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                     'x-wallet-address': address,
                   },
                   body: JSON.stringify({ transactionHash }),
+                }).catch((recordError) => {
+                  console.warn('Failed to record mint:', recordError);
                 });
-              } catch (recordError) {
-                console.warn('Failed to record mint:', recordError);
               }
-            }
-            
-            // Sync NFT from blockchain to ensure inventory is up to date
-            if (address) {
-              try {
-                await fetch('/api/cards/sync-nft', {
+              
+              // Sync NFT from blockchain (non-blocking)
+              if (address) {
+                fetch('/api/cards/sync-nft', {
                   method: 'POST',
                   headers: {
                     'x-wallet-address': address,
                   },
+                }).then(() => {
+                  // Refresh inventory and quests after sync
+                  if (address) {
+                    Promise.all([
+                      refreshInventory(address),
+                      refreshQuests(address),
+                      refetchDailyPacks(), // Refresh pack count to show 0
+                    ]).catch((refreshError) => {
+                      console.warn('Failed to refresh data:', refreshError);
+                    });
+                  }
+                }).catch((syncError) => {
+                  console.warn('Failed to sync NFT from blockchain:', syncError);
                 });
-              } catch (syncError) {
-                console.warn('Failed to sync NFT from blockchain:', syncError);
               }
-            }
-            
-            // Refresh inventory and quests after sync to show updated progress
-            if (address) {
-              await Promise.all([
-                refreshInventory(address),
-                refreshQuests(address),
-                refetchDailyPacks(), // Refresh pack count to show 0
-              ]);
-            }
-            
-            // Don't show Toast - CardRevealModal will show success state
-          } catch (error) {
-            console.error('Failed to claim pack:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to claim daily pack. Please try again.';
-            
-            // Refresh pack count in case of error
-            if (address) {
-              try {
-                await refetchDailyPacks();
-              } catch (refreshError) {
-                console.warn('Failed to refresh daily packs:', refreshError);
+            } catch (error) {
+              console.error('Failed to claim pack:', error);
+              // Don't show error to user - card reveal should continue
+              // Just refresh pack count in case of error
+              if (address) {
+                refetchDailyPacks().catch((refreshError) => {
+                  console.warn('Failed to refresh daily packs:', refreshError);
+                });
               }
+            } finally {
+              setIsMintingInProgress(false);
             }
-            
-            setToast({
-              message: errorMessage,
-              type: 'error',
-              isVisible: true,
-            });
-          } finally {
-            setIsMintingInProgress(false);
-          }
+          })();
         }}
         onMintError={(_error) => {
           setIsMintingInProgress(false);
@@ -309,6 +297,36 @@ export default function HomePage() {
         }}
       />
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      
+      {/* Already Claimed Popup */}
+      {showAlreadyClaimedPopup && (
+        <div className={styles.popupOverlay} onClick={() => setShowAlreadyClaimedPopup(false)}>
+          <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className={styles.popupCloseButton} 
+              onClick={() => setShowAlreadyClaimedPopup(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h3 className={styles.popupTitle}>PACK SUDAH DI-CLAIM</h3>
+            <p className={styles.popupDescription}>
+              Free daily pack hanya bisa di-claim <strong>1x sehari</strong>.
+            </p>
+            <p className={styles.popupDescription}>
+              Silakan kembali besok untuk claim pack gratis Anda!
+            </p>
+            <div className={styles.popupActions}>
+              <button 
+                className={styles.popupOkButton} 
+                onClick={() => setShowAlreadyClaimedPopup(false)}
+              >
+                MENGERTI
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

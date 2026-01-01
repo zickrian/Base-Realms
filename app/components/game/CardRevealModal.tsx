@@ -76,6 +76,7 @@ export function CardRevealModal({
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
+      console.log('[CardRevealModal] Modal opened, resetting state to minting');
       setRevealState("minting");
       setIsRotating(false);
       setIsFlipped(false);
@@ -84,22 +85,56 @@ export function CardRevealModal({
       
       // Auto-start minting when modal opens
       if (cardData && walletAddress) {
+        console.log('[CardRevealModal] Starting mint...');
         handleMint();
       }
     }
   }, [isOpen, cardData, walletAddress, handleMint]); // Re-mint if cardData changes
 
-  // Handle successful mint transaction
+  // Handle successful mint transaction - transition to backcard with animation
   useEffect(() => {
-    if (isSuccess && hash) {
+    if (isSuccess && hash && revealState === "minting") {
+      // Immediately transition to card2 (backcard) when minting succeeds
+      // This will show the backcard with animation
+      console.log('[CardRevealModal] Minting successful, transitioning to card2 (backcard)');
       setRevealState("card2");
-      onMintSuccess?.(hash);
+      
+      // Call onMintSuccess in background without blocking UI transition
+      // Use setTimeout to ensure state update happens first
+      setTimeout(() => {
+        try {
+          onMintSuccess?.(hash);
+        } catch (error) {
+          console.error('[CardRevealModal] Error in onMintSuccess callback:', error);
+          // Don't show error to user - card reveal should continue
+        }
+      }, 0);
     }
-  }, [isSuccess, hash, onMintSuccess]);
+  }, [isSuccess, hash, onMintSuccess, revealState]);
+
+  // Auto-flip to front card after showing backcard for 1 second (if user doesn't click)
+  useEffect(() => {
+    if (revealState === "card2" && !isRotating && !isFlipped) {
+      const autoFlipTimer = setTimeout(() => {
+        console.log('[CardRevealModal] Auto-flipping to front card after 1 second');
+        setIsRotating(true);
+        setRevealState("rotating");
+        
+        setTimeout(() => {
+          console.log('[CardRevealModal] Auto-flip animation complete, showing front card');
+          setRevealState("card1");
+        }, 400);
+      }, 1000); // Auto-flip after 1 second to show backcard briefly
+      
+      return () => clearTimeout(autoFlipTimer);
+    }
+  }, [revealState, isRotating, isFlipped]);
 
   // Handle write errors - format same as free mint in home/page.tsx
   useEffect(() => {
-    if (writeError) {
+    // Only handle errors if we're still in minting state
+    // If already transitioned to card2, ignore errors (transaction might have succeeded)
+    if (writeError && revealState === "minting") {
       let errorMessage = "Minting failed. Please try again.";
       const errorMsg = writeError.message || "";
       
@@ -113,13 +148,15 @@ export function CardRevealModal({
         onMintError?.(errorMessage);
         // Reset pending states
         setRevealState("minting");
-      } else if (errorMsg) {
+      } else if (errorMsg && !errorMsg.includes("continue in Base Account")) {
+        // Ignore "continue in Base Account" errors - these are wallet permission prompts
+        // that don't indicate actual failure
         errorMessage = `Minting failed: ${errorMsg}`;
         setMintError(errorMessage);
         onMintError?.(errorMessage);
       }
     }
-  }, [writeError, onMintError]);
+  }, [writeError, onMintError, revealState]);
 
   // Reset rotation class after animation completes
   useEffect(() => {
@@ -138,10 +175,12 @@ export function CardRevealModal({
     
     // Only allow click if showing back card and not already rotating
     if (revealState === "card2" && !isRotating && !isFlipped) {
+      console.log('[CardRevealModal] Card clicked, starting flip animation from backcard to front');
       setIsRotating(true);
       setRevealState("rotating");
       
       setTimeout(() => {
+        console.log('[CardRevealModal] Flip animation complete, showing front card');
         setRevealState("card1");
       }, 400);
     }
@@ -178,8 +217,8 @@ export function CardRevealModal({
 
   // Back card is ALWAYS the same for all rarities
   const backCardImage = getBackCardImage();
-  // Front card varies by rarity
-  const frontCardImage = cardData ? getFrontCardImage(cardData.rarity) : getGameIconUrl("commoncards.png");
+  // Front card varies by rarity - use common as fallback if no cardData
+  const frontCardImage = cardData ? getFrontCardImage(cardData.rarity) : getFrontCardImage('common');
 
   return (
     <div className={styles.container} onClick={handleBackdropClick}>
@@ -226,7 +265,7 @@ export function CardRevealModal({
           </div>
         )}
 
-        {/* Card reveal states */}
+        {/* Card reveal states - Show backcard (card2) when minting succeeds */}
         {(revealState === "card2" || revealState === "rotating" || revealState === "card1" || revealState === "acquired") && (
           <>
             <div
@@ -277,6 +316,13 @@ export function CardRevealModal({
             {revealState === "card2" && !isRotating && (
               <div className={styles.clickHint}>
                 <p>Click to flip</p>
+              </div>
+            )}
+            
+            {/* Success message when card is revealed */}
+            {revealState === "card1" && !isAnimatingToInventory && !isRotating && (
+              <div className={styles.successMessage}>
+                <p>Berhasil!</p>
               </div>
             )}
             
