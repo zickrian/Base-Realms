@@ -11,6 +11,7 @@ import {
   BottomNav,
   CardsMenu,
   QuestMenu,
+  SwapMenu,
   CardRevealModal,
   SettingsMenu,
 } from "../components/game";
@@ -39,6 +40,7 @@ export default function HomePage() {
 
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">("arena");
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
+  const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
@@ -126,6 +128,7 @@ export default function HomePage() {
   const handleBattle = () => { };
   const handleStageSelect = () => { };
   const handleQuestClick = () => setIsQuestMenuOpen(true);
+  const handleSwapClick = () => setIsSwapMenuOpen(true);
   
   const handlePackClick = async () => {
     if (!address || !isConnected) {
@@ -190,7 +193,7 @@ export default function HomePage() {
       <HeaderBar onSettingsClick={() => setIsSettingsOpen(true)} />
       <DailyPacks onQuestClick={handleQuestClick} onPackClick={handlePackClick} />
       <StageDisplay />
-      <BattleSection onBattle={handleBattle} onStageSelect={handleStageSelect} isPvPEnabled={false} />
+      <BattleSection onBattle={handleBattle} onStageSelect={handleStageSelect} onSwapClick={handleSwapClick} isSwapEnabled={false} />
     </>
   );
 
@@ -212,6 +215,7 @@ export default function HomePage() {
       {activeNav === "cards" && renderCardsView()}
       <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
+      <SwapMenu isOpen={isSwapMenuOpen} onClose={() => setIsSwapMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
         onClose={() => {

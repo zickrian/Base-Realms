@@ -10,10 +10,11 @@ import styles from "./BattleSection.module.css";
 interface BattleSectionProps {
   onStageSelect?: () => void;
   onBattle?: () => void;
-  isPvPEnabled?: boolean;
+  onSwapClick?: () => void;
+  isSwapEnabled?: boolean;
 }
 
-export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEnabled = false }: BattleSectionProps) {
+export function BattleSection({ onStageSelect, onBattle, onSwapClick, isSwapEnabled: _isSwapEnabled = false }: BattleSectionProps) {
   const router = useRouter();
   const { profile } = useGameStore();
 
@@ -45,7 +46,7 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEna
   const isBattleDisabled = !profile || !profile.selectedCardId || !profile.selectedCard;
   return (
     <div className={styles.wrapper}>
-      {/* Unified Base Card containing Stage, Battle, and PvP */}
+      {/* Unified Base Card containing Stage, Battle, and Swap */}
       <div className={styles.unifiedBaseCard}>
 
         {/* Left: Stage Button */}
@@ -80,18 +81,18 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEna
           </div>
         </button>
 
-        {/* Right: PvP Button */}
-        <button key="pvp-btn" className={styles.pvpButton} onClick={() => { }}>
-          <div className={styles.cardInnerPvP}>
+        {/* Right: Swap Button */}
+        <button key="swap-btn" className={styles.swapButton} onClick={onSwapClick}>
+          <div className={styles.cardInnerSwap}>
             <Image
               src={getGameIconUrl("swords.png")}
-              alt="PvP"
+              alt="Swap"
               className={styles.pannelIcon}
               width={40}
               height={40}
               unoptimized
             />
-            <span className={styles.buttonLabel} suppressHydrationWarning>PVP</span>
+            <span className={styles.buttonLabel} suppressHydrationWarning>SWAP</span>
           </div>
         </button>
 

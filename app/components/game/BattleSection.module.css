@@ -154,8 +154,8 @@
   white-space: nowrap;
 }
 
-/* PvP Button (Right Card Slot) */
-.pvpButton {
+/* Swap Button (Right Card Slot) */
+.swapButton {
   width: 64px;
   height: 64px;
   background: linear-gradient(180deg, #00AA88 0%, #007766 100%);
@@ -172,12 +172,12 @@
   flex-shrink: 0;
 }
 
-.pvpButton:active {
+.swapButton:active {
   transform: translateY(2px);
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #004433;
 }
 
-.cardInnerPvP {
+.cardInnerSwap {
   width: 100%;
   height: 100%;
   border-radius: 0;
@@ -230,7 +230,7 @@
   }
 
   .stageButton,
-  .pvpButton {
+  .swapButton {
     width: 60px;
     /* Slightly smaller buttons on mobile */
     height: 60px;
@@ -263,7 +263,7 @@
   }
 
   .stageButton,
-  .pvpButton {
+  .swapButton {
     width: 56px;
     height: 56px;
   }
