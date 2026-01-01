@@ -113,19 +113,17 @@ export async function POST(request: NextRequest) {
 
     // Update quest progress (no auto-claim for battle quests, user can claim manually)
     // Always update play_games quest
+    console.log(`[Battle Complete] Updating quest progress for user ${user.id}, result: ${result}`);
     const playGamesResult = await updateQuestProgress(user.id, 'play_games', 1, false);
+    console.log(`[Battle Complete] play_games quest updated - Progress increased, Completed: ${playGamesResult.completedQuestIds.length > 0}`);
     
     // Update win_games quest only if result is win
     let winGamesResult: { completedQuestIds: string[]; xpAwarded: number } = { completedQuestIds: [], xpAwarded: 0 };
     if (result === 'win') {
       winGamesResult = await updateQuestProgress(user.id, 'win_games', 1, false);
-    }
-
-    // Log quest updates for debugging
-    console.log(`[Battle Complete] User ${user.id}, Result: ${result}`);
-    console.log(`[Quest Progress] play_games - Completed: ${playGamesResult.completedQuestIds.length > 0}`);
-    if (result === 'win') {
-      console.log(`[Quest Progress] win_games - Completed: ${winGamesResult.completedQuestIds.length > 0}`);
+      console.log(`[Battle Complete] win_games quest updated - Progress increased, Completed: ${winGamesResult.completedQuestIds.length > 0}`);
+    } else {
+      console.log(`[Battle Complete] win_games quest not updated (result is loss)`);
     }
 
     return NextResponse.json({

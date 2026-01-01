@@ -43,17 +43,28 @@ export async function updateQuestProgress(
     .eq('quest_templates.quest_type', questType)
     .gte('expires_at', now.toISOString()); // Only update quests that haven't expired
 
-  if (error || !quests || quests.length === 0) {
+  if (error) {
+    console.error(`[updateQuestProgress] Error fetching quests for user ${userId}, type ${questType}:`, error);
     return { completedQuestIds: [], xpAwarded: 0 };
   }
+
+  if (!quests || quests.length === 0) {
+    console.log(`[updateQuestProgress] No active quests found for user ${userId}, type ${questType}`);
+    return { completedQuestIds: [], xpAwarded: 0 };
+  }
+
+  console.log(`[updateQuestProgress] Found ${quests.length} active quest(s) for user ${userId}, type ${questType}`);
 
   const completedQuestIds: string[] = [];
   let totalXpAwarded = 0;
 
   // Update each quest
   for (const quest of quests as UserQuest[]) {
+    const oldProgress = quest.current_progress;
     const newProgress = Math.min(quest.current_progress + increment, quest.max_progress);
     const isCompleted = newProgress >= quest.max_progress;
+
+    console.log(`[updateQuestProgress] Updating quest ${quest.id}: ${oldProgress}/${quest.max_progress} -> ${newProgress}/${quest.max_progress}`);
 
     const updateData: {
       current_progress: number;
@@ -70,6 +81,7 @@ export async function updateQuestProgress(
       updateData.status = 'completed';
       updateData.completed_at = new Date().toISOString();
       completedQuestIds.push(quest.id);
+      console.log(`[updateQuestProgress] Quest ${quest.id} completed!`);
 
       // Auto-claim if enabled
       if (autoClaim) {
@@ -79,6 +91,7 @@ export async function updateQuestProgress(
         if (template.reward_xp > 0) {
           await awardXp(userId, template.reward_xp);
           totalXpAwarded += template.reward_xp;
+          console.log(`[updateQuestProgress] Auto-claimed quest ${quest.id}, awarded ${template.reward_xp} XP`);
         }
 
         // TODO: Add card pack to inventory if reward_card_pack_id exists
@@ -89,10 +102,16 @@ export async function updateQuestProgress(
       }
     }
 
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('user_quests')
       .update(updateData)
       .eq('id', quest.id);
+
+    if (updateError) {
+      console.error(`[updateQuestProgress] Error updating quest ${quest.id}:`, updateError);
+    } else {
+      console.log(`[updateQuestProgress] Successfully updated quest ${quest.id}`);
+    }
   }
 
   return { completedQuestIds, xpAwarded: totalXpAwarded };

@@ -169,6 +169,16 @@ export async function POST(request: NextRequest) {
       const lastClaimed = new Date(dailyPacks.last_claimed_at);
       // Check if last claim was today (in UTC)
       if (lastClaimed >= todayStart) {
+        // User already claimed today - ensure quest is completed
+        // This handles edge case where quest wasn't updated during first claim
+        const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
+        try {
+          await updateQuestProgress(user.id, 'open_packs', 1, false);
+          console.log(`[Daily Pack] User ${user.id} already claimed today - ensured open_packs quest is updated`);
+        } catch (questError) {
+          console.error(`[Daily Pack] Error updating quest for already-claimed pack:`, questError);
+        }
+        
         return NextResponse.json(
           { error: 'You have already claimed your free daily pack today. Please come back tomorrow!' },
           { status: 400 }
@@ -193,8 +203,10 @@ export async function POST(request: NextRequest) {
 
     // Update quest progress for "open_packs" quest (NO auto-claim)
     // User must manually claim the quest to get XP - XP will only enter progress bar after claim
+    console.log(`[Daily Pack] Updating open_packs quest for user ${user.id} after successful claim`);
     const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
-    await updateQuestProgress(user.id, 'open_packs', 1, false);
+    const questResult = await updateQuestProgress(user.id, 'open_packs', 1, false);
+    console.log(`[Daily Pack] Quest update result - Completed: ${questResult.completedQuestIds.length > 0}, Quest IDs: ${questResult.completedQuestIds.join(', ')}`);
 
     return NextResponse.json({
       success: true,

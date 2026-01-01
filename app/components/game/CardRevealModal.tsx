@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { type Rarity, getBackCardImage, getFrontCardImage } from "../../lib/blockchain/nftService";
 import styles from "./CardRevealModal.module.css";
 
