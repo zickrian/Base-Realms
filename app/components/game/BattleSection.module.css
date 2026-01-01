@@ -9,6 +9,8 @@
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  position: relative;
+  z-index: 20; /* Lebih tinggi dari StageDisplay agar tidak terpotong */
 }
 
 /* --- Unified Base Card --- */
