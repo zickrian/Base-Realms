@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { type Rarity, getBackCardImage, getFrontCardImage } from "../../lib/blockchain/nftService";
@@ -50,6 +51,28 @@ export function CardRevealModal({
   const [mintError, setMintError] = useState<string | null>(null);
   const [isAnimatingToInventory, setIsAnimatingToInventory] = useState(false);
 
+  const handleMint = useCallback(() => {
+    if (!cardData || !walletAddress || isPending || isConfirming) return;
+
+    setMintError(null);
+
+    try {
+      // Use wagmi's writeContract which is already integrated with OnchainKit
+      // This will automatically use the correct chain (Base) from OnchainKitProvider
+      // Mint function doesn't require parameters (same as in home/page.tsx)
+      writeContract({
+        address: cardData.contractAddress as `0x${string}`,
+        abi: MINT_ABI,
+        functionName: 'mint',
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to start minting";
+      console.error('Minting error:', error);
+      setMintError(errorMsg);
+      onMintError?.(errorMsg);
+    }
+  }, [cardData, walletAddress, isPending, isConfirming, writeContract, onMintError]);
+
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +87,7 @@ export function CardRevealModal({
         handleMint();
       }
     }
-  }, [isOpen, cardData?.id]); // Re-mint if cardData changes
+  }, [isOpen, cardData, walletAddress, handleMint]); // Re-mint if cardData changes
 
   // Handle successful mint transaction
   useEffect(() => {
@@ -108,28 +131,6 @@ export function CardRevealModal({
       return () => clearTimeout(timer);
     }
   }, [revealState, isRotating]);
-
-  const handleMint = () => {
-    if (!cardData || !walletAddress || isPending || isConfirming) return;
-
-    setMintError(null);
-
-    try {
-      // Use wagmi's writeContract which is already integrated with OnchainKit
-      // This will automatically use the correct chain (Base) from OnchainKitProvider
-      // Mint function doesn't require parameters (same as in home/page.tsx)
-      writeContract({
-        address: cardData.contractAddress as `0x${string}`,
-        abi: MINT_ABI,
-        functionName: 'mint',
-      });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to start minting";
-      console.error('Minting error:', error);
-      setMintError(errorMsg);
-      onMintError?.(errorMsg);
-    }
-  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevent backdrop click from closing modal when clicking on card
@@ -245,10 +246,13 @@ export function CardRevealModal({
                     : styles.hidden
                 }`}
               >
-                <img
+                <Image
                   src={backCardImage}
                   alt="Card Back"
                   className={styles.cardImage}
+                  width={400}
+                  height={600}
+                  unoptimized
                 />
               </div>
 
@@ -258,10 +262,13 @@ export function CardRevealModal({
                   revealState === "card1" || revealState === "acquired" ? styles.visible : styles.hidden
                 }`}
               >
-                <img
+                <Image
                   src={frontCardImage}
                   alt={cardData?.name || "Card"}
                   className={styles.cardImage}
+                  width={400}
+                  height={600}
+                  unoptimized
                 />
               </div>
             </div>

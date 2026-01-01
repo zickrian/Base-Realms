@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import styles from './CharacterSprite.module.css';
 import { getStorageUrl } from '../../utils/supabaseStorage';
@@ -72,7 +73,7 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         )}
 
         {/* Character sprite */}
-        <img
+        <Image
           src={position === 'left' 
             ? (imageUrl || getStorageUrl('battle/human.png'))
             : ENEMY_SPRITE_URL
@@ -81,6 +82,7 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           width={240}
           height={240}
           className={spriteClasses}
+          unoptimized
         />
       </div>
 

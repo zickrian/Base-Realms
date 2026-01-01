@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { useGameStore, CardPack } from '../../stores/gameStore';
 import { CardRevealModal } from './CardRevealModal';
@@ -189,10 +190,12 @@ export function CardsMenu() {
                 <div className={styles.cardIllustration}>
                   <div className={styles.glowEffect} />
                   {pack.imageUrl ? (
-                    <img
+                    <Image
                       src={pack.imageUrl}
                       alt={pack.name}
                       className={styles.packImage}
+                      width={200}
+                      height={200}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         console.error('Failed to load pack image:', pack.name, pack.imageUrl);
@@ -203,6 +206,7 @@ export function CardsMenu() {
                         if (target) target.style.display = 'block';
                       }}
                       loading="lazy"
+                      unoptimized
                     />
                   ) : (
                     <div className={styles.packImagePlaceholder}>
@@ -248,10 +252,12 @@ export function CardsMenu() {
                     <div className={`${styles.cardSlot} ${isSelected ? styles.cardSlotSelected : ''}`}>
                       <div className={styles.cardInner}>
                         {item.cardTemplate.imageUrl && (
-                          <img
+                          <Image
                             src={item.cardTemplate.imageUrl}
                             alt={item.cardTemplate.name}
                             className={styles.cardImage}
+                            width={150}
+                            height={200}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               if (target) target.style.display = 'none';
@@ -261,6 +267,7 @@ export function CardsMenu() {
                               if (target) target.style.display = 'block';
                             }}
                             loading="lazy"
+                            unoptimized
                           />
                         )}
                       </div>

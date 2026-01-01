@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { useGameStore } from "../../stores/gameStore";
 import { useSoundEffect } from "../../hooks/useSoundEffect";
@@ -39,12 +40,13 @@ export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
       <div className={styles.packsSection}>
         <span className={styles.label}>FREE DAILY PACKS</span>
         <button className={styles.packButton} onClick={handlePackClick}>
-          <img
+          <Image
             src={getGameIconUrl("packs.png")}
             alt="Daily Packs"
             width={60}
             height={60}
             className={styles.packButtonImage}
+            unoptimized
           />
         </button>
       </div>
@@ -52,12 +54,13 @@ export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
       <div className={styles.questSection}>
         <span className={styles.questLabel}>QUEST</span>
         <button className={styles.questButton} onClick={handleQuestClick}>
-          <img
+          <Image
             src={getGameIconUrl("quest-button.png")}
             alt="Quests"
             width={60}
             height={60}
             className={styles.questButtonImage}
+            unoptimized
           />
           {questCount > 0 && (
             <div className={styles.questBadge}>{questCount}</div>
