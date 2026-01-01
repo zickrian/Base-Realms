@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { getGameIconUrl } from '../../utils/supabaseStorage';
 import { useSoundEffect } from '../../hooks/useSoundEffect';
 import styles from "./BottomNav.module.css";
@@ -35,13 +36,13 @@ export function BottomNav({ activeItem, onNavigate }: BottomNavProps) {
           className={`${styles.navItem} ${activeItem === item.id ? styles.active : ''}`}
           onClick={() => handleClick(item.id, item.sound)}
         >
-          {/* Using standard img to avoid React removeChild errors with Next/Image in dynamic buttons */}
-          <img
+          <Image
             src={item.icon}
             alt={item.label}
             className={styles.navIcon}
             width={32}
             height={32}
+            unoptimized
           />
           <span className={styles.navLabel}>{item.label}</span>
         </button>

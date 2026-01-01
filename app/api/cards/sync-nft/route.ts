@@ -12,8 +12,6 @@ import { NFT_CONTRACTS, NFT_CONTRACT_ABI_VIEM } from '@/app/lib/blockchain/nftSe
  * 3. Returns synced inventory
  */
 export async function POST(request: NextRequest) {
-  const syncApiStart = Date.now();
-  
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 

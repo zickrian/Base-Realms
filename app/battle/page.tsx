@@ -85,7 +85,7 @@ export default function BattlePage() {
         image_url: profile.selectedCard.image_url, // Optional, not used in battle
       });
       setPhase('battle');
-    } catch (err) {
+    } catch {
       setError('Failed to initialize battle');
       setPhase('error');
     }

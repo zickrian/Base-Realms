@@ -6,7 +6,6 @@ import styles from './BattleArena.module.css';
 import { HealthBar } from './HealthBar';
 import { CharacterSprite } from './CharacterSprite';
 import { ResultModal } from './ResultModal';
-import { LoadingScreen } from './LoadingScreen';
 import { useBattleStore } from '../../stores/battleStore';
 import { useGameStore } from '../../stores/gameStore';
 import { getStorageUrl } from '../../utils/supabaseStorage';

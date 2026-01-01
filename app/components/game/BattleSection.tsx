@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { useGameStore } from "../../stores/gameStore";
@@ -50,10 +51,13 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEna
         {/* Left: Stage Button */}
         <button key="stage-btn" className={styles.stageButton} onClick={onStageSelect}>
           <div className={styles.cardInner}>
-            <img
+            <Image
               src={getGameIconUrl("stage-button.png")}
               alt="Stats"
               className={styles.pannelIcon}
+              width={40}
+              height={40}
+              unoptimized
             />
             <span className={styles.buttonLabel} suppressHydrationWarning>STATS</span>
           </div>
@@ -79,10 +83,13 @@ export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEna
         {/* Right: PvP Button */}
         <button key="pvp-btn" className={styles.pvpButton} onClick={() => { }}>
           <div className={styles.cardInnerPvP}>
-            <img
+            <Image
               src={getGameIconUrl("swords.png")}
               alt="PvP"
               className={styles.pannelIcon}
+              width={40}
+              height={40}
+              unoptimized
             />
             <span className={styles.buttonLabel} suppressHydrationWarning>PVP</span>
           </div>
