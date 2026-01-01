@@ -97,7 +97,7 @@ interface GameState {
   claimQuest: (walletAddress: string, questId: string) => Promise<{ xpAwarded: number }>;
   updateProfileXp: (newXp: number, newLevel: number, newMaxXp: number) => void;
   updateQuestStatus: (questId: string, status: 'active' | 'completed' | 'claimed') => void;
-  selectCard: (walletAddress: string, cardTemplateId: string) => Promise<void>;
+  selectCard: (walletAddress: string, cardTemplateId: string | null) => Promise<void>;
   reset: () => void;
 }
 

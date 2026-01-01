@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     const playGamesResult = await updateQuestProgress(user.id, 'play_games', 1, false);
     
     // Update win_games quest only if result is win
-    let winGamesResult = { completedQuestIds: [], xpAwarded: 0 };
+    let winGamesResult: { completedQuestIds: string[]; xpAwarded: number } = { completedQuestIds: [], xpAwarded: 0 };
     if (result === 'win') {
       winGamesResult = await updateQuestProgress(user.id, 'win_games', 1, false);
     }
