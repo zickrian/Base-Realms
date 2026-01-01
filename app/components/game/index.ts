@@ -6,6 +6,7 @@ export { BottomNav } from "./BottomNav";
 export { CardsMenu } from "./CardsMenu";
 export { QuestMenu } from "./QuestMenu";
 export { SwapMenu } from "./SwapMenu";
+export { LeaderboardMenu } from "./LeaderboardMenu";
 export { CardRevealModal } from "./CardRevealModal";
 export { SettingsMenu } from "./SettingsMenu";
 

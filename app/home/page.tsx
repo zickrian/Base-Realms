@@ -12,6 +12,7 @@ import {
   CardsMenu,
   QuestMenu,
   SwapMenu,
+  LeaderboardMenu,
   CardRevealModal,
   SettingsMenu,
 } from "../components/game";
@@ -41,6 +42,7 @@ export default function HomePage() {
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">("arena");
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
   const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
+  const [isLeaderboardMenuOpen, setIsLeaderboardMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
@@ -126,7 +128,7 @@ export default function HomePage() {
 
   // Define handlers BEFORE conditional returns (but after hooks)
   const handleBattle = () => { };
-  const handleStageSelect = () => { };
+  const handleBoardClick = () => setIsLeaderboardMenuOpen(true);
   const handleQuestClick = () => setIsQuestMenuOpen(true);
   const handleSwapClick = () => setIsSwapMenuOpen(true);
   
@@ -193,7 +195,7 @@ export default function HomePage() {
       <HeaderBar onSettingsClick={() => setIsSettingsOpen(true)} />
       <DailyPacks onQuestClick={handleQuestClick} onPackClick={handlePackClick} />
       <StageDisplay />
-      <BattleSection onBattle={handleBattle} onStageSelect={handleStageSelect} onSwapClick={handleSwapClick} isSwapEnabled={false} />
+      <BattleSection onBattle={handleBattle} onBoardClick={handleBoardClick} onSwapClick={handleSwapClick} isSwapEnabled={false} />
     </>
   );
 
@@ -216,6 +218,7 @@ export default function HomePage() {
       <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
       <SwapMenu isOpen={isSwapMenuOpen} onClose={() => setIsSwapMenuOpen(false)} />
+      <LeaderboardMenu isOpen={isLeaderboardMenuOpen} onClose={() => setIsLeaderboardMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
         onClose={() => {

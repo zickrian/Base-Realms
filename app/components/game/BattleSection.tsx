@@ -11,10 +11,11 @@ interface BattleSectionProps {
   onStageSelect?: () => void;
   onBattle?: () => void;
   onSwapClick?: () => void;
+  onBoardClick?: () => void;
   isSwapEnabled?: boolean;
 }
 
-export function BattleSection({ onStageSelect, onBattle, onSwapClick, isSwapEnabled: _isSwapEnabled = false }: BattleSectionProps) {
+export function BattleSection({ onStageSelect, onBattle, onSwapClick, onBoardClick, isSwapEnabled: _isSwapEnabled = false }: BattleSectionProps) {
   const router = useRouter();
   const { profile } = useGameStore();
 
@@ -49,18 +50,18 @@ export function BattleSection({ onStageSelect, onBattle, onSwapClick, isSwapEnab
       {/* Unified Base Card containing Stage, Battle, and Swap */}
       <div className={styles.unifiedBaseCard}>
 
-        {/* Left: Stage Button */}
-        <button key="stage-btn" className={styles.stageButton} onClick={onStageSelect}>
+        {/* Left: Board Button */}
+        <button key="board-btn" className={styles.stageButton} onClick={onBoardClick}>
           <div className={styles.cardInner}>
             <Image
               src={getGameIconUrl("stage-button.png")}
-              alt="Stats"
+              alt="Board"
               className={styles.pannelIcon}
               width={40}
               height={40}
               unoptimized
             />
-            <span className={styles.buttonLabel} suppressHydrationWarning>STATS</span>
+            <span className={styles.buttonLabel} suppressHydrationWarning>BOARD</span>
           </div>
         </button>
 
