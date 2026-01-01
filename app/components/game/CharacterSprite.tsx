@@ -10,10 +10,11 @@ interface CharacterSpriteProps {
   isHit: boolean;
   isAttacking: boolean;
   damageAmount?: number | null;
+  imageUrl?: string | null;
 }
 
-// Dragon sprite URL from Supabase storage
-const DRAGON_SPRITE_URL = getStorageUrl('battle/output-onlinegiftools.gif');
+// Default enemy sprite URL from Supabase storage
+const ENEMY_SPRITE_URL = 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/battle/Pixel%20Monster%20No%20Background.png';
 
 /**
  * CharacterSprite Component
@@ -24,6 +25,7 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   isHit,
   isAttacking,
   damageAmount,
+  imageUrl,
 }) => {
   const [showDamage, setShowDamage] = useState(false);
   const [currentDamage, setCurrentDamage] = useState<number | null>(null);
@@ -47,9 +49,10 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   }, [isHit, damageAmount]);
 
   // Build sprite class names
+  // Player (left) faces right, Enemy (right) faces left (no mirroring)
   const spriteClasses = [
     styles.sprite,
-    position === 'right' ? styles.mirrored : '',
+    // Removed mirroring for enemy - enemy now faces left towards player
     isHit ? styles.hitEffect : '',
     isAttacking ? styles.attacking : '',
   ].filter(Boolean).join(' ');
@@ -69,10 +72,12 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
         )}
 
         {/* Character sprite */}
-
         <img
-          src={DRAGON_SPRITE_URL}
-          alt={position === 'left' ? 'Player Dragon' : 'Enemy Dragon'}
+          src={position === 'left' 
+            ? (imageUrl || getStorageUrl('battle/human.png'))
+            : ENEMY_SPRITE_URL
+          }
+          alt={position === 'left' ? 'Player' : 'Enemy'}
           width={240}
           height={240}
           className={spriteClasses}

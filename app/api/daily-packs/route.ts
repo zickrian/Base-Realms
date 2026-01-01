@@ -88,8 +88,21 @@ export async function GET(request: NextRequest) {
       throw packsError;
     }
 
+    // Check if user already claimed today - if yes, packCount should be 0
+    let finalPackCount = currentDailyPacks?.pack_count || 0;
+    if (currentDailyPacks?.last_claimed_at) {
+      const now = new Date();
+      const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      const lastClaimed = new Date(currentDailyPacks.last_claimed_at);
+      
+      // If last claim was today, packCount should be 0 (already claimed)
+      if (lastClaimed >= todayStart) {
+        finalPackCount = 0;
+      }
+    }
+
     return NextResponse.json({
-      packCount: currentDailyPacks?.pack_count || 0,
+      packCount: finalPackCount,
       nextResetAt: currentDailyPacks?.next_reset_at,
     });
   } catch (error: unknown) {

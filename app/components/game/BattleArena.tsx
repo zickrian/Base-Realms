@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { useAccount } from 'wagmi';
 import styles from './BattleArena.module.css';
 import { HealthBar } from './HealthBar';
 import { CharacterSprite } from './CharacterSprite';
 import { ResultModal } from './ResultModal';
+import { LoadingScreen } from './LoadingScreen';
 import { useBattleStore } from '../../stores/battleStore';
+import { useGameStore } from '../../stores/gameStore';
 import { getStorageUrl } from '../../utils/supabaseStorage';
 
 interface BattleArenaProps {
@@ -24,6 +27,8 @@ const HIT_EFFECT_DURATION = 300;
  * Main battle scene with turn-based combat
  */
 export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
+  const { address } = useAccount();
+  const { refreshQuests, refreshProfile } = useGameStore();
   const {
     status,
     currentTurn,
@@ -32,23 +37,50 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
     lastDamage,
     isHitEffectActive,
     hitTarget,
+    playerImageUrl,
     executeAttack,
     nextTurn,
     setStatus,
     setHitEffect,
   } = useBattleStore();
+  
+  const [battleId, setBattleId] = useState<string | null>(null);
+  const battleStartedRef = useRef(false);
 
   const [isAttacking, setIsAttacking] = useState(false);
   const [attackingCharacter, setAttackingCharacter] = useState<'player' | 'enemy' | null>(null);
   const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hitEffectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Start battle when component mounts
+  // Start battle when component mounts - create battle record
   useEffect(() => {
-    if (status === 'ready') {
+    if (status === 'ready' && !battleStartedRef.current && address) {
+      battleStartedRef.current = true;
+      
+      // Create battle record
+      fetch('/api/battles/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': address,
+        },
+        body: JSON.stringify({
+          battleType: 'pve',
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.battle) {
+            setBattleId(data.battle.id);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to create battle:', err);
+        });
+      
       setStatus('in_progress');
     }
-  }, [status, setStatus]);
+  }, [status, setStatus, address]);
 
   // Execute turn logic
   const executeTurn = useCallback(() => {
@@ -108,10 +140,50 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
     }
   }, [isHitEffectActive, hitTarget, status, nextTurn, setHitEffect]);
 
-  // Handle battle end
-  const handleBattleEnd = useCallback(() => {
+  // Handle battle end - complete battle and update quests
+  const handleBattleEnd = useCallback(async () => {
+    if (battleId && address) {
+      const battleResult = status === 'victory' ? 'win' : 'loss';
+      
+      try {
+        // Complete battle
+        const response = await fetch('/api/battles/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-wallet-address': address,
+          },
+          body: JSON.stringify({
+            battleId,
+            result: battleResult,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Log quest update result
+          if (data.questUpdated) {
+            console.log('[BattleArena] Quest updated:', data.questUpdated);
+          }
+          
+          // Refresh quests and profile to show updated progress
+          // Use Promise.allSettled to ensure both refresh even if one fails
+          await Promise.allSettled([
+            refreshQuests(address),
+            refreshProfile(address),
+          ]);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('[BattleArena] Failed to complete battle:', errorData);
+        }
+      } catch (error) {
+        console.error('Failed to complete battle:', error);
+      }
+    }
+    
     onBattleEnd();
-  }, [onBattleEnd]);
+  }, [battleId, address, status, refreshQuests, refreshProfile, onBattleEnd]);
 
   // Determine if battle has ended
   const battleEnded = status === 'victory' || status === 'defeat';
@@ -158,6 +230,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
               isHit={hitTarget === 'player'}
               isAttacking={isAttacking && attackingCharacter === 'player'}
               damageAmount={lastDamage?.target === 'player' ? lastDamage.amount : null}
+              imageUrl={playerImageUrl}
             />
           </div>
 

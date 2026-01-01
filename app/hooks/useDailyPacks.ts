@@ -6,6 +6,7 @@ export function useDailyPacks() {
   const [packCount, setPackCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   useEffect(() => {
     if (!isConnected || !address) {
@@ -42,9 +43,20 @@ export function useDailyPacks() {
     fetchDailyPacks();
   }, [address, isConnected]);
 
-  const claimPack = async () => {
-    if (!address || !isConnected) return;
+  const claimPack = async (): Promise<boolean> => {
+    if (!address || !isConnected) return false;
 
+    // Prevent multiple simultaneous requests
+    if (isClaiming) {
+      throw new Error('Claim already in progress. Please wait...');
+    }
+
+    // Check if pack count is already 0 (already claimed)
+    if (packCount <= 0) {
+      throw new Error('You have already claimed your free daily pack today. Please come back tomorrow!');
+    }
+
+    setIsClaiming(true);
     try {
       const response = await fetch('/api/daily-packs', {
         method: 'POST',
@@ -54,45 +66,51 @@ export function useDailyPacks() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to claim daily pack');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || 'Failed to claim daily pack';
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setPackCount(data.packCount);
+      setError(null);
+      return true; // Success
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
       throw err;
+    } finally {
+      setIsClaiming(false);
     }
   };
 
-  return { packCount, loading, error, claimPack, refetch: () => {
-    if (address && isConnected) {
-      const fetchDailyPacks = async () => {
-        try {
-          setLoading(true);
-          const response = await fetch('/api/daily-packs', {
-            headers: {
-              'x-wallet-address': address,
-            },
-          });
+  const refetch = async (): Promise<void> => {
+    if (!address || !isConnected) return;
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch daily packs');
-          }
+    try {
+      setLoading(true);
+      const response = await fetch('/api/daily-packs', {
+        headers: {
+          'x-wallet-address': address,
+        },
+      });
 
-          const data = await response.json();
-          setPackCount(data.packCount || 0);
-          setError(null);
-        } catch (err: unknown) {
-          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-          setError(errorMessage);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchDailyPacks();
+      if (!response.ok) {
+        throw new Error('Failed to fetch daily packs');
+      }
+
+      const data = await response.json();
+      setPackCount(data.packCount || 0);
+      setError(null);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  } };
+  };
+
+  return { packCount, loading, error, isClaiming, claimPack, refetch };
 }
 

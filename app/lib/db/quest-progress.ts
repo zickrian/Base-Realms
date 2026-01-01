@@ -29,8 +29,9 @@ export async function updateQuestProgress(
   increment: number = 1,
   autoClaim: boolean = false // Default to false - user must manually claim
 ): Promise<{ completedQuestIds: string[]; xpAwarded: number }> {
-  // Get ONLY active quests of this type
+  // Get ONLY active quests of this type that haven't expired
   // Don't update completed or claimed quests
+  const now = new Date();
   const { data: quests, error } = await supabaseAdmin
     .from('user_quests')
     .select(`
@@ -39,7 +40,8 @@ export async function updateQuestProgress(
     `)
     .eq('user_id', userId)
     .eq('status', 'active') // ONLY active quests can be updated
-    .eq('quest_templates.quest_type', questType);
+    .eq('quest_templates.quest_type', questType)
+    .gte('expires_at', now.toISOString()); // Only update quests that haven't expired
 
   if (error || !quests || quests.length === 0) {
     return { completedQuestIds: [], xpAwarded: 0 };

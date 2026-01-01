@@ -28,6 +28,15 @@ export interface PlayerProfile {
     name: string;
     stageNumber: number;
   };
+  selectedCardId?: string | null;
+  selectedCard?: {
+    id: string;
+    name: string;
+    rarity: string;
+    image_url: string | null;
+    atk: number;
+    health: number;
+  } | null;
 }
 
 export interface UserSettings {
@@ -88,6 +97,7 @@ interface GameState {
   claimQuest: (walletAddress: string, questId: string) => Promise<{ xpAwarded: number }>;
   updateProfileXp: (newXp: number, newLevel: number, newMaxXp: number) => void;
   updateQuestStatus: (questId: string, status: 'active' | 'completed' | 'claimed') => void;
+  selectCard: (walletAddress: string, cardTemplateId: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -496,6 +506,44 @@ export const useGameStore = create<GameState>((set, get) => ({
       q.id === questId ? { ...q, status } : q
     );
     set({ quests: updatedQuests });
+  },
+
+  // Select card for battle (or deselect if cardTemplateId is null)
+  selectCard: async (walletAddress: string, cardTemplateId: string | null) => {
+    try {
+      const response = await fetch('/api/cards/select', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': walletAddress,
+        },
+        body: JSON.stringify({ cardTemplateId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to select card');
+      }
+
+      const result = await response.json();
+      
+      // Update profile with selected card (or null if deselected)
+      const currentProfile = get().profile;
+      if (currentProfile) {
+        set({
+          profile: {
+            ...currentProfile,
+            selectedCardId: result.card?.id || null,
+            selectedCard: result.card || null,
+          },
+        });
+      } else {
+        // Refresh profile if not available
+        await get().refreshProfile(walletAddress);
+      }
+    } catch (error: unknown) {
+      throw error;
+    }
   },
 
   // Reset store (on logout)

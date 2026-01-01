@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { getStorageUrl } from '@/app/utils/supabaseStorage';
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,6 +52,24 @@ export async function GET(request: NextRequest) {
       stage = stageData;
     }
 
+    // Get selected card details if exists
+    let selectedCard = null;
+    if (profile.selected_card_id) {
+      const { data: cardData } = await supabaseAdmin
+        .from('card_templates')
+        .select('id, name, rarity, image_url, atk, health')
+        .eq('id', profile.selected_card_id)
+        .single();
+      
+      if (cardData) {
+        // Format image_url using getStorageUrl
+        selectedCard = {
+          ...cardData,
+          image_url: cardData.image_url ? getStorageUrl(cardData.image_url) : null,
+        };
+      }
+    }
+
     // Calculate XP percentage
     const xpPercentage = profile.max_xp > 0 
       ? (profile.current_xp / profile.max_xp) * 100 
@@ -71,6 +90,8 @@ export async function GET(request: NextRequest) {
         wins: profile.wins || 0,
         losses: profile.losses || 0,
         stage: stage,
+        selectedCardId: profile.selected_card_id || null,
+        selectedCard: selectedCard,
       },
     });
   } catch (error: unknown) {

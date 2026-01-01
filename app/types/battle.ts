@@ -30,6 +30,16 @@ export interface BattleState {
   lastDamage: LastDamage | null;
   isHitEffectActive: boolean;
   hitTarget: 'player' | 'enemy' | null;
+  playerImageUrl: string | null;
+}
+
+// Selected card interface for battle initialization
+export interface SelectedCardForBattle {
+  atk: number;
+  health: number;
+  name: string;
+  rarity: string;
+  image_url?: string | null; // Optional, not used in battle (we use character image based on rarity)
 }
 
 // Initial player stats (ATK: 100, HP: 500)
@@ -40,17 +50,26 @@ export const INITIAL_PLAYER_STATS: CharacterStats = {
   atk: 100,
 };
 
-// Initial enemy stats (ATK: 50, HP: 500)
+// Initial enemy stats (ATK: 80, HP: 500)
 export const INITIAL_ENEMY_STATS: CharacterStats = {
   name: 'Enemy',
   currentHp: 500,
   maxHp: 500,
-  atk: 50,
+  atk: 80,
 };
+
+// Selected card interface for battle initialization
+export interface SelectedCardForBattle {
+  atk: number;
+  health: number;
+  name: string;
+  rarity: string;
+  image_url?: string | null; // Optional, not used in battle (we use character image based on rarity)
+}
 
 // Battle store actions interface
 export interface BattleActions {
-  initBattle: () => void;
+  initBattle: (selectedCard?: SelectedCardForBattle) => void;
   executeAttack: () => void;
   nextTurn: () => void;
   setStatus: (status: BattleStatus) => void;

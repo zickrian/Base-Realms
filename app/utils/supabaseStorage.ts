@@ -46,3 +46,22 @@ export function getSoundUrl(soundPath: string): string {
     : `sound/${soundPath}`;
   return getStorageUrl(cleanPath);
 }
+
+/**
+ * Get character image URL based on card rarity
+ * Used in battle system to display character instead of card
+ * @param rarity - Card rarity ('common' | 'rare' | 'epic' | 'legendary' | 'legend')
+ * @returns Full URL to the character image in Supabase Storage
+ */
+export function getCharacterImageUrl(rarity: string): string {
+  const characterMap: Record<string, string> = {
+    common: 'battle/human.png',
+    rare: 'battle/knight.png',
+    epic: 'battle/mage.png',
+    legendary: 'battle/output-onlinegiftools.gif',
+    legend: 'battle/output-onlinegiftools.gif', // Support both 'legend' and 'legendary'
+  };
+
+  const characterPath = characterMap[rarity.toLowerCase()] || characterMap.common;
+  return getStorageUrl(characterPath);
+}

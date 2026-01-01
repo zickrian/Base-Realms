@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './LoadingScreen.module.css';
-import { getStorageUrl } from '../../utils/supabaseStorage';
+import { getStorageUrl, getCharacterImageUrl } from '../../utils/supabaseStorage';
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
+  playerRarity?: string | null;
 }
 
-// Assets to preload
-const ASSETS_TO_PRELOAD = [
+// Default assets to preload
+const DEFAULT_ASSETS_TO_PRELOAD = [
   getStorageUrl('battle/gladiator.png'),
-  getStorageUrl('battle/output-onlinegiftools.gif'),
+  'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/battle/Pixel%20Monster%20No%20Background.png',
 ];
 
 // Loading tips
@@ -26,16 +27,27 @@ const LOADING_TIPS = [
  * LoadingScreen Component
  * Pixel-style loading screen with asset preloading
  */
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, playerRarity }) => {
   const [progress, setProgress] = useState(0);
   const [tip] = useState(() => LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]);
 
   // Preload assets
   const preloadAssets = useCallback(async () => {
-    const totalAssets = ASSETS_TO_PRELOAD.length;
+    // Get character image URL based on rarity
+    const playerCharacterImageUrl = playerRarity 
+      ? getCharacterImageUrl(playerRarity)
+      : getCharacterImageUrl('common'); // Default to common
+
+    // Build assets list with player character image
+    const assetsToLoad = [
+      ...DEFAULT_ASSETS_TO_PRELOAD,
+      playerCharacterImageUrl,
+    ];
+
+    const totalAssets = assetsToLoad.length;
     let loadedAssets = 0;
 
-    const loadPromises = ASSETS_TO_PRELOAD.map((url) => {
+    const loadPromises = assetsToLoad.map((url) => {
       return new Promise<void>((resolve) => {
         const img = new Image();
         img.onload = () => {
@@ -54,7 +66,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete }) 
     });
 
     await Promise.all(loadPromises);
-  }, []);
+  }, [playerRarity]);
 
   useEffect(() => {
     let isMounted = true;

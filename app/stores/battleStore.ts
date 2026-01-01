@@ -7,7 +7,9 @@ import {
   INITIAL_PLAYER_STATS,
   INITIAL_ENEMY_STATS,
   VALID_TRANSITIONS,
+  SelectedCardForBattle,
 } from '../types/battle';
+import { getCharacterImageUrl } from '../utils/supabaseStorage';
 
 /**
  * Calculate damage result
@@ -29,6 +31,7 @@ const initialBattleState = {
   lastDamage: null,
   isHitEffectActive: false,
   hitTarget: null,
+  playerImageUrl: null,
 };
 
 /**
@@ -39,19 +42,35 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   ...initialBattleState,
 
   /**
-   * Initialize battle with default stats
+   * Initialize battle with selected card stats
    * Sets player as first attacker
+   * Uses character image based on card rarity instead of card image
    */
-  initBattle: () => {
+  initBattle: (selectedCard?: SelectedCardForBattle) => {
+    const playerStats = selectedCard 
+      ? {
+          name: selectedCard.name || 'Player',
+          currentHp: selectedCard.health,
+          maxHp: selectedCard.health,
+          atk: selectedCard.atk,
+        }
+      : { ...INITIAL_PLAYER_STATS };
+
+    // Get character image URL based on rarity (not card image)
+    const characterImageUrl = selectedCard?.rarity 
+      ? getCharacterImageUrl(selectedCard.rarity)
+      : getCharacterImageUrl('common'); // Default to common if no rarity
+
     set({
       status: 'ready',
       currentTurn: 'player',
       turnCount: 0,
-      player: { ...INITIAL_PLAYER_STATS },
+      player: playerStats,
       enemy: { ...INITIAL_ENEMY_STATS },
       lastDamage: null,
       isHitEffectActive: false,
       hitTarget: null,
+      playerImageUrl: characterImageUrl,
     });
   },
 
@@ -143,7 +162,10 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
    * Reset battle state to initial values
    */
   resetBattle: () => {
-    set(initialBattleState);
+    set({
+      ...initialBattleState,
+      playerImageUrl: null,
+    });
   },
 
   /**

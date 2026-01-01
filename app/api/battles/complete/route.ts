@@ -112,9 +112,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Update quest progress (no auto-claim for battle quests, user can claim manually)
-    await updateQuestProgress(user.id, 'play_games', 1, false);
+    // Always update play_games quest
+    const playGamesResult = await updateQuestProgress(user.id, 'play_games', 1, false);
+    
+    // Update win_games quest only if result is win
+    let winGamesResult = { completedQuestIds: [], xpAwarded: 0 };
     if (result === 'win') {
-      await updateQuestProgress(user.id, 'win_games', 1, false);
+      winGamesResult = await updateQuestProgress(user.id, 'win_games', 1, false);
+    }
+
+    // Log quest updates for debugging
+    console.log(`[Battle Complete] User ${user.id}, Result: ${result}`);
+    console.log(`[Quest Progress] play_games - Completed: ${playGamesResult.completedQuestIds.length > 0}`);
+    if (result === 'win') {
+      console.log(`[Quest Progress] win_games - Completed: ${winGamesResult.completedQuestIds.length > 0}`);
     }
 
     return NextResponse.json({
@@ -123,6 +134,10 @@ export async function POST(request: NextRequest) {
       xpAwarded: xpGained,
       levelUp: xpResult.leveledUp,
       newLevel: xpResult.newLevel,
+      questUpdated: {
+        playGames: playGamesResult.completedQuestIds.length > 0,
+        winGames: result === 'win' ? winGamesResult.completedQuestIds.length > 0 : false,
+      },
     });
   } catch (error: unknown) {
     console.error('Complete battle error:', error);

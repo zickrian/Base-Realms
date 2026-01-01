@@ -273,8 +273,8 @@ export function CardRevealModal({
               </div>
             )}
             
-            {/* Close button after flip */}
-            {revealState === "card1" && !isAnimatingToInventory && (
+            {/* Close button after flip - hide during rotation/flipping */}
+            {revealState === "card1" && !isAnimatingToInventory && !isRotating && (
               <button 
                 className={styles.closeButton}
                 onClick={handleCloseClick}

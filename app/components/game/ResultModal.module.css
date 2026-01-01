@@ -38,6 +38,8 @@
   align-items: center;
   justify-content: center;
   padding: 80px 50px 60px 50px;
+  position: relative;
+  z-index: 1002;
 
   /* Paper Background */
   background-image: url('https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/quest/temp.png');
@@ -115,6 +117,9 @@
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
   transition: all 0.1s ease;
   margin-top: 10px;
+  position: relative;
+  z-index: 1003;
+  pointer-events: auto;
 }
 
 .returnButton:hover {
@@ -144,6 +149,7 @@
   height: 8px;
   animation: confettiFall 3s linear infinite;
   z-index: 1001;
+  pointer-events: none; /* Allow clicks to pass through confetti */
   /* Above modal */
 }
 

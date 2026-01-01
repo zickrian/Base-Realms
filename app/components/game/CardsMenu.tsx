@@ -9,7 +9,7 @@ import styles from "./CardsMenu.module.css";
 
 export function CardsMenu() {
   const { address } = useAccount();
-  const { cardPacks, inventory, packsLoading, inventoryLoading, refreshInventory, refreshQuests } = useGameStore();
+  const { cardPacks, inventory, packsLoading, inventoryLoading, refreshInventory, refreshQuests, refreshProfile, selectCard, profile } = useGameStore();
   const [selectedPack, setSelectedPack] = useState<CardPack | null>(null);
   const [purchasing, setPurchasing] = useState(false);
   const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
@@ -22,6 +22,7 @@ export function CardsMenu() {
   } | null>(null);
   const processedTxHashes = useRef<Set<string>>(new Set());
   const isProcessingPurchase = useRef(false);
+  const [selectingCard, setSelectingCard] = useState<string | null>(null);
 
   const handleInfoClick = (pack: CardPack) => {
     setSelectedPack(pack);
@@ -145,6 +146,27 @@ export function CardsMenu() {
     setPurchasing(false);
   };
 
+  const handleUseCard = async (cardTemplateId: string) => {
+    if (!address || selectingCard) return;
+    
+    setSelectingCard(cardTemplateId);
+    try {
+      // If card is already selected, deselect it (set to null)
+      const isCurrentlySelected = profile?.selectedCardId === cardTemplateId;
+      const cardIdToSelect = isCurrentlySelected ? null : cardTemplateId;
+      
+      await selectCard(address, cardIdToSelect);
+      // Refresh profile to get updated selected card
+      await refreshProfile(address);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to select card';
+      console.error('Failed to select card:', errorMessage);
+      alert(errorMessage);
+    } finally {
+      setSelectingCard(null);
+    }
+  };
+
   return (
     <div className={styles.container} data-allow-scroll="true">
       {/* Cards Shop */}
@@ -219,43 +241,52 @@ export function CardsMenu() {
             </>
           ) : (
             <>
-              {inventory.map((item) => (
-                <div key={item.id} className={styles.cardSlot}>
-                  <button 
-                    className={styles.cardCloseButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Handle card close/remove if needed
-                    }}
-                    aria-label="Close"
-                  >
-                    ×
-                  </button>
-                  <div className={styles.cardInner}>
-                    {item.cardTemplate.imageUrl && (
-                      <img
-                        src={item.cardTemplate.imageUrl}
-                        alt={item.cardTemplate.name}
-                        className={styles.cardImage}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          if (target) target.style.display = 'none';
-                        }}
-                        onLoad={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          if (target) target.style.display = 'block';
-                        }}
-                        loading="lazy"
-                      />
-                    )}
+              {inventory.map((item) => {
+                const isSelected = profile?.selectedCardId === item.cardTemplate.id;
+                return (
+                  <div key={item.id} className={styles.cardSlotWrapper}>
+                    <div className={`${styles.cardSlot} ${isSelected ? styles.cardSlotSelected : ''}`}>
+                      <div className={styles.cardInner}>
+                        {item.cardTemplate.imageUrl && (
+                          <img
+                            src={item.cardTemplate.imageUrl}
+                            alt={item.cardTemplate.name}
+                            className={styles.cardImage}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target) target.style.display = 'none';
+                            }}
+                            onLoad={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target) target.style.display = 'block';
+                            }}
+                            loading="lazy"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      className={`${styles.useButton} ${isSelected ? styles.useButtonSelected : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUseCard(item.cardTemplate.id);
+                      }}
+                      disabled={selectingCard === item.cardTemplate.id}
+                    >
+                      {selectingCard === item.cardTemplate.id ? '...' : isSelected ? 'SELECTED' : 'USE'}
+                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {[...Array(Math.max(0, 4 - inventory.length))].map((_, index) => (
-                <div key={`empty-${index}`} className={styles.cardSlot}>
-                  <div className={styles.cardEmpty}>
-                    <span className={styles.cardEmptyLabel}>EMPTY</span>
+                <div key={`empty-${index}`} className={styles.cardSlotWrapper}>
+                  <div className={styles.cardSlot}>
+                    <div className={styles.cardEmpty}>
+                      <span className={styles.cardEmptyLabel}>EMPTY</span>
+                    </div>
                   </div>
+                  {/* Empty slot placeholder for button space */}
+                  <div className={styles.emptyButtonPlaceholder}></div>
                 </div>
               ))}
             </>

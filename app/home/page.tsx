@@ -218,20 +218,40 @@ export default function HomePage() {
       return;
     }
 
-    // Check pack count - jangan buka modal kalau tidak ada pack
-    if (packCount <= 0) {
+    // Check if already minting to prevent double minting
+    if (isMintingInProgress) {
       setToast({
-        message: "No daily packs available. Come back tomorrow!",
+        message: "Minting already in progress. Please wait...",
         type: "info",
         isVisible: true,
       });
       return;
     }
 
-    // Check if already minting to prevent double minting
-    if (isMintingInProgress) {
+    // Always fetch fresh pack count before checking
+    // This ensures we have the latest data after mint
+    let freshPackCount = packCount;
+    try {
+      await refetchDailyPacks();
+      // Get fresh pack count after refetch
+      // We need to fetch directly to get the latest value
+      const response = await fetch('/api/daily-packs', {
+        headers: {
+          'x-wallet-address': address,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        freshPackCount = data.packCount || 0;
+      }
+    } catch (error) {
+      console.warn('Failed to refresh daily packs:', error);
+    }
+
+    // Check pack count - jangan buka modal kalau tidak ada pack
+    if (freshPackCount <= 0) {
       setToast({
-        message: "Minting already in progress. Please wait...",
+        message: "You have already claimed your free daily pack today. Please come back tomorrow!",
         type: "info",
         isVisible: true,
       });
@@ -329,9 +349,31 @@ export default function HomePage() {
         walletAddress={address}
         onMintSuccess={async (transactionHash) => {
           setIsMintingInProgress(true);
+          
           // After successful mint, claim the pack from backend
+          // This will update quest progress and mark pack as claimed for today
           try {
+            // Claim pack - this will:
+            // 1. Update last_claimed_at to prevent another claim today
+            // 2. Update quest progress for 'open_packs'
+            // 3. Decrement pack_count
             await claimPack();
+            
+            // Record mint transaction
+            if (address) {
+              try {
+                await fetch('/api/cards/record-mint', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-wallet-address': address,
+                  },
+                  body: JSON.stringify({ transactionHash }),
+                });
+              } catch (recordError) {
+                console.warn('Failed to record mint:', recordError);
+              }
+            }
             
             // Sync NFT from blockchain to ensure inventory is up to date
             if (address) {
@@ -347,18 +389,34 @@ export default function HomePage() {
               }
             }
             
-            // Refresh inventory and quests after sync
+            // Refresh inventory and quests after sync to show updated progress
             if (address) {
               await Promise.all([
                 refreshInventory(address),
                 refreshQuests(address),
+                refetchDailyPacks(), // Refresh pack count to show 0
               ]);
             }
             
             // Don't show Toast - CardRevealModal will show success state
           } catch (error) {
             console.error('Failed to claim pack:', error);
-            // Don't show Toast - CardRevealModal will handle display
+            const errorMessage = error instanceof Error ? error.message : 'Failed to claim daily pack. Please try again.';
+            
+            // Refresh pack count in case of error
+            if (address) {
+              try {
+                await refetchDailyPacks();
+              } catch (refreshError) {
+                console.warn('Failed to refresh daily packs:', refreshError);
+              }
+            }
+            
+            setToast({
+              message: errorMessage,
+              type: 'error',
+              isVisible: true,
+            });
           } finally {
             setIsMintingInProgress(false);
           }

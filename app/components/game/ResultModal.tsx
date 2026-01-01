@@ -21,7 +21,11 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   const [countdown, setCountdown] = useState(Math.ceil(autoCloseDelay / 1000));
 
   // Handle close
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     onClose();
   }, [onClose]);
 
