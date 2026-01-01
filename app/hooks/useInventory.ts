@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { getStorageUrl } from '../utils/supabaseStorage';
 
@@ -35,11 +35,25 @@ export function useInventory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Guard untuk mencegah multiple sync bersamaan
+  const syncInProgressRef = useRef(false);
+  const lastSyncedAddressRef = useRef<string | null>(null);
+  const syncFnRef = useRef<((forceSync?: boolean) => Promise<void>) | null>(null);
+  const initializedAddressRef = useRef<string | null>(null);
+  const lastSyncTimeRef = useRef<number>(0);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const syncAndFetchInventory = useCallback(async (forceSync: boolean = false) => {
     if (!isConnected || !address) {
       setInventory([]);
       setLoading(false);
+      return;
+    }
+
+    // Prevent multiple syncs at the same time
+    if (forceSync && syncInProgressRef.current) {
+      console.log('[useInventory] Sync already in progress, skipping...');
       return;
     }
 
@@ -74,7 +88,24 @@ export function useInventory() {
       setLoading(false);
       
       if (forceSync) {
+        // Skip sync if already synced for this address recently
+        if (lastSyncedAddressRef.current === address && syncInProgressRef.current) {
+          console.log('[useInventory] Already syncing for this address, skipping...');
+          return;
+        }
+
+        // Skip sync if already synced untuk address ini dalam 10 detik terakhir
+        const now = Date.now();
+        const timeSinceLastSync = now - lastSyncTimeRef.current;
+        if (lastSyncedAddressRef.current === address && timeSinceLastSync < 10000) {
+          console.log('[useInventory] Sync cooldown active, skipping...');
+          return;
+        }
+
+        syncInProgressRef.current = true;
+        lastSyncedAddressRef.current = address;
         setIsSyncing(true);
+        
         fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
@@ -118,6 +149,8 @@ export function useInventory() {
           })
           .finally(() => {
             setIsSyncing(false);
+            syncInProgressRef.current = false;
+            lastSyncTimeRef.current = Date.now(); // Update waktu sync terakhir
           });
       }
     } catch (err: unknown) {
@@ -125,21 +158,77 @@ export function useInventory() {
       setError(errorMessage);
       setInventory([]);
       setLoading(false);
+      syncInProgressRef.current = false;
     }
   }, [address, isConnected]);
 
-  // OPTIMIZATION: Initial fetch WITHOUT force sync for faster load
-  // Sync will happen in background after data is displayed
+  // Simpan function terbaru ke ref untuk digunakan di useEffect
+  syncFnRef.current = syncAndFetchInventory;
+
+  // FIX: Hanya sync sekali saat address pertama kali connect atau berubah
   useEffect(() => {
-    syncAndFetchInventory(true); // Still sync, but non-blocking now
-  }, [syncAndFetchInventory]);
+    // Clear timeout yang lama jika ada
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = null;
+    }
+
+    if (address && isConnected) {
+      // Hanya sync jika address berbeda dari yang sudah di-initialize
+      const addressChanged = initializedAddressRef.current !== address && initializedAddressRef.current !== null;
+      const neverInitialized = initializedAddressRef.current === null;
+      
+      // Hanya sync jika address berubah atau belum pernah di-initialize
+      const shouldSync = addressChanged || neverInitialized;
+
+      // Fetch inventory tanpa sync dulu untuk load cepat (hanya sekali saat address baru)
+      if (neverInitialized) {
+        syncFnRef.current?.(false);
+      }
+      
+      // Hanya sync jika address berubah atau belum pernah di-initialize
+      // JANGAN sync lagi setelah sudah di-initialize untuk address yang sama
+      if (shouldSync && !syncInProgressRef.current) {
+        // Set flag dulu untuk mencegah multiple sync
+        initializedAddressRef.current = address;
+        
+        syncTimeoutRef.current = setTimeout(() => {
+          // Double check bahwa masih connected dan address masih sama sebelum sync
+          if (address && isConnected && address === initializedAddressRef.current && !syncInProgressRef.current && syncFnRef.current) {
+            lastSyncTimeRef.current = Date.now();
+            syncFnRef.current(true);
+          }
+          syncTimeoutRef.current = null;
+        }, 2000); // Delay 2 detik untuk mencegah sync terlalu cepat
+      }
+      
+      return () => {
+        if (syncTimeoutRef.current) {
+          clearTimeout(syncTimeoutRef.current);
+          syncTimeoutRef.current = null;
+        }
+      };
+    } else {
+      setInventory([]);
+      setLoading(false);
+      // Reset sync state ketika disconnect
+      syncInProgressRef.current = false;
+      lastSyncedAddressRef.current = null;
+      initializedAddressRef.current = null;
+      lastSyncTimeRef.current = 0;
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
+    }
+  }, [address, isConnected]); // Hanya depend pada address dan isConnected
 
   // Listen for refresh events
   useEffect(() => {
     const handleRefresh = () => {
-      if (address && isConnected) {
+      if (address && isConnected && !syncInProgressRef.current && syncFnRef.current) {
         // Force sync when refresh event is triggered (e.g., after minting)
-        syncAndFetchInventory(true);
+        syncFnRef.current(true);
       }
     };
 
@@ -147,7 +236,7 @@ export function useInventory() {
     return () => {
       window.removeEventListener('refresh-quests-inventory', handleRefresh);
     };
-  }, [address, isConnected, syncAndFetchInventory]);
+  }, [address, isConnected]); // Hanya depend pada address dan isConnected
 
   return { 
     inventory, 

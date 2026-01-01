@@ -331,9 +331,7 @@
   .closeButton {
     top: 50px;
     right: 40px;
-  }
-
-  .questTitle {
+  }  .questTitle {
     font-size: 1.25rem;
   }
 }

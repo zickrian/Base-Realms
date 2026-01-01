@@ -385,8 +385,16 @@
 
 .actionButtons {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+
+.actionButtons button {
+  width: 100%;
+  max-width: 250px;
 }
 
 .spinner {
@@ -433,6 +441,18 @@
   font-weight: bold;
   color: #f3e5c9;
   image-rendering: pixelated;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.retryButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.retryButton:disabled:hover,
+.cancelButton:disabled:hover {
+  transform: none;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
 }
 

@@ -42,7 +42,7 @@ export function CardRevealModal({
   onMintSuccess,
   onMintError 
 }: CardRevealModalProps) {
-  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
+  const { writeContract, data: hash, isPending, error: writeError, reset: resetWriteContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   const [revealState, setRevealState] = useState<RevealState>("minting");
   const [isRotating, setIsRotating] = useState(false);
@@ -81,14 +81,11 @@ export function CardRevealModal({
       setIsFlipped(false);
       setMintError(null);
       setIsAnimatingToInventory(false);
-      
-      // Auto-start minting when modal opens
-      if (cardData && walletAddress) {
-        console.log('[CardRevealModal] Starting mint...');
-        handleMint();
-      }
+      // Reset wagmi writeContract state to clear any previous errors
+      resetWriteContract();
+      // Don't auto-start minting - let user click button to start
     }
-  }, [isOpen, cardData, walletAddress, handleMint]); // Re-mint if cardData changes
+  }, [isOpen, resetWriteContract]); // Only reset when modal opens/closes
 
   // Handle successful mint transaction - transition to backcard with animation
   useEffect(() => {
@@ -131,9 +128,9 @@ export function CardRevealModal({
 
   // Handle write errors - format same as free mint in home/page.tsx
   useEffect(() => {
-    // Only handle errors if we're still in minting state
+    // Only handle errors if we're still in minting state and modal is open
     // If already transitioned to card2, ignore errors (transaction might have succeeded)
-    if (writeError && revealState === "minting") {
+    if (writeError && revealState === "minting" && isOpen) {
       let errorMessage = "Minting failed. Please try again.";
       const errorMsg = writeError.message || "";
       
@@ -155,7 +152,7 @@ export function CardRevealModal({
         onMintError?.(errorMessage);
       }
     }
-  }, [writeError, onMintError, revealState]);
+  }, [writeError, onMintError, revealState, isOpen]);
 
   // Reset rotation class after animation completes
   useEffect(() => {
@@ -186,11 +183,18 @@ export function CardRevealModal({
   };
 
   const handleCloseClick = () => {
-    // If minting is in progress, cancel it and show error
+    // Reset error state when closing
+    setMintError(null);
+    // Reset wagmi writeContract state to clear any errors for next time
+    resetWriteContract();
+    
+    // If minting is in progress, just close - wallet will handle cancellation
+    // Don't try to cancel writeContract as it's already initiated
     if (isPending || isConfirming) {
-      setMintError("Transaction cancelled by user.");
-      onMintError?.("Transaction cancelled by user.");
-      setRevealState("minting");
+      // User is closing while transaction is pending
+      // The transaction will either succeed or fail, but we'll close the modal
+      // Error handling will catch user rejection
+      onClose();
       return;
     }
     // Only close when user explicitly clicks close button or backdrop
@@ -199,16 +203,13 @@ export function CardRevealModal({
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // If minting is in progress, cancel it
+    // Only allow closing if not in minting state or if transaction is not pending
     if (e.target === e.currentTarget) {
-      if (isPending || isConfirming) {
-        // User is trying to cancel during minting
-        setMintError("Transaction cancelled by user.");
-        onMintError?.("Transaction cancelled by user.");
-        setRevealState("minting");
-      } else if (revealState !== "minting") {
-        handleCloseClick();
+      if (revealState === "minting" && (isPending || isConfirming)) {
+        // Don't close during active minting - user should cancel in wallet
+        return;
       }
+      handleCloseClick();
     }
   };
 
@@ -249,16 +250,28 @@ export function CardRevealModal({
                 <h3 className={styles.statusTitle}>Error</h3>
                 <p className={styles.statusMessage}>{mintError}</p>
                 <div className={styles.actionButtons}>
-                  <button className={styles.retryButton} onClick={handleMint}>
+                  <button className={styles.retryButton} onClick={handleMint} disabled={isPending || isConfirming}>
                     Retry Mint
+                  </button>
+                  <button className={styles.cancelButton} onClick={onClose} style={{ marginTop: '10px' }}>
+                    Close
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <div className={styles.spinner}></div>
-                <h3 className={styles.statusTitle}>Preparing</h3>
-                <p className={styles.statusMessage}>Preparing your card...</p>
+                <h3 className={styles.statusTitle}>Ready to Mint</h3>
+                <p className={styles.statusMessage}>Click the button below to start minting your card</p>
+                <div className={styles.actionButtons}>
+                  <button 
+                    className={styles.retryButton} 
+                    onClick={handleMint} 
+                    disabled={isPending || isConfirming || !cardData || !walletAddress}
+                  >
+                    {isPending || isConfirming ? 'Minting...' : 'Start Mint'}
+                  </button>
+                </div>
               </>
             )}
           </div>
