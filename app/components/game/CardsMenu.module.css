@@ -289,6 +289,48 @@
   transition: transform 0.1s;
 }
 
+.cardCloseButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: #dc2626;
+  border: 2px solid #991b1b;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixelify);
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 1;
+  z-index: 10;
+  padding: 0;
+  box-shadow: 
+    0 2px 0 #991b1b,
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.15s ease;
+  image-rendering: pixelated;
+  border-radius: 0;
+}
+
+.cardCloseButton:hover {
+  background: #ef4444;
+  transform: translateY(1px);
+  box-shadow: 
+    0 1px 0 #991b1b,
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.cardCloseButton:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 0 0 #991b1b,
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
 .cardSlot:hover {
   transform: translateY(-2px);
   border-color: #94a3b8;
@@ -359,86 +401,162 @@
 .popupOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease-out;
 }
 
 .popupContent {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 24px;
+  position: relative;
+  background-color: #e8be82;
+  border: 4px solid #3e1f08;
+  outline: 4px solid #2a1810;
+  border-radius: 0;
+  padding: 6px;
   width: 90%;
   max-width: 320px;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-  animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow:
+    inset 0 0 40px rgba(139, 69, 19, 0.15),
+    10px 10px 0 rgba(0, 0, 0, 0.5);
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  color: #3e1f08;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.popupCloseButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: #a52a2a;
+  border: 2px solid #3e1f08;
+  color: #f3e5c9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'VT323', monospace;
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 1;
+  z-index: 10;
+  padding: 0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.1s;
+  image-rendering: pixelated;
+}
+
+.popupCloseButton:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+.popupCloseButton:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 .popupTitle {
-  font-family: var(--font-russo);
-  font-size: 20px;
-  color: white;
-  margin-bottom: 12px;
+  font-family: 'VT323', monospace;
+  font-size: 2rem;
+  color: #3e1f08;
+  margin: 0;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+  font-weight: bold;
+  padding: 0.75rem 1rem;
+  border-bottom: 3px dashed #8b5a2b;
 }
 
 .popupDescription {
-  font-family: var(--font-source-code-pro);
-  font-size: 14px;
-  color: #94a3b8;
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
+  color: #3e1f08;
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin: 0;
+  text-shadow: none;
+  padding: 1rem;
 }
 
 .popupActions {
   display: flex;
   gap: 12px;
   justify-content: center;
+  padding: 1rem;
 }
 
 .cancelButton,
 .confirmButton {
   flex: 1;
-  padding: 10px 0;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-russo);
-  font-size: 14px;
+  padding: 0.75rem;
+  border: 2px solid #3e1f08;
+  border-radius: 0;
+  font-family: 'VT323', monospace;
+  font-size: 1.5rem;
   cursor: pointer;
-  color: white;
-  transition: transform 0.1s;
+  color: #f3e5c9;
+  transition: all 0.1s;
+  font-weight: bold;
+  text-transform: uppercase;
+  image-rendering: pixelated;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
 }
 
 .cancelButton {
-  background: #ef4444;
-  box-shadow: 0 4px 0 #991b1b;
+  background: #a52a2a;
+}
+
+.cancelButton:hover {
+  background: #c0392b;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
 }
 
 .cancelButton:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #991b1b;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 .confirmButton {
-  background: #22c55e;
-  box-shadow: 0 4px 0 #15803d;
+  background: #5e9c6f;
+}
+
+.confirmButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
 }
 
 .confirmButton:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #15803d;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 .confirmButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Toast Message */
@@ -509,20 +627,7 @@
   from {
     opacity: 0;
   }
-
   to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-
-  to {
-    transform: scale(1);
     opacity: 1;
   }
 }

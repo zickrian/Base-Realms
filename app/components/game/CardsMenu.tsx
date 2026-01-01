@@ -221,6 +221,16 @@ export function CardsMenu() {
             <>
               {inventory.map((item) => (
                 <div key={item.id} className={styles.cardSlot}>
+                  <button 
+                    className={styles.cardCloseButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle card close/remove if needed
+                    }}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
                   <div className={styles.cardInner}>
                     {item.cardTemplate.imageUrl && (
                       <img
@@ -269,6 +279,13 @@ export function CardsMenu() {
       {selectedPack && (
         <div className={styles.popupOverlay} onClick={closePopup}>
           <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className={styles.popupCloseButton} 
+              onClick={closePopup}
+              aria-label="Close"
+            >
+              ×
+            </button>
             <h3 className={styles.popupTitle}>CONFIRM PURCHASE</h3>
             <p className={styles.popupDescription}>
               Are you sure you want to buy <strong>{selectedPack.name}</strong> for <strong>{selectedPack.priceEth} ETH</strong>?

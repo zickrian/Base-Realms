@@ -81,14 +81,20 @@ export function CardRevealModal({
       const errorMsg = writeError.message || "";
       
       if (errorMsg.includes("user rejected") || errorMsg.includes("User rejected") || 
-          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled")) {
+          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled") ||
+          errorMsg.includes("User denied") || errorMsg.includes("user denied") ||
+          errorMsg.includes("rejected") || errorMsg.includes("cancelled")) {
         errorMessage = "Transaction cancelled by user.";
+        // Set error state immediately when user cancels
+        setMintError(errorMessage);
+        onMintError?.(errorMessage);
+        // Reset pending states
+        setRevealState("minting");
       } else if (errorMsg) {
         errorMessage = `Minting failed: ${errorMsg}`;
+        setMintError(errorMessage);
+        onMintError?.(errorMessage);
       }
-      
-      setMintError(errorMessage);
-      onMintError?.(errorMessage);
     }
   }, [writeError, onMintError]);
 
@@ -141,14 +147,29 @@ export function CardRevealModal({
   };
 
   const handleCloseClick = () => {
+    // If minting is in progress, cancel it and show error
+    if (isPending || isConfirming) {
+      setMintError("Transaction cancelled by user.");
+      onMintError?.("Transaction cancelled by user.");
+      setRevealState("minting");
+      return;
+    }
     // Only close when user explicitly clicks close button or backdrop
     // Don't auto-close after flip
     onClose();
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && revealState !== "minting") {
-      handleCloseClick();
+    // If minting is in progress, cancel it
+    if (e.target === e.currentTarget) {
+      if (isPending || isConfirming) {
+        // User is trying to cancel during minting
+        setMintError("Transaction cancelled by user.");
+        onMintError?.("Transaction cancelled by user.");
+        setRevealState("minting");
+      } else if (revealState !== "minting") {
+        handleCloseClick();
+      }
     }
   };
 
