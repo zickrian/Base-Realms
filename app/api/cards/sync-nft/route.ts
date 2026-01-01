@@ -64,15 +64,61 @@ export async function POST(request: NextRequest) {
         const nftBalance = Number(balance);
 
         if (nftBalance > 0) {
+          console.log(`[Sync NFT] Found ${nftBalance} NFTs for ${rarity} contract ${contractAddress}`);
+          
           // Find card template with this contract address
-          const { data: cardTemplate } = await supabaseAdmin
+          // Try exact match first
+          let { data: cardTemplate } = await supabaseAdmin
             .from('card_templates')
-            .select('id, name, rarity, image_url')
+            .select('id, name, rarity, image_url, contract_address')
             .eq('contract_address', contractAddress.toLowerCase())
             .eq('rarity', rarity)
             .single();
 
+          // If not found, try without contract_address filter (in case contract_address is null)
+          if (!cardTemplate) {
+            console.log(`[Sync NFT] Card template not found for contract ${contractAddress}, trying by rarity only`);
+            const { data: templates } = await supabaseAdmin
+              .from('card_templates')
+              .select('id, name, rarity, image_url, contract_address')
+              .eq('rarity', rarity)
+              .limit(1);
+            
+            if (templates && templates.length > 0) {
+              cardTemplate = templates[0];
+              console.log(`[Sync NFT] Found card template by rarity: ${cardTemplate.id}`);
+            }
+          }
+
           if (cardTemplate) {
+            // Ensure card template has correct image_url based on rarity
+            // Path format: game/icons/commoncards.png (without leading slash)
+            const imageMap: Record<string, string> = {
+              common: 'game/icons/commoncards.png',
+              rare: 'game/icons/rarecards.png',
+              epic: 'game/icons/epiccards.png',
+              legendary: 'game/icons/legendcards.png',
+            };
+            
+            const expectedImageUrl = imageMap[rarity] || `game/icons/${rarity}cards.png`;
+            
+            // Update card template if image_url is missing or incorrect
+            if (!cardTemplate.image_url || 
+                (!cardTemplate.image_url.includes('commoncards') && 
+                 !cardTemplate.image_url.includes('rarecards') && 
+                 !cardTemplate.image_url.includes('epiccards') && 
+                 !cardTemplate.image_url.includes('legendcards'))) {
+              await supabaseAdmin
+                .from('card_templates')
+                .update({
+                  image_url: expectedImageUrl,
+                  contract_address: contractAddress.toLowerCase(),
+                })
+                .eq('id', cardTemplate.id);
+              console.log(`[Sync NFT] Updated card template ${cardTemplate.id} image_url to ${expectedImageUrl}`);
+              cardTemplate.image_url = expectedImageUrl;
+            }
+            
             // Check if inventory exists
             const { data: existingInventory } = await supabaseAdmin
               .from('user_inventory')
@@ -92,6 +138,7 @@ export async function POST(request: NextRequest) {
                   updated_at: new Date().toISOString(),
                 })
                 .eq('id', existingInventory.id);
+              console.log(`[Sync NFT] Updated inventory for card ${cardTemplate.id}: ${nftBalance}`);
             } else {
               // Insert new inventory entry
               await supabaseAdmin
@@ -103,8 +150,55 @@ export async function POST(request: NextRequest) {
                   blockchain_synced_at: new Date().toISOString(),
                   last_sync_balance: nftBalance,
                 });
+              console.log(`[Sync NFT] Created new inventory entry for card ${cardTemplate.id}: ${nftBalance}`);
+            }
+          } else {
+            console.warn(`[Sync NFT] No card template found for ${rarity} contract ${contractAddress}. NFT balance: ${nftBalance}`);
+            
+            // Create card template if it doesn't exist
+            const imageMap: Record<string, string> = {
+              common: 'game/icons/commoncards.png',
+              rare: 'game/icons/rarecards.png',
+              epic: 'game/icons/epiccards.png',
+              legendary: 'game/icons/legendcards.png',
+            };
+            
+            const imageUrl = imageMap[rarity] || `game/icons/${rarity}cards.png`;
+            
+            try {
+              const { data: newTemplate, error: createError } = await supabaseAdmin
+                .from('card_templates')
+                .insert({
+                  name: `${rarity.charAt(0).toUpperCase() + rarity.slice(1)} Card`,
+                  rarity: rarity,
+                  image_url: imageUrl,
+                  contract_address: contractAddress.toLowerCase(),
+                  description: `NFT card from ${rarity} contract`,
+                })
+                .select()
+                .single();
+              
+              if (!createError && newTemplate) {
+                console.log(`[Sync NFT] Created new card template for ${rarity}: ${newTemplate.id}`);
+                
+                // Create inventory entry
+                await supabaseAdmin
+                  .from('user_inventory')
+                  .insert({
+                    user_id: user.id,
+                    card_template_id: newTemplate.id,
+                    quantity: nftBalance,
+                    blockchain_synced_at: new Date().toISOString(),
+                    last_sync_balance: nftBalance,
+                  });
+                console.log(`[Sync NFT] Created inventory entry for new template ${newTemplate.id}: ${nftBalance}`);
+              }
+            } catch (createErr) {
+              console.error(`[Sync NFT] Failed to create card template for ${rarity}:`, createErr);
             }
           }
+        } else {
+          console.log(`[Sync NFT] No NFTs found for ${rarity} contract ${contractAddress}`);
         }
       } catch (blockchainError: unknown) {
         console.error(`Blockchain error for ${rarity}:`, blockchainError);

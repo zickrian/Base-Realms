@@ -49,6 +49,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if purchase with this transaction hash already exists (prevent duplicate)
+    if (transactionHash) {
+      const { data: existingPurchase } = await supabaseAdmin
+        .from('user_purchases')
+        .select('id')
+        .eq('transaction_hash', transactionHash)
+        .single();
+
+      if (existingPurchase) {
+        // Purchase already recorded, return existing purchase
+        return NextResponse.json({
+          success: true,
+          purchase: existingPurchase,
+          message: 'Purchase already recorded for this transaction',
+        });
+      }
+    }
+
     // Create purchase record
     const amountPaid = paymentMethod === 'eth' ? pack.price_eth : pack.price_idrx;
     

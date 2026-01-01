@@ -228,13 +228,85 @@
   cursor: not-allowed;
 }
 
-/* Minting State */
+/* Minting State - Standard display like Toast */
 .mintingContainer {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1.5rem;
+  padding: 2.5rem 2rem;
+  background: #1a1a2e;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  min-width: 320px;
+  max-width: 400px;
+  min-height: 280px;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.statusTitle {
+  margin: 0;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  font-family: 'VT323', monospace;
+  text-transform: uppercase;
+}
+
+.statusMessage {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+  max-width: 100%;
+  text-align: center;
+  font-family: 'VT323', monospace;
+}
+
+.errorIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.actionButtons {
+  display: flex;
   gap: 1rem;
-  padding: 2rem;
+  margin-top: 0.5rem;
 }
 
 .spinner {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { startTransition } from "react";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./BattleSection.module.css";
 
@@ -13,12 +14,17 @@ interface BattleSectionProps {
 export function BattleSection({ onStageSelect, onBattle, isPvPEnabled: _isPvPEnabled = false }: BattleSectionProps) {
   const router = useRouter();
 
-  // Handle battle button click - navigate to battle page
+  // Handle battle button click - navigate to battle page immediately
   const handleBattleClick = () => {
+    // Use startTransition for non-blocking navigation
+    // This ensures UI responds immediately
+    startTransition(() => {
+      router.push('/battle');
+    });
+    // Call callback if provided (non-blocking, fire and forget)
     if (onBattle) {
       onBattle();
     }
-    router.push('/battle');
   };
   return (
     <div className={styles.wrapper}>

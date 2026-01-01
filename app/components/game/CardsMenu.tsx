@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useGameStore, CardPack } from '../../stores/gameStore';
 import { CardRevealModal } from './CardRevealModal';
@@ -20,7 +20,8 @@ export function CardsMenu() {
     imageUrl: string;
     contractAddress: string;
   } | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const processedTxHashes = useRef<Set<string>>(new Set());
+  const isProcessingPurchase = useRef(false);
 
   const handleInfoClick = (pack: CardPack) => {
     setSelectedPack(pack);
@@ -64,12 +65,27 @@ export function CardsMenu() {
       setIsRevealModalOpen(true);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setToastMessage({ message: `Failed to prepare purchase: ${errorMessage}`, type: 'error' });
+      console.error('Failed to prepare purchase:', errorMessage);
       setPurchasing(false);
     }
   };
 
   const handleMintSuccess = async (transactionHash: string) => {
+    // Prevent duplicate processing of the same transaction
+    if (processedTxHashes.current.has(transactionHash)) {
+      console.log(`[CardsMenu] Transaction ${transactionHash} already processed, skipping`);
+      return;
+    }
+
+    // Prevent multiple simultaneous purchase calls
+    if (isProcessingPurchase.current) {
+      console.log('[CardsMenu] Purchase already in progress, skipping');
+      return;
+    }
+
+    isProcessingPurchase.current = true;
+    processedTxHashes.current.add(transactionHash);
+
     try {
       // After successful mint, record purchase in backend
       const response = await fetch('/api/cards/purchase', {
@@ -90,28 +106,36 @@ export function CardsMenu() {
         throw new Error(error.error || 'Failed to record purchase');
       }
 
-      // Refresh inventory and quests
-      await refreshInventory(address!);
-      await refreshQuests(address!);
+      // Sync NFT from blockchain to ensure inventory is up to date
+      try {
+        await fetch('/api/cards/sync-nft', {
+          method: 'POST',
+          headers: {
+            'x-wallet-address': address!,
+          },
+        });
+      } catch (syncError) {
+        console.warn('Failed to sync NFT from blockchain:', syncError);
+      }
 
-      setToastMessage({ 
-        message: `Successfully purchased and minted ${revealCardData?.name}!`, 
-        type: 'success' 
-      });
+      // Refresh inventory and quests after sync
+      await Promise.all([
+        refreshInventory(address!),
+        refreshQuests(address!),
+      ]);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to record purchase:', errorMessage);
-      setToastMessage({ 
-        message: 'Card minted but failed to record purchase. Check your inventory.', 
-        type: 'info' 
-      });
+      // Remove from processed set on error so it can be retried
+      processedTxHashes.current.delete(transactionHash);
     } finally {
       setPurchasing(false);
+      isProcessingPurchase.current = false;
     }
   };
 
   const handleMintError = (error: string) => {
-    setToastMessage({ message: error, type: 'error' });
+    console.error('Minting error:', error);
     setPurchasing(false);
   };
 
@@ -214,9 +238,6 @@ export function CardsMenu() {
                         loading="lazy"
                       />
                     )}
-                    {item.quantity > 1 && (
-                      <div className={styles.cardQuantity}>{item.quantity}</div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -233,16 +254,6 @@ export function CardsMenu() {
       </section>
 
       <div className={styles.bottomSpacer} />
-
-      {/* Toast Message */}
-      {toastMessage && (
-        <div 
-          className={`${styles.toast} ${styles[toastMessage.type]}`}
-          onClick={() => setToastMessage(null)}
-        >
-          {toastMessage.message}
-        </div>
-      )}
 
       {/* Card Reveal Modal */}
       <CardRevealModal

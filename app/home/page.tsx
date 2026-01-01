@@ -19,6 +19,7 @@ import { Toast } from "../components/Toast";
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useGameStore } from "../stores/gameStore";
+import { getStorageUrl } from "../utils/supabaseStorage";
 import type { Rarity } from "../lib/blockchain/nftService";
 import styles from "./page.module.css";
 
@@ -78,6 +79,25 @@ export default function HomePage() {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
+
+  // Prefetch battle route and preload LoadingScreen assets when page is ready
+  useEffect(() => {
+    if (isConnected && isInitialized && !storeLoading) {
+      // Prefetch battle route to avoid delay on first click
+      router.prefetch('/battle');
+      
+      // Preload LoadingScreen assets in background (same as LoadingScreen.tsx)
+      const loadingAssets = [
+        getStorageUrl('battle/gladiator.png'),
+        getStorageUrl('battle/output-onlinegiftools.gif'),
+      ];
+      
+      loadingAssets.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+      });
+    }
+  }, [isConnected, isInitialized, storeLoading, router]);
 
   // Track when user has been fully ready (prevents unnecessary redirects on state flickers)
   useEffect(() => {
@@ -312,42 +332,43 @@ export default function HomePage() {
           // After successful mint, claim the pack from backend
           try {
             await claimPack();
-            setToast({
-              message: "Card minted successfully! Added to your inventory.",
-              type: "success",
-              isVisible: true,
-              transactionHash,
-            });
+            
+            // Sync NFT from blockchain to ensure inventory is up to date
+            if (address) {
+              try {
+                await fetch('/api/cards/sync-nft', {
+                  method: 'POST',
+                  headers: {
+                    'x-wallet-address': address,
+                  },
+                });
+              } catch (syncError) {
+                console.warn('Failed to sync NFT from blockchain:', syncError);
+              }
+            }
+            
+            // Refresh inventory and quests after sync
+            if (address) {
+              await Promise.all([
+                refreshInventory(address),
+                refreshQuests(address),
+              ]);
+            }
+            
+            // Don't show Toast - CardRevealModal will show success state
           } catch (error) {
             console.error('Failed to claim pack:', error);
-            setToast({
-              message: "Card minted, but failed to update pack count.",
-              type: "warning",
-              isVisible: true,
-              transactionHash,
-            });
+            // Don't show Toast - CardRevealModal will handle display
           } finally {
             setIsMintingInProgress(false);
           }
         }}
         onMintError={(error) => {
           setIsMintingInProgress(false);
-          setToast({
-            message: error || "Failed to mint card. Please try again.",
-            type: "error",
-            isVisible: true,
-          });
+          // Don't show Toast - CardRevealModal already shows error
         }}
       />
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        transactionHash={toast.transactionHash}
-        onClose={() => setToast({ ...toast, isVisible: false })}
-        duration={toast.type === "success" ? 6000 : 5000}
-      />
     </div>
   );
 }

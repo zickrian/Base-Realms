@@ -1,9 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
-import { mintNFTCard, type Rarity, getBackCardImage, getFrontCardImage } from "../../lib/blockchain/nftService";
+import { type Rarity, getBackCardImage, getFrontCardImage } from "../../lib/blockchain/nftService";
 import styles from "./CardRevealModal.module.css";
+
+// ABI for mint function - same as in home/page.tsx
+const MINT_ABI = [
+  {
+    name: "mint",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
+] as const;
 
 interface CardRevealModalProps {
   isOpen: boolean;
@@ -30,10 +42,11 @@ export function CardRevealModal({
   onMintSuccess,
   onMintError 
 }: CardRevealModalProps) {
+  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   const [revealState, setRevealState] = useState<RevealState>("minting");
   const [isRotating, setIsRotating] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isMinting, setIsMinting] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
   const [isAnimatingToInventory, setIsAnimatingToInventory] = useState(false);
 
@@ -43,7 +56,6 @@ export function CardRevealModal({
       setRevealState("minting");
       setIsRotating(false);
       setIsFlipped(false);
-      setIsMinting(false);
       setMintError(null);
       setIsAnimatingToInventory(false);
       
@@ -53,6 +65,32 @@ export function CardRevealModal({
       }
     }
   }, [isOpen, cardData?.id]); // Re-mint if cardData changes
+
+  // Handle successful mint transaction
+  useEffect(() => {
+    if (isSuccess && hash) {
+      setRevealState("card2");
+      onMintSuccess?.(hash);
+    }
+  }, [isSuccess, hash, onMintSuccess]);
+
+  // Handle write errors - format same as free mint in home/page.tsx
+  useEffect(() => {
+    if (writeError) {
+      let errorMessage = "Minting failed. Please try again.";
+      const errorMsg = writeError.message || "";
+      
+      if (errorMsg.includes("user rejected") || errorMsg.includes("User rejected") || 
+          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled")) {
+        errorMessage = "Transaction cancelled by user.";
+      } else if (errorMsg) {
+        errorMessage = `Minting failed: ${errorMsg}`;
+      }
+      
+      setMintError(errorMessage);
+      onMintError?.(errorMessage);
+    }
+  }, [writeError, onMintError]);
 
   // Reset rotation class after animation completes
   useEffect(() => {
@@ -65,45 +103,32 @@ export function CardRevealModal({
     }
   }, [revealState, isRotating]);
 
-  const handleMint = async () => {
-    if (!cardData || !walletAddress || isMinting) return;
+  const handleMint = () => {
+    if (!cardData || !walletAddress || isPending || isConfirming) return;
 
-    setIsMinting(true);
     setMintError(null);
 
     try {
-      const result = await mintNFTCard(cardData.contractAddress, walletAddress);
-      
-      if (result.success && result.transactionHash) {
-        // Minting successful - show back card
-        setRevealState("card2");
-        onMintSuccess?.(result.transactionHash);
-      } else {
-        // Minting failed - stay in minting state with error
-        const errorMsg = result.error || "Failed to mint NFT";
-        setMintError(errorMsg);
-        onMintError?.(errorMsg);
-        // DON'T close modal, let user retry or cancel manually
-      }
+      // Use wagmi's writeContract which is already integrated with OnchainKit
+      // This will automatically use the correct chain (Base) from OnchainKitProvider
+      // Mint function doesn't require parameters (same as in home/page.tsx)
+      writeContract({
+        address: cardData.contractAddress as `0x${string}`,
+        abi: MINT_ABI,
+        functionName: 'mint',
+      });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Unexpected error during minting";
-      
-      // Check if user rejected/cancelled the transaction
-      if (errorMsg.includes('User rejected') || errorMsg.includes('user rejected') || 
-          errorMsg.includes('User denied') || errorMsg.includes('user denied')) {
-        setMintError("Transaction cancelled. You can retry or close this modal.");
-        onMintError?.("Transaction cancelled by user");
-      } else {
-        setMintError(errorMsg);
-        onMintError?.(errorMsg);
-      }
-      // DON'T close modal, let user decide to retry or cancel
-    } finally {
-      setIsMinting(false);
+      const errorMsg = error instanceof Error ? error.message : "Failed to start minting";
+      console.error('Minting error:', error);
+      setMintError(errorMsg);
+      onMintError?.(errorMsg);
     }
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent backdrop click from closing modal when clicking on card
+    e.stopPropagation();
+    
     // Only allow click if showing back card and not already rotating
     if (revealState === "card2" && !isRotating && !isFlipped) {
       setIsRotating(true);
@@ -116,18 +141,9 @@ export function CardRevealModal({
   };
 
   const handleCloseClick = () => {
-    if (revealState === "card1") {
-      // Start animation to inventory
-      setIsAnimatingToInventory(true);
-      setRevealState("acquired");
-      
-      // Close modal after animation completes
-      setTimeout(() => {
-        onClose();
-      }, 800); // Match animation duration
-    } else {
-      onClose();
-    }
+    // Only close when user explicitly clicks close button or backdrop
+    // Don't auto-close after flip
+    onClose();
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -146,22 +162,43 @@ export function CardRevealModal({
   return (
     <div className={styles.container} onClick={handleBackdropClick}>
       <div className={styles.cardContainer}>
-        {/* Minting state */}
+        {/* Minting state - Standard display for processing, success, failed */}
         {revealState === "minting" && (
           <div className={styles.mintingContainer}>
-            <div className={styles.spinner}></div>
-            <p className={styles.mintingText}>
-              {isMinting ? "Minting your card..." : mintError ? "Minting Failed" : "Preparing..."}
-            </p>
-            {mintError && (
+            <button className={styles.closeButton} onClick={onClose} aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+            
+            {isPending || isConfirming ? (
               <>
-                <p className={styles.errorText}>{mintError}</p>
-                <button className={styles.retryButton} onClick={handleMint}>
-                  Retry Mint
-                </button>
-                <button className={styles.cancelButton} onClick={onClose}>
-                  Cancel
-                </button>
+                <div className={styles.spinner}></div>
+                <h3 className={styles.statusTitle}>Processing</h3>
+                <p className={styles.statusMessage}>
+                  Transaction is being processed. Please wait for confirmation...
+                </p>
+              </>
+            ) : mintError ? (
+              <>
+                <div className={styles.errorIcon}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3 className={styles.statusTitle}>Error</h3>
+                <p className={styles.statusMessage}>{mintError}</p>
+                <div className={styles.actionButtons}>
+                  <button className={styles.retryButton} onClick={handleMint}>
+                    Retry Mint
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.spinner}></div>
+                <h3 className={styles.statusTitle}>Preparing</h3>
+                <p className={styles.statusMessage}>Preparing your card...</p>
               </>
             )}
           </div>
@@ -217,15 +254,15 @@ export function CardRevealModal({
             
             {/* Close button after flip */}
             {revealState === "card1" && !isAnimatingToInventory && (
-              <div className={styles.acquiredContainer}>
-                <p className={styles.acquiredText}>Card Acquired!</p>
-                <button 
-                  className={styles.closeButton}
-                  onClick={handleCloseClick}
-                >
-                  Add to Inventory
-                </button>
-              </div>
+              <button 
+                className={styles.closeButton}
+                onClick={handleCloseClick}
+                aria-label="Close"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
             )}
           </>
         )}

@@ -165,6 +165,7 @@ export async function checkNFTOwnership(
 /**
  * Mint NFT card using connected wallet
  * This must be called from client-side with user's wallet connected
+ * Note: Chain switching should be handled at component level using wagmi hooks
  */
 export async function mintNFTCard(
   contractAddress: string,
@@ -178,8 +179,21 @@ export async function mintNFTCard(
       };
     }
 
-    // Use viem for minting
-    // OnchainKit sudah set wallet ke Base dari awal, langsung gunakan wallet yang terconnect
+    const BASE_CHAIN_ID = 8453;
+
+    // Verify we're on Base network before minting
+    const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+    const currentChainId = parseInt(chainIdHex as string, 16);
+    
+    if (currentChainId !== BASE_CHAIN_ID) {
+      return {
+        success: false,
+        error: `Wallet is on chain ${currentChainId}, but Base network (${BASE_CHAIN_ID}) is required. Please switch to Base network in your wallet.`
+      };
+    }
+
+    // Use viem with wallet connected through wagmi/OnchainKit
+    // The wallet should already be on Base network (verified above)
     const { createWalletClient, custom } = await import('viem');
     const { base } = await import('viem/chains');
 
@@ -188,7 +202,6 @@ export async function mintNFTCard(
       transport: custom(window.ethereum),
     });
 
-    // Use the already connected wallet address directly (no popup)
     // Call mint function on the contract
     const hash = await walletClient.writeContract({
       address: contractAddress as `0x${string}`,
@@ -204,6 +217,17 @@ export async function mintNFTCard(
     };
   } catch (error: unknown) {
     console.error('Minting error:', error);
+    
+    // Check for specific chain mismatch error
+    if (error instanceof Error) {
+      if (error.message.includes('chain') && error.message.includes('does not match')) {
+        return {
+          success: false,
+          error: 'Please switch to Base network (Chain ID: 8453) in your wallet and try again.'
+        };
+      }
+    }
+    
     const errorMessage = error instanceof Error ? error.message : 'Failed to mint NFT card';
     return {
       success: false,
