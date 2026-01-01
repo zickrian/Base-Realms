@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount } from "wagmi";
 import {
   HeaderBar,
   DailyPacks,
@@ -15,7 +15,6 @@ import {
   SettingsMenu,
 } from "../components/game";
 import { LoadingState } from "../components/LoadingState";
-import { Toast } from "../components/Toast";
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useGameStore } from "../stores/gameStore";
@@ -23,22 +22,9 @@ import { getStorageUrl } from "../utils/supabaseStorage";
 import type { Rarity } from "../lib/blockchain/nftService";
 import styles from "./page.module.css";
 
-const CONTRACT_ADDRESS = "0x2FFb8aA5176c1da165EAB569c3e4089e84EC5816" as const;
-const CONTRACT_ABI = [
-  {
-    name: "mint",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [],
-    outputs: [],
-  },
-] as const;
-
 export default function HomePage() {
   const router = useRouter();
   const { isConnected, isConnecting, address } = useAccount();
-  const { writeContract, data: hash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const {
     isInitialized,
@@ -63,7 +49,7 @@ export default function HomePage() {
     imageUrl: string;
     contractAddress: string;
   } | null>(null);
-  const [toast, setToast] = useState<{
+  const [_toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
     isVisible: boolean;
@@ -74,7 +60,7 @@ export default function HomePage() {
     isVisible: false,
   });
 
-  const { packCount, loading: packsLoading, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
+  const { packCount, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // This ensures React Hooks rules are followed
@@ -134,74 +120,6 @@ export default function HomePage() {
 
     return () => clearTimeout(timer);
   }, [isConnected, isConnecting, isInitialized, storeLoading, router]);
-
-  // Handle successful mint
-  useEffect(() => {
-    if (isSuccess && address && hash) {
-      Promise.all([
-        fetch('/api/cards/record-mint', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-wallet-address': address,
-          },
-          body: JSON.stringify({ transactionHash: hash }),
-        }).catch(() => null),
-        fetch('/api/quests/update-progress', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-wallet-address': address,
-          },
-          body: JSON.stringify({ questType: 'open_packs', autoClaim: false }),
-        }),
-        fetch('/api/cards/sync-nft', {
-          method: 'POST',
-          headers: { 'x-wallet-address': address },
-        }).catch(() => null),
-      ])
-        .then(async ([, questRes]) => {
-          await Promise.all([
-            refreshQuests(address),
-            refreshInventory(address),
-          ]);
-
-          if (questRes?.ok) {
-            const data = await questRes.json();
-            if (data.questCompleted) {
-              setToast({
-                message: "NFT minted successfully! Quest 'Open Free Cards' completed. Go to Quests to claim your reward!",
-                type: "success",
-                isVisible: true,
-                transactionHash: hash,
-              });
-            } else {
-              setToast({
-                message: "NFT minted successfully! Quest progress updated.",
-                type: "success",
-                isVisible: true,
-                transactionHash: hash,
-              });
-            }
-          } else {
-            setToast({
-              message: "NFT minted successfully!",
-              type: "success",
-              isVisible: true,
-              transactionHash: hash,
-            });
-          }
-        })
-        .catch(() => {
-          setToast({
-            message: "NFT minted successfully!",
-            type: "success",
-            isVisible: true,
-            transactionHash: hash,
-          });
-        });
-    }
-  }, [isSuccess, address, hash, refreshQuests, refreshInventory]);
 
   // Define handlers BEFORE conditional returns (but after hooks)
   const handleBattle = () => { };
@@ -267,42 +185,6 @@ export default function HomePage() {
       contractAddress: '0x2ffb8aa5176c1da165eab569c3e4089e84ec5816',
     });
     setIsCardModalOpen(true);
-  };
-
-  const handleMint = () => {
-    if (!address || !isConnected) {
-      setToast({
-        message: "Wallet not connected. Please connect your wallet first.",
-        type: "error",
-        isVisible: true,
-      });
-      return;
-    }
-
-    // OnchainKit sudah handle Base chain dari awal, langsung mint
-    try {
-      writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: "mint",
-      });
-
-      setToast({
-        message: "Transaction is being processed. Please wait for confirmation...",
-        type: "info",
-        isVisible: true,
-      });
-    } catch (err: unknown) {
-      let errorMessage = "Minting failed. Please try again.";
-      if (err instanceof Error) {
-        if (err.message?.includes("user rejected")) {
-          errorMessage = "Transaction cancelled by user.";
-        } else {
-          errorMessage = `Minting failed: ${err.message}`;
-        }
-      }
-      setToast({ message: errorMessage, type: "error", isVisible: true });
-    }
   };
 
   const renderArenaView = () => (
@@ -421,7 +303,7 @@ export default function HomePage() {
             setIsMintingInProgress(false);
           }
         }}
-        onMintError={(error) => {
+        onMintError={(_error) => {
           setIsMintingInProgress(false);
           // Don't show Toast - CardRevealModal already shows error
         }}

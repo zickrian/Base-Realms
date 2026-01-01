@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
+import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { useGameStore } from "../../stores/gameStore";
 import styles from "./HeaderBar.module.css";
@@ -80,7 +81,7 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
       <div className={styles.playerStats}>
         <div className={styles.clickableArea} onClick={onSettingsClick}>
           <div className={styles.levelBadge}>
-            <img
+            <Image
               src={getGameIconUrl("level-badge.png")}
               alt="Level Badge"
               width={60}
@@ -111,11 +112,11 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
       </div>
       <div className={styles.currencySection}>
         <div className={styles.currencyItem}>
-          <img src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
+          <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
           <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
         </div>
         <div className={styles.currencyItem}>
-          <img src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
+          <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
           <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
       </div>
