@@ -1,6 +1,5 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain`](https://www.npmjs.com/package/create-onchain).
 
-nyoba
 
 ## Getting Started
 
