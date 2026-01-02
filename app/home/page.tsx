@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import {
@@ -11,16 +11,16 @@ import {
   BottomNav,
   CardsMenu,
   QuestMenu,
-  SwapMenu,
-  LeaderboardMenu,
   CardRevealModal,
   SettingsMenu,
 } from "../components/game";
+import { HomeLoadingScreen } from "../components/HomeLoadingScreen";
 import { LoadingState } from "../components/LoadingState";
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
+import { prefetchLeaderboard } from "../hooks/useLeaderboard";
 import type { Rarity } from "../lib/blockchain/nftService";
 import styles from "./page.module.css";
 
@@ -41,12 +41,17 @@ export default function HomePage() {
 
   const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">("arena");
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
-  const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
-  const [isLeaderboardMenuOpen, setIsLeaderboardMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
   const [showAlreadyClaimedPopup, setShowAlreadyClaimedPopup] = useState(false);
+  // Check if assets were already loaded in this session
+  const [assetsLoaded, setAssetsLoaded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('homeAssetsLoaded') === 'true';
+    }
+    return false;
+  });
   const [revealCardData, setRevealCardData] = useState<{
     id: string;
     name: string;
@@ -71,11 +76,25 @@ export default function HomePage() {
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
 
+  // Callback for when assets are loaded
+  const handleAssetsLoaded = useCallback(() => {
+    setAssetsLoaded(true);
+    // Persist to session storage so we don't reload on navigation back
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('homeAssetsLoaded', 'true');
+    }
+  }, []);
+
   // Prefetch battle route and preload LoadingScreen assets when page is ready
   useEffect(() => {
     if (isConnected && isInitialized && !storeLoading) {
-      // Prefetch battle route to avoid delay on first click
+      // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
+      router.prefetch('/leaderboard');
+      router.prefetch('/swap');
+      
+      // Pre-fetch leaderboard data so it's ready when user clicks
+      prefetchLeaderboard();
       
       // Preload LoadingScreen assets in background (same as LoadingScreen.tsx)
       const loadingAssets = [
@@ -128,9 +147,15 @@ export default function HomePage() {
 
   // Define handlers BEFORE conditional returns (but after hooks)
   const handleBattle = () => { };
-  const handleBoardClick = () => setIsLeaderboardMenuOpen(true);
+  const handleBoardClick = () => {
+    // Use startTransition for smoother navigation
+    router.push('/leaderboard');
+  };
   const handleQuestClick = () => setIsQuestMenuOpen(true);
-  const handleSwapClick = () => setIsSwapMenuOpen(true);
+  const handleSwapClick = () => {
+    // Use startTransition for smoother navigation
+    router.push('/swap');
+  };
   
   const handlePackClick = async () => {
     if (!address || !isConnected) {
@@ -211,14 +236,17 @@ export default function HomePage() {
     return <LoadingState />;
   }
 
+  // Show asset loading screen after store is ready but before assets are loaded
+  if (!assetsLoaded) {
+    return <HomeLoadingScreen onLoadComplete={handleAssetsLoaded} />;
+  }
+
   return (
     <div className={styles.container}>
       {activeNav === "arena" && renderArenaView()}
       {activeNav === "cards" && renderCardsView()}
       <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
-      <SwapMenu isOpen={isSwapMenuOpen} onClose={() => setIsSwapMenuOpen(false)} />
-      <LeaderboardMenu isOpen={isLeaderboardMenuOpen} onClose={() => setIsLeaderboardMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
         onClose={() => {
