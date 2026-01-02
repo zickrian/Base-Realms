@@ -52,7 +52,7 @@ export default function SwapPage() {
   }, [isConnected, router]);
 
   const handleBack = () => {
-    router.back();
+    router.push('/home');
   };
 
   return (

@@ -36,7 +36,7 @@ export default function LeaderboardPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/home');
   };
 
   return (

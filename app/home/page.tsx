@@ -148,12 +148,12 @@ export default function HomePage() {
   // Define handlers BEFORE conditional returns (but after hooks)
   const handleBattle = () => { };
   const handleBoardClick = () => {
-    // Use startTransition for smoother navigation
+    // Navigate immediately - route is prefetched
     router.push('/leaderboard');
   };
   const handleQuestClick = () => setIsQuestMenuOpen(true);
   const handleSwapClick = () => {
-    // Use startTransition for smoother navigation
+    // Navigate immediately - route is prefetched
     router.push('/swap');
   };
   
