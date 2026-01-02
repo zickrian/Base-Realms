@@ -129,25 +129,25 @@ export async function POST(request: NextRequest) {
 
       const dailyQuestTemplateIds = dailyQuestTemplates?.map(t => t.id) || [];
 
-      // Delete expired daily quests (expires_at < today start)
+      // Delete expired daily quests (expires_at <= now, meaning they have already expired)
       // This includes ALL quests from previous days (active, completed, claimed)
       if (dailyQuestTemplateIds.length > 0) {
         await supabaseAdmin
           .from('user_quests')
           .delete()
           .eq('user_id', currentUser.id)
-          .lt('expires_at', todayStart.toISOString())
+          .lte('expires_at', now.toISOString())
           .in('quest_template_id', dailyQuestTemplateIds);
       }
 
-      // Check if user has ANY daily quests for today (including claimed ones)
+      // Check if user has ANY daily quests that are still valid (expires_at > now)
       // This prevents creating duplicate quests
       const { data: existingQuests } = await supabaseAdmin
         .from('user_quests')
         .select('id, quest_template_id, status, quest_templates!inner(quest_type, is_daily)')
         .eq('user_id', currentUser.id)
         .eq('quest_templates.is_daily', true)
-        .gte('expires_at', todayStart.toISOString());
+        .gt('expires_at', now.toISOString());
 
       // If no daily quests for today at all, create them
       if (!existingQuests || existingQuests.length === 0) {

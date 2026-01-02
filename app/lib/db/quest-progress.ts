@@ -32,6 +32,9 @@ export async function updateQuestProgress(
   // Get ONLY active quests of this type that haven't expired
   // Don't update completed or claimed quests
   const now = new Date();
+  
+  // Use gt (greater than) instead of gte to ensure quest hasn't expired yet
+  // expires_at > now means the quest is still valid
   const { data: quests, error } = await supabaseAdmin
     .from('user_quests')
     .select(`
@@ -41,7 +44,7 @@ export async function updateQuestProgress(
     .eq('user_id', userId)
     .eq('status', 'active') // ONLY active quests can be updated
     .eq('quest_templates.quest_type', questType)
-    .gte('expires_at', now.toISOString()); // Only update quests that haven't expired
+    .gt('expires_at', now.toISOString()); // Only update quests that haven't expired (expires_at > now)
 
   if (error) {
     console.error(`[updateQuestProgress] Error fetching quests for user ${userId}, type ${questType}:`, error);
@@ -68,13 +71,11 @@ export async function updateQuestProgress(
 
     const updateData: {
       current_progress: number;
-      updated_at: string;
       status?: 'completed' | 'claimed';
       completed_at?: string;
       claimed_at?: string;
     } = {
       current_progress: newProgress,
-      updated_at: new Date().toISOString(),
     };
 
     if (isCompleted && quest.status === 'active') {

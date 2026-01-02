@@ -45,11 +45,65 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
   
   const [battleId, setBattleId] = useState<string | null>(null);
   const battleStartedRef = useRef(false);
+  const battleCompletedRef = useRef(false);
 
   const [isAttacking, setIsAttacking] = useState(false);
   const [attackingCharacter, setAttackingCharacter] = useState<'player' | 'enemy' | null>(null);
   const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hitEffectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to complete battle - called when battle ends
+  const completeBattle = useCallback(async (bId: string, result: 'win' | 'loss') => {
+    if (battleCompletedRef.current || !address) {
+      console.log('[BattleArena] Battle already completed or no address');
+      return;
+    }
+    
+    battleCompletedRef.current = true;
+    console.log('[BattleArena] Completing battle:', bId, 'result:', result);
+    
+    try {
+      const response = await fetch('/api/battles/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': address,
+        },
+        body: JSON.stringify({
+          battleId: bId,
+          result: result,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[BattleArena] Battle completed successfully:', data);
+        
+        // Immediately refresh quests to show updated progress
+        // No delay needed - database is already updated
+        try {
+          await refreshQuests(address);
+          console.log('[BattleArena] Quests refreshed successfully');
+        } catch (e) {
+          console.error('[BattleArena] Failed to refresh quests:', e);
+        }
+        
+        try {
+          await refreshProfile(address);
+          console.log('[BattleArena] Profile refreshed successfully');
+        } catch (e) {
+          console.error('[BattleArena] Failed to refresh profile:', e);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[BattleArena] Failed to complete battle:', errorData);
+        battleCompletedRef.current = false; // Allow retry
+      }
+    } catch (error) {
+      console.error('[BattleArena] Error completing battle:', error);
+      battleCompletedRef.current = false; // Allow retry
+    }
+  }, [address, refreshQuests, refreshProfile]);
 
   // Start battle when component mounts - create battle record
   useEffect(() => {
@@ -70,6 +124,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
         .then(res => res.json())
         .then(data => {
           if (data.success && data.battle) {
+            console.log('[BattleArena] Battle started:', data.battle.id);
             setBattleId(data.battle.id);
           }
         })
@@ -139,53 +194,22 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
     }
   }, [isHitEffectActive, hitTarget, status, nextTurn, setHitEffect]);
 
-  // Handle battle end - complete battle and update quests
-  const handleBattleEnd = useCallback(async () => {
-    if (battleId && address) {
-      const battleResult = status === 'victory' ? 'win' : 'loss';
-      
-      try {
-        // Complete battle
-        const response = await fetch('/api/battles/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-wallet-address': address,
-          },
-          body: JSON.stringify({
-            battleId,
-            result: battleResult,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Log quest update result
-          if (data.questUpdated) {
-            console.log('[BattleArena] Quest updated:', data.questUpdated);
-          }
-          
-          // Refresh quests and profile to show updated progress
-          // Use Promise.allSettled to ensure both refresh even if one fails
-          await Promise.allSettled([
-            refreshQuests(address),
-            refreshProfile(address),
-          ]);
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('[BattleArena] Failed to complete battle:', errorData);
-        }
-      } catch (error) {
-        console.error('Failed to complete battle:', error);
-      }
-    }
-    
-    onBattleEnd();
-  }, [battleId, address, status, refreshQuests, refreshProfile, onBattleEnd]);
-
   // Determine if battle has ended
   const battleEnded = status === 'victory' || status === 'defeat';
+
+  // Complete battle when status changes to victory/defeat
+  useEffect(() => {
+    if (battleEnded && battleId && !battleCompletedRef.current) {
+      const result = status === 'victory' ? 'win' : 'loss';
+      console.log('[BattleArena] Battle ended, completing with result:', result);
+      completeBattle(battleId, result);
+    }
+  }, [battleEnded, battleId, status, completeBattle]);
+
+  // Handle battle end - navigate back to home
+  const handleBattleEnd = useCallback(() => {
+    onBattleEnd();
+  }, [onBattleEnd]);
 
   return (
     <div className={styles.arenaContainer} data-testid="battle-arena">
