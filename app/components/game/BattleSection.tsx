@@ -15,7 +15,7 @@ interface BattleSectionProps {
   isSwapEnabled?: boolean;
 }
 
-export function BattleSection({ onStageSelect, onBattle, onSwapClick, onBoardClick, isSwapEnabled: _isSwapEnabled = false }: BattleSectionProps) {
+export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapClick, onBoardClick, isSwapEnabled: _isSwapEnabled = false }: BattleSectionProps) {
   const router = useRouter();
   const { profile } = useGameStore();
 

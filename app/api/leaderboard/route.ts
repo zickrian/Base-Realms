@@ -10,6 +10,26 @@ interface LeaderboardEntry {
   winRate: number;
 }
 
+interface LeaderboardEntryWithoutRank {
+  walletAddress: string;
+  level: number;
+  wins: number;
+  totalBattles: number;
+  winRate: number;
+}
+
+interface ProfileRow {
+  user_id: string;
+  level: number;
+  wins: number;
+  total_battles: number;
+}
+
+interface UserRow {
+  id: string;
+  wallet_address: string;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,7 +56,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user wallet addresses for each profile
-    const userIds = profiles.map((p: any) => p.user_id);
+    const typedProfiles = profiles as ProfileRow[];
+    const userIds = typedProfiles.map((p) => p.user_id);
     const { data: users, error: usersError } = await supabaseAdmin
       .from('users')
       .select('id, wallet_address')
@@ -51,16 +72,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Create a map of user_id to wallet_address
-    const userMap = new Map();
+    const userMap = new Map<string, string>();
     if (users) {
-      users.forEach((user: any) => {
+      const typedUsers = users as UserRow[];
+      typedUsers.forEach((user) => {
         userMap.set(user.id, user.wallet_address);
       });
     }
 
     // Transform data and calculate win rate
-    let leaderboard: LeaderboardEntry[] = profiles
-      .map((profile: any) => {
+    const leaderboard: LeaderboardEntryWithoutRank[] = typedProfiles
+      .map((profile) => {
         const totalBattles = profile.total_battles || 0;
         const wins = profile.wins || 0;
         const winRate = totalBattles > 0 ? (wins / totalBattles) * 100 : 0;
@@ -78,7 +100,7 @@ export async function GET(request: NextRequest) {
           winRate: winRate,
         };
       })
-      .filter((entry: LeaderboardEntry | null): entry is LeaderboardEntry => {
+      .filter((entry): entry is LeaderboardEntryWithoutRank => {
         if (!entry) return false;
         // Filter out entries with no activity
         if (sortBy === 'level') return entry.level > 0;
@@ -109,7 +131,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Limit to top 100 and add rank
-    leaderboard = leaderboard
+    const leaderboardWithRank: LeaderboardEntry[] = leaderboard
       .slice(0, 100)
       .map((entry, index) => ({
         ...entry,
@@ -117,7 +139,7 @@ export async function GET(request: NextRequest) {
       }));
 
     return NextResponse.json({
-      leaderboard,
+      leaderboard: leaderboardWithRank,
     });
   } catch (error: unknown) {
     console.error('Leaderboard error:', error);

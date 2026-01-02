@@ -138,6 +138,7 @@
   color: #3e1f08;
   font-weight: bold;
   text-shadow: none;
+  font-family: 'VT323', monospace;
 }
 
 /* Pixel Slider */
@@ -176,6 +177,7 @@
   width: 40px;
   text-align: right;
   font-weight: bold;
+  font-family: 'VT323', monospace;
 }
 
 /* Pixel Toggle */

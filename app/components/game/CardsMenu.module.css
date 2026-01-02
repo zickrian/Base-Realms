@@ -21,7 +21,7 @@
 
 /* Titles */
 .title {
-  font-family: var(--font-russo);
+  font-family: var(--font-pixelify);
   font-size: 32px;
   color: #fff;
   text-transform: uppercase;
@@ -31,7 +31,7 @@
 }
 
 .sectionTitle {
-  font-family: var(--font-russo);
+  font-family: var(--font-pixelify);
   font-size: 16px;
   color: #f1f5f9;
   text-transform: uppercase;
@@ -391,7 +391,7 @@
   background: #fbbf24;
   /* Gold badge */
   color: #451a03;
-  font-family: var(--font-russo);
+  font-family: var(--font-pixelify);
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 99px;
@@ -668,7 +668,7 @@
   padding: 16px 40px 16px 24px;
   border-radius: 8px;
   color: white;
-  font-family: var(--font-russo);
+  font-family: var(--font-pixelify);
   font-size: 14px;
   z-index: 10000;
   cursor: pointer;
