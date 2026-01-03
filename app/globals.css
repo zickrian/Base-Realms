@@ -194,4 +194,174 @@
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
   }
+
+  /* 16-bit Button Style */
+  .bit16-button {
+    position: relative;
+    border-image: url("https://github.com/devMiguelCarrero/cool-jsx-buttons/blob/main/public/img/frame-hd.png?raw=true");
+    background-color: #4bb244;
+    border-image-repeat: initial;
+    padding: 3px 12px;
+    border-image-slice: 12;
+    border-width: 8px;
+    font-size: 14px;
+    border-image-outset: 4px;
+    cursor: pointer;
+    font-family: var(--font-pixelify);
+    line-height: 1.2;
+    color: #ffffff;
+    text-transform: uppercase;
+    font-weight: bold;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .bit16-button.has-green-background {
+    background-color: #4bb244;
+  }
+
+  .bit16-button.has-red-background {
+    background-color: #f22561;
+  }
+
+  .bit16-button.has-yellow-background {
+    background-color: #f2c019;
+  }
+
+  .bit16-button.has-blue-background {
+    background-color: #4eb6d9;
+  }
+
+  .bit16-button::before,
+  .bit16-button::after {
+    content: '';
+    position: absolute;
+    display: block;
+    z-index: 0;
+    width: calc(100% + 12px);
+    height: 12px;
+  }
+
+  .bit16-button::before {
+    background-color: rgba(0, 0, 0, 0.2);
+    left: -4px;
+    top: calc(100% - 4px);
+    clip-path: polygon(
+      0 8px,
+      calc(100% - 8px) 8px,
+      calc(100% - 8px) 4px,
+      calc(100% - 4px) 4px,
+      calc(100% - 4px) 0,
+      100% 0,
+      100% 8px,
+      calc(100% - 4px) 8px,
+      calc(100% - 4px) 100%,
+      0 100%
+    );
+  }
+
+  .bit16-button::after {
+    background-color: rgba(255, 255, 255, 0.3);
+    right: -4px;
+    bottom: calc(100% - 4px);
+    transform: rotate(0.5turn);
+    clip-path: polygon(
+      0 8px,
+      calc(100% - 8px) 8px,
+      calc(100% - 8px) 4px,
+      calc(100% - 4px) 4px,
+      calc(100% - 4px) 0,
+      100% 0,
+      100% 8px,
+      calc(100% - 4px) 8px,
+      calc(100% - 4px) 100%,
+      0 100%
+    );
+  }
+
+  .bit16-button:hover:not(:disabled)::before {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+  .bit16-button:hover:not(:disabled)::after {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .bit16-button:active:not(:disabled)::before {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .bit16-button:active:not(:disabled)::after {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .bit16-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* 16-bit Container Style - for modals and popups */
+  .bit16-container {
+    position: relative;
+    border-image: url("https://github.com/devMiguelCarrero/cool-jsx-buttons/blob/main/public/img/frame-hd.png?raw=true");
+    border-image-repeat: initial;
+    border-image-slice: 12;
+    border-width: 8px;
+    border-image-outset: 4px;
+    border-radius: 0;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  .bit16-container::before,
+  .bit16-container::after {
+    content: '';
+    position: absolute;
+    display: block;
+    z-index: 0;
+    width: calc(100% + 12px);
+    height: 12px;
+    pointer-events: none;
+  }
+
+  .bit16-container::before {
+    background-color: rgba(0, 0, 0, 0.2);
+    left: -4px;
+    top: calc(100% - 4px);
+    clip-path: polygon(
+      0 8px,
+      calc(100% - 8px) 8px,
+      calc(100% - 8px) 4px,
+      calc(100% - 4px) 4px,
+      calc(100% - 4px) 0,
+      100% 0,
+      100% 8px,
+      calc(100% - 4px) 8px,
+      calc(100% - 4px) 100%,
+      0 100%
+    );
+  }
+
+  .bit16-container::after {
+    background-color: rgba(255, 255, 255, 0.3);
+    right: -4px;
+    bottom: calc(100% - 4px);
+    transform: rotate(0.5turn);
+    clip-path: polygon(
+      0 8px,
+      calc(100% - 8px) 8px,
+      calc(100% - 8px) 4px,
+      calc(100% - 4px) 4px,
+      calc(100% - 4px) 0,
+      100% 0,
+      100% 8px,
+      calc(100% - 4px) 8px,
+      calc(100% - 4px) 100%,
+      0 100%
+    );
+  }
 }

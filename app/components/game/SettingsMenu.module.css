@@ -29,24 +29,15 @@
 .menuBox {
   width: 90%;
   max-width: 400px;
-  /* Parchment color matching the quest menu vibe */
   background-color: #e8be82;
-  /* Dark brown wood border */
-  border: 4px solid #3e1f08;
-  outline: 4px solid #2a1810;
-  box-shadow:
-    inset 0 0 40px rgba(139, 69, 19, 0.15),
-    /* Inner shadow for depth */
-    10px 10px 0 rgba(0, 0, 0, 0.5);
-  /* Drop shadow */
+  box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
   display: flex;
   flex-direction: column;
   position: relative;
   color: #3e1f08;
-  /* Dark text */
-  image-rendering: pixelated;
   padding: 6px;
   animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
 }
 
 @keyframes popIn {
@@ -83,27 +74,13 @@
 }
 
 .closeButton {
-  background: #a52a2a;
-  border: 2px solid #3e1f08;
-  color: #f3e5c9;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
-  transition: all 0.1s;
-}
-
-.closeButton:hover {
-  background: #c0392b;
-  transform: scale(1.05);
-}
-
-.closeButton:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  font-size: 16px;
+  background-color: #f22561;
+  color: #ffffff;
 }
 
 /* Content */
@@ -224,32 +201,15 @@
 
 /* Logout */
 .logoutButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
   width: 100%;
-  padding: 0.75rem;
-  background: #a52a2a;
-  border: 2px solid #3e1f08;
-  color: #f3e5c9;
-  font-family: 'VT323', monospace;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+  font-size: 1.2rem;
+  padding: 3px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.1s;
-}
-
-.logoutButton:hover {
-  background: #c0392b;
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
-}
-
-.logoutButton:active {
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
-  transform: translate(2px, 2px);
+  background-color: #f22561;
 }
 
 @media (max-width: 480px) {

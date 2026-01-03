@@ -24,40 +24,31 @@
   }
 }
 
-/* Main Box - Custom Leaderboard Paper Background */
+/* Main Box - Same style as SettingsMenu */
 .menuBox {
   width: 90%;
   max-width: 500px;
   height: 80vh;
   max-height: 700px;
-
-  /* The Background Image - same as QuestMenu */
-  background-image: url('https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/quest/temp.png');
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: transparent;
-
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-
-  padding: 90px 60px 60px 60px;
-
+  background-color: #e8be82;
+  box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
   display: flex;
   flex-direction: column;
   position: relative;
   color: #3e1f08;
-  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 6px;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
+  image-rendering: pixelated;
 }
 
-@keyframes slideUp {
+@keyframes popIn {
   from {
-    transform: translateY(20px) scale(0.95);
+    transform: scale(0.8);
     opacity: 0;
   }
   to {
-    transform: translateY(0) scale(1);
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -66,13 +57,13 @@
 .header {
   background: transparent;
   color: #3e1f08;
-  padding: 0 0 1rem 0;
+  padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  border-bottom: 2px dashed rgba(62, 31, 8, 0.3);
-  margin-bottom: 0.5rem;
+  border-bottom: 3px dashed #8b5a2b;
+  margin-bottom: 1rem;
 }
 
 .title {
@@ -86,30 +77,21 @@
 }
 
 .closeButton {
-  background: transparent;
-  border: none;
-  color: #5e2f0d;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.1s;
-  position: absolute;
-  top: 75px;
-  right: 50px;
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  font-size: 16px;
+  background-color: #f22561;
+  color: #ffffff;
 }
 
-.closeButton:hover {
-  transform: scale(1.1);
-  color: #991b1b;
-}
 
 /* Leaderboard List */
 .leaderboardList {
   flex: 1;
   overflow-y: auto;
+  padding: 1rem;
   padding-right: 5px;
   display: flex;
   flex-direction: column;
@@ -129,24 +111,29 @@
   border-radius: 3px;
 }
 
-/* Leaderboard Entry */
+/* Leaderboard Entry - Pixelated Style */
 .leaderboardEntry {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.5rem 0;
-  background: transparent;
-  border: none;
-  border-bottom: 1px dashed rgba(62, 31, 8, 0.2);
-  transition: all 0.2s;
+  padding: 0.5rem;
+  background: rgba(139, 69, 19, 0.05);
+  border: 2px solid rgba(62, 31, 8, 0.3);
+  border-radius: 0;
+  transition: all 0.1s;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .leaderboardEntry:hover {
-  transform: translateX(2px);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
 }
 
 .leaderboardEntry:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .currentUser {
@@ -209,13 +196,17 @@
 }
 
 .youBadge {
-  background: #5e9c6f;
+  background: #4bb244;
   color: #fff;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 0;
   font-size: 0.75rem;
   text-transform: uppercase;
-  border: 1px solid #3e1f08;
+  border: 2px solid #3e1f08;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
 }
 
 .playerStats {
@@ -247,10 +238,6 @@
     font-size: 1.5rem;
   }
 
-  .closeButton {
-    top: 50px;
-    right: 40px;
-  }
 
   .sortButton {
     font-size: 0.85rem;

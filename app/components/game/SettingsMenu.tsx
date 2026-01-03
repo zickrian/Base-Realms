@@ -114,10 +114,10 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.menuBox}>
+      <div className={`${styles.menuBox} bit16-container`}>
         <div className={styles.header}>
           <div className={styles.title}>Settings</div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose}>
             <X size={24} />
           </button>
         </div>
@@ -162,7 +162,7 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
           <div className={styles.divider}></div>
 
-          <button className={styles.logoutButton} onClick={handleLogout}>
+          <button className={`${styles.logoutButton} bit16-button has-red-background`} onClick={handleLogout}>
             <LogOut size={20} />
             <span>Logout</span>
           </button>

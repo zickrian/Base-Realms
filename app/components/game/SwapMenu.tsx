@@ -49,11 +49,11 @@ export const SwapMenu = ({ isOpen, onClose }: SwapMenuProps) => {
 
   return (
     <div className={styles.container} style={{ display: isOpen ? 'flex' : 'none' }}>
-      <div className={styles.menuBox}>
+      <div className={`${styles.menuBox} bit16-container`}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.title}>Swap Tokens</div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose}>
             <X size={24} />
           </button>
         </div>

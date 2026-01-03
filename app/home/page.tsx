@@ -336,7 +336,7 @@ export default function HomePage() {
       {/* Already Claimed Popup */}
       {showAlreadyClaimedPopup && (
         <div className={styles.popupOverlay} onClick={() => setShowAlreadyClaimedPopup(false)}>
-          <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
+          <div className={`${styles.popupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
             <button 
               className={styles.popupCloseButton} 
               onClick={() => setShowAlreadyClaimedPopup(false)}

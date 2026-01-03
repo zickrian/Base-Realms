@@ -59,7 +59,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         </>
       )}
 
-      <div className={styles.modalContainer}>
+      <div className={`${styles.modalContainer} bit16-container`}>
         {/* Stars decoration for victory */}
         {isVictory && (
           <div className={styles.stars}>
@@ -79,7 +79,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
         {/* Return button */}
         <button
-          className={styles.returnButton}
+          className={`${styles.returnButton} bit16-button has-green-background`}
           onClick={handleClose}
           data-testid="return-button"
         >

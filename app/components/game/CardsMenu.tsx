@@ -171,7 +171,7 @@ export function CardsMenu() {
   return (
     <div className={styles.container} data-allow-scroll="true">
       {/* Cards Shop */}
-      <section className={styles.shopContainer}>
+      <section className={`${styles.shopContainer} bit16-container`}>
         <h2 className={styles.sectionTitle}>CARDS SHOP</h2>
 
         <div className={styles.packsRow}>
@@ -229,7 +229,7 @@ export function CardsMenu() {
       </section>
 
       {/* Inventory */}
-      <section className={styles.inventoryContainer}>
+      <section className={`${styles.inventoryContainer} bit16-container`}>
         <h2 className={styles.sectionTitle}>MY CARDS INVENTORY</h2>
 
         <div className={styles.cardsGrid}>
@@ -273,7 +273,7 @@ export function CardsMenu() {
                       </div>
                     </div>
                     <button
-                      className={`${styles.useButton} ${isSelected ? styles.useButtonSelected : ''}`}
+                      className={`${styles.useButton} bit16-button ${isSelected ? styles.useButtonSelected : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleUseCard(item.cardTemplate.id);
@@ -316,9 +316,9 @@ export function CardsMenu() {
       {/* Purchase Confirmation Popup */}
       {selectedPack && (
         <div className={styles.popupOverlay} onClick={closePopup}>
-          <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
+          <div className={`${styles.popupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
             <button 
-              className={styles.popupCloseButton} 
+              className={`${styles.popupCloseButton} bit16-button has-red-background`} 
               onClick={closePopup}
               aria-label="Close"
             >
@@ -332,11 +332,11 @@ export function CardsMenu() {
               This will mint an NFT to your wallet.
             </p>
             <div className={styles.popupActions}>
-              <button className={styles.cancelButton} onClick={closePopup}>
+              <button className={`${styles.cancelButton} bit16-button has-red-background`} onClick={closePopup}>
                 CANCEL
               </button>
               <button 
-                className={styles.confirmButton} 
+                className={`${styles.confirmButton} bit16-button has-green-background`} 
                 onClick={handlePurchase}
                 disabled={purchasing}
               >

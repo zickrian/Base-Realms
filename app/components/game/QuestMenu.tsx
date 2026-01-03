@@ -53,11 +53,11 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
 
   return (
     <div className={styles.container} style={{ display: isOpen ? 'flex' : 'none' }}>
-      <div className={styles.menuBox}>
+      <div className={`${styles.menuBox} bit16-container`}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.title}>Quest Log</div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose}>
             <X size={24} />
           </button>
         </div>
@@ -115,7 +115,7 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
                   {/* Claim Button - only show if completed but not claimed */}
                   {isCompleted && quest.status === 'completed' && !isClaimed && (
                     <button
-                      className={styles.claimButton}
+                      className={`${styles.claimButton} bit16-button has-red-background`}
                       onClick={() => handleClaimQuest(quest.id)}
                       disabled={isClaiming}
                     >

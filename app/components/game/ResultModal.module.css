@@ -31,7 +31,6 @@
   font-family: 'VT323', monospace;
   width: 90%;
   max-width: 400px;
-  /* Adjust height to fit content nicely on the paper */
   min-height: 400px;
   display: flex;
   flex-direction: column;
@@ -47,10 +46,6 @@
   background-position: center;
   background-repeat: no-repeat;
   background-color: transparent;
-
-  /* Remove default box styles */
-  border: none;
-  box-shadow: none;
 
   animation: modalSlideIn 0.4s ease-out;
   color: #3e1f08;
@@ -102,35 +97,16 @@
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.2));
 }
 
-/* Return button - Stamp Style */
+/* Return button - 16-bit style */
 .returnButton {
-  font-family: 'VT323', monospace;
-  font-size: 20px;
-  color: #ffffff;
-  background: #3e1f08;
-  border: 2px solid #2c1810;
-  border-radius: 4px;
-  padding: 10px 30px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
-  transition: all 0.1s ease;
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  font-size: 16px;
+  padding: 3px 14px;
   margin-top: 10px;
   position: relative;
   z-index: 1003;
   pointer-events: auto;
-}
-
-.returnButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 3px 5px 0 rgba(0, 0, 0, 0.3);
-  background: #5d2e0c;
-}
-
-.returnButton:active {
-  transform: translateY(1px);
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+  background-color: #4bb244;
 }
 
 /* Auto-close text */

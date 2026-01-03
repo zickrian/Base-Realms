@@ -51,13 +51,16 @@
   white-space: nowrap;
 }
 
-/* Shop Container */
+/* Shop Container - 16-bit style */
 .shopContainer {
-  width: 100%;
-  max-width: 100%;
-  padding: 0 var(--spacing-md);
-  margin-bottom: 40px;
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  padding: 12px;
+  margin: 0 auto 40px auto;
   box-sizing: border-box;
+  background-color: rgba(15, 23, 42, 0.7);
+  position: relative;
+  z-index: 1;
 }
 
 /* Base Card Grid */
@@ -106,24 +109,25 @@
   }
 }
 
-/* Individual Card Styling - Improved RPG Fantasy Style */
+/* Individual Card Styling - Pixelated 16-bit Style */
 .packCard {
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
   background: #0f172a;
-  /* Fallback */
   border: 4px solid;
-  /* Thick borders for RPG feel */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 .packCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.6);
   z-index: 10;
 }
 
@@ -253,7 +257,6 @@
   color: white;
   border: none;
   border-radius: 0;
-  /* Full width seamless */
   padding: 8px 0;
   font-family: var(--font-pixelify);
   font-weight: 700;
@@ -283,20 +286,22 @@
   }
 }
 
-/* Inventory Section */
+/* Inventory Section - Pixelated Style with 16-bit border */
 .inventoryContainer {
-  width: 100%;
-  max-width: 100%;
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
   padding: 12px;
   margin: 0 auto;
   box-sizing: border-box;
   background: rgba(15, 23, 42, 0.6);
-  /* Semi-transparent background */
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
-  /* Ensure container doesn't overflow */
   overflow: hidden;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
 }
 
 .cardsGrid {
@@ -323,32 +328,31 @@
 
 .cardSlot {
   aspect-ratio: 2/3;
-  /* Portrait Ratio for Cards */
   background: #0f172a;
-  border-radius: 8px;
-  border: 2px solid #334155;
-  /* Default border */
+  border-radius: 0;
+  border: 3px solid #334155;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
-  transition: transform 0.1s, border-color 0.2s;
-  /* Ensure consistent size - no size changes on selection */
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 0 rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s, border-color 0.1s;
   width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
   max-width: 100%;
   max-height: 100%;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 .cardSlotSelected {
-  border: 3px solid #10b981;
+  border: 4px solid #10b981;
   box-shadow: 
-    inset 0 0 12px rgba(0, 0, 0, 0.8),
-    0 0 12px rgba(16, 185, 129, 0.4);
-  /* Ensure no size change - use same dimensions */
+    inset 0 0 8px rgba(0, 0, 0, 0.8),
+    0 3px 0 rgba(16, 185, 129, 0.6);
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -359,8 +363,9 @@
 
 
 .cardSlot:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: #94a3b8;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 3px 0 rgba(0, 0, 0, 0.3);
 }
 
 .cardInner {
@@ -410,8 +415,11 @@
   justify-content: center;
   background: rgba(15, 23, 42, 0.3);
   border: 2px dashed #475569;
-  border-radius: 6px;
+  border-radius: 0;
   position: relative;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 .cardEmptyLabel {
@@ -426,70 +434,26 @@
 }
 
 .useButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
   width: 100%;
-  padding: 6px 8px;
-  background: #3b82f6;
-  border: 2px solid #1e40af;
-  color: #ffffff;
-  font-family: var(--font-pixelify);
-  font-weight: bold;
-  font-size: 10px;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 
-    0 2px 0 #1e40af,
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transition: all 0.15s ease;
-  border-radius: 0;
-  text-align: center;
-  box-sizing: border-box;
-  /* Ensure button doesn't overflow */
+  font-size: 9px;
+  padding: 2px 8px;
   min-width: 0;
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.useButton:hover:not(:disabled) {
-  background: #60a5fa;
-  transform: translateY(1px);
-  box-shadow: 
-    0 1px 0 #1e40af,
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.useButton:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 
-    0 0 0 #1e40af,
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.useButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  background-color: #808080 !important; /* Gray for unused */
 }
 
 .useButtonSelected {
-  background: #10b981;
-  border-color: #047857;
-  box-shadow: 
-    0 2px 0 #047857,
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.useButtonSelected:hover:not(:disabled) {
-  background: #34d399;
-  box-shadow: 
-    0 1px 0 #047857,
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background-color: #4bb244 !important; /* Green for selected */
 }
 
 .emptyButtonPlaceholder {
   width: 100%;
-  min-height: 32px;
-  /* Match useButton height (padding 6px top + 6px bottom + line-height ~20px + border 2px top + 2px bottom) */
+  min-height: 24px;
+  /* Match useButton height with reduced size */
   box-sizing: border-box;
   max-width: 100%;
 }
@@ -514,23 +478,16 @@
 .popupContent {
   position: relative;
   background-color: #e8be82;
-  border: 4px solid #3e1f08;
-  outline: 4px solid #2a1810;
-  border-radius: 0;
   padding: 6px;
   width: 90%;
   max-width: 320px;
   text-align: center;
-  box-shadow:
-    inset 0 0 40px rgba(139, 69, 19, 0.15),
-    10px 10px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
   animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
   color: #3e1f08;
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
 @keyframes popIn {
@@ -545,37 +502,16 @@
 }
 
 .popupCloseButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px;
-  height: 32px;
-  background: #a52a2a;
-  border: 2px solid #3e1f08;
-  color: #f3e5c9;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'VT323', monospace;
-  font-weight: bold;
-  font-size: 18px;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  font-size: 16px;
   z-index: 10;
-  padding: 0;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
-  transition: all 0.1s;
-  image-rendering: pixelated;
-}
-
-.popupCloseButton:hover {
-  background: #c0392b;
-  transform: scale(1.05);
-}
-
-.popupCloseButton:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  background-color: #f22561;
 }
 
 .popupTitle {
@@ -610,54 +546,18 @@
 
 .cancelButton,
 .confirmButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
   flex: 1;
-  padding: 0.75rem;
-  border: 2px solid #3e1f08;
-  border-radius: 0;
-  font-family: 'VT323', monospace;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #f3e5c9;
-  transition: all 0.1s;
-  font-weight: bold;
-  text-transform: uppercase;
-  image-rendering: pixelated;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+  font-size: 1.2rem;
+  padding: 3px 12px;
 }
 
 .cancelButton {
-  background: #a52a2a;
-}
-
-.cancelButton:hover {
-  background: #c0392b;
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
-}
-
-.cancelButton:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+  background-color: #f22561;
 }
 
 .confirmButton {
-  background: #5e9c6f;
-}
-
-.confirmButton:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
-}
-
-.confirmButton:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
-}
-
-.confirmButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+  background-color: #4bb244;
 }
 
 /* Toast Message */

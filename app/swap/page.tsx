@@ -57,10 +57,10 @@ export default function SwapPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.paperCard}>
+      <div className={`${styles.paperCard} bit16-container`}>
         {/* Header with Back Button */}
         <div className={styles.header}>
-          <button className={styles.backButton} onClick={handleBack}>
+          <button className={`${styles.backButton} bit16-button has-green-background`} onClick={handleBack}>
             <ArrowLeft size={24} />
           </button>
           <div className={styles.title}>Swap</div>

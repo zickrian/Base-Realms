@@ -225,8 +225,8 @@ export function CardRevealModal({
       <div className={styles.cardContainer}>
         {/* Minting state - Standard display for processing, success, failed */}
         {revealState === "minting" && (
-          <div className={styles.mintingContainer}>
-            <button className={styles.closeButton} onClick={onClose} aria-label="Close">
+          <div className={`${styles.mintingContainer} bit16-container`}>
+            <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose} aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
@@ -250,10 +250,10 @@ export function CardRevealModal({
                 <h3 className={styles.statusTitle}>Error</h3>
                 <p className={styles.statusMessage}>{mintError}</p>
                 <div className={styles.actionButtons}>
-                  <button className={styles.retryButton} onClick={handleMint} disabled={isPending || isConfirming}>
+                  <button className={`${styles.retryButton} bit16-button has-green-background`} onClick={handleMint} disabled={isPending || isConfirming}>
                     Retry Mint
                   </button>
-                  <button className={styles.cancelButton} onClick={onClose} style={{ marginTop: '10px' }}>
+                  <button className={`${styles.cancelButton} bit16-button has-red-background`} onClick={onClose} style={{ marginTop: '10px' }}>
                     Close
                   </button>
                 </div>
@@ -265,7 +265,7 @@ export function CardRevealModal({
                 <p className={styles.statusMessage}>Click the button below to start minting your card</p>
                 <div className={styles.actionButtons}>
                   <button 
-                    className={styles.retryButton} 
+                    className={`${styles.retryButton} bit16-button has-green-background`} 
                     onClick={handleMint} 
                     disabled={isPending || isConfirming || !cardData || !walletAddress}
                   >
