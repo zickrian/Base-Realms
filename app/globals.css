@@ -1,3 +1,27 @@
+/* Import VT323 font once globally */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* Shared Animations - moved from individual files to reduce duplication */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @layer base {
   :root {
     /* Supabase Storage URL */

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+/* VT323 font and fadeIn/popIn animations moved to globals.css */
 
 /* Container - Overlay */
 .container {
@@ -14,15 +14,6 @@
   padding: 1rem;
   animation: fadeIn 0.15s ease-out;
   perspective: 1000px;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 /* Card Container - Wraps card and hint together */
@@ -278,17 +269,6 @@
   z-index: 1;
 }
 
-@keyframes popIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 .closeButton {
   /* 16-bit button style - inherits from globals.css .bit16-button */
   position: absolute;
@@ -471,4 +451,3 @@
     bottom: -40px;
   }
 }
-

@@ -64,14 +64,7 @@
   animation: fadeIn 0.15s ease-out;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+/* fadeIn and popIn animations moved to globals.css */
 
 .popupContent {
   position: relative;
@@ -86,17 +79,6 @@
   display: flex;
   flex-direction: column;
   z-index: 1;
-}
-
-@keyframes popIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 .popupCloseButton {

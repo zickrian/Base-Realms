@@ -490,16 +490,7 @@
   z-index: 1;
 }
 
-@keyframes popIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
+/* popIn animation moved to globals.css */
 
 .popupCloseButton {
   /* 16-bit button style - inherits from globals.css .bit16-button */
@@ -624,11 +615,4 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+/* fadeIn animation moved to globals.css */
