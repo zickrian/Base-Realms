@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import { useGameCanvas } from "@/app/hooks/useGameCanvas";
 import { GameAssets } from "@/app/utils/gameAssets";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { useStages } from "../../hooks/useStages";
 import styles from "./StageDisplay.module.css";
 
-export function StageDisplay() {
+export const StageDisplay = memo(function StageDisplay() {
   const { currentStage: _currentStage } = useStages();
   const [cloudImage, setCloudImage] = useState<HTMLImageElement | null>(null);
   const cloudXRef = useRef<number>(0);
@@ -79,4 +79,4 @@ export function StageDisplay() {
       </div>
     </div>
   );
-}
+});

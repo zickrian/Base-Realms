@@ -42,7 +42,6 @@ export function BottomNav({ activeItem, onNavigate }: BottomNavProps) {
             className={styles.navIcon}
             width={32}
             height={32}
-            unoptimized
           />
           <span className={styles.navLabel}>{item.label}</span>
         </button>

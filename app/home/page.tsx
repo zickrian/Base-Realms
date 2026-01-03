@@ -85,9 +85,12 @@ export default function HomePage() {
     }
   }, []);
 
-  // Prefetch battle route and preload LoadingScreen assets when page is ready
+  // Combined effect: Prefetch routes, preload assets, and track ready state
   useEffect(() => {
     if (isConnected && isInitialized && !storeLoading) {
+      // Track ready state
+      hasEverBeenReady.current = true;
+      
       // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
       router.prefetch('/leaderboard');
@@ -96,7 +99,7 @@ export default function HomePage() {
       // Pre-fetch leaderboard data so it's ready when user clicks
       prefetchLeaderboard();
       
-      // Preload LoadingScreen assets in background (same as LoadingScreen.tsx)
+      // Preload LoadingScreen assets in background
       const loadingAssets = [
         getStorageUrl('battle/gladiator.png'),
         getStorageUrl('battle/output-onlinegiftools.gif'),
@@ -108,13 +111,6 @@ export default function HomePage() {
       });
     }
   }, [isConnected, isInitialized, storeLoading, router]);
-
-  // Track when user has been fully ready (prevents unnecessary redirects on state flickers)
-  useEffect(() => {
-    if (isConnected && isInitialized && !storeLoading) {
-      hasEverBeenReady.current = true;
-    }
-  }, [isConnected, isInitialized, storeLoading]);
 
   // Redirect if not connected - with better protection against race conditions
   useEffect(() => {
@@ -177,22 +173,12 @@ export default function HomePage() {
       return;
     }
 
-    // Always fetch fresh pack count before checking
-    // This ensures we have the latest data after mint
+    // Fetch fresh pack count - refetchDailyPacks returns the updated count
     let freshPackCount = packCount;
     try {
-      await refetchDailyPacks();
-      // Get fresh pack count after refetch
-      // We need to fetch directly to get the latest value
-      const response = await fetch('/api/daily-packs', {
-        headers: {
-          'x-wallet-address': address,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        freshPackCount = data.packCount || 0;
-      }
+      const result = await refetchDailyPacks();
+      // Use returned value directly instead of making another API call
+      freshPackCount = typeof result === 'number' ? result : packCount;
     } catch (error) {
       console.warn('Failed to refresh daily packs:', error);
     }

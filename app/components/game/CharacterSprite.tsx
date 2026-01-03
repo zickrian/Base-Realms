@@ -82,7 +82,7 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
           width={240}
           height={240}
           className={spriteClasses}
-          unoptimized
+          priority
         />
       </div>
 

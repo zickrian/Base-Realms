@@ -85,8 +85,8 @@ export function useDailyPacks() {
     }
   };
 
-  const refetch = async (): Promise<void> => {
-    if (!address || !isConnected) return;
+  const refetch = async (): Promise<number> => {
+    if (!address || !isConnected) return 0;
 
     try {
       setLoading(true);
@@ -101,11 +101,14 @@ export function useDailyPacks() {
       }
 
       const data = await response.json();
-      setPackCount(data.packCount || 0);
+      const newPackCount = data.packCount || 0;
+      setPackCount(newPackCount);
       setError(null);
+      return newPackCount;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
+      return packCount;
     } finally {
       setLoading(false);
     }

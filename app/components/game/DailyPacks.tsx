@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { useGameStore } from "../../stores/gameStore";
@@ -12,7 +12,7 @@ interface DailyPacksProps {
   onPackClick?: () => void;
 }
 
-export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
+export const DailyPacks = memo(function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
   const { quests } = useGameStore();
   const { playSound } = useSoundEffect();
   
@@ -46,7 +46,6 @@ export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
             width={60}
             height={60}
             className={styles.packButtonImage}
-            unoptimized
           />
         </button>
       </div>
@@ -60,7 +59,6 @@ export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
             width={60}
             height={60}
             className={styles.questButtonImage}
-            unoptimized
           />
           {questCount > 0 && (
             <div className={styles.questBadge}>{questCount}</div>
@@ -69,4 +67,4 @@ export function DailyPacks({ onQuestClick, onPackClick }: DailyPacksProps) {
       </div>
     </div>
   );
-}
+});

@@ -303,7 +303,7 @@ export function CardRevealModal({
                   className={styles.cardImage}
                   width={400}
                   height={600}
-                  unoptimized
+                  priority
                 />
               </div>
 
@@ -319,7 +319,7 @@ export function CardRevealModal({
                   className={styles.cardImage}
                   width={400}
                   height={600}
-                  unoptimized
+                  priority
                 />
               </div>
             </div>

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all stages
+    // Get all stages with cache headers
     const { data: stages, error } = await supabaseAdmin
       .from('stages')
       .select('*')
@@ -40,7 +40,14 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json({ stages: stages || [] });
+    return NextResponse.json(
+      { stages: stages || [] },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
+        },
+      }
+    );
   } catch (error: unknown) {
     console.error('Get stages error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to get stages';

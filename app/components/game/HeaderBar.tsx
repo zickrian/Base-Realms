@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, memo } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import Image from "next/image";
@@ -15,7 +15,7 @@ interface HeaderBarProps {
 const IDRX_TOKEN_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22" as const;
 const BASE_CHAIN_ID = 8453;
 
-export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
+export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
   const { profile, profileLoading } = useGameStore();
 
@@ -122,4 +122,4 @@ export function HeaderBar({ onSettingsClick }: HeaderBarProps) {
       </div>
     </div>
   );
-}
+});

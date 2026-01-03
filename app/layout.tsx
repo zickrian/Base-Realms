@@ -44,23 +44,29 @@ export async function generateMetadata(): Promise<Metadata> {
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const sourceCodePro = Source_Code_Pro({
   variable: "--font-source-code-pro",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 const pixelifySans = Pixelify_Sans({
   variable: "--font-pixelify",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const russoOne = Russo_One({
   variable: "--font-russo",
   subsets: ["latin"],
   weight: ["400"],
+  display: "swap",
+  preload: false,
 });
 
 export default function RootLayout({

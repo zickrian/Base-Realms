@@ -206,7 +206,6 @@ export function CardsMenu() {
                         if (target) target.style.display = 'block';
                       }}
                       loading="lazy"
-                      unoptimized
                     />
                   ) : (
                     <div className={styles.packImagePlaceholder}>
@@ -267,7 +266,6 @@ export function CardsMenu() {
                               if (target) target.style.display = 'block';
                             }}
                             loading="lazy"
-                            unoptimized
                           />
                         )}
                       </div>

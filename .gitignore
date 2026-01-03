@@ -12,7 +12,8 @@
 .kiro
 # testing
 /coverage
-
+.cursor
+.vscode
 # next.js
 /.next/
 /out/

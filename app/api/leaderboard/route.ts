@@ -138,9 +138,14 @@ export async function GET(request: NextRequest) {
         rank: index + 1,
       }));
 
-    return NextResponse.json({
-      leaderboard: leaderboardWithRank,
-    });
+    return NextResponse.json(
+      { leaderboard: leaderboardWithRank },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        },
+      }
+    );
   } catch (error: unknown) {
     console.error('Leaderboard error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch leaderboard';

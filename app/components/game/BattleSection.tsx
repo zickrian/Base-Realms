@@ -59,7 +59,6 @@ export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapC
               className={styles.pannelIcon}
               width={40}
               height={40}
-              unoptimized
             />
             <span className={styles.buttonLabel} suppressHydrationWarning>BOARD</span>
           </div>
@@ -91,7 +90,6 @@ export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapC
               className={styles.pannelIcon}
               width={40}
               height={40}
-              unoptimized
             />
             <span className={styles.buttonLabel} suppressHydrationWarning>SWAP</span>
           </div>
