@@ -236,9 +236,22 @@ export default function HomePage() {
     return <LoadingState />;
   }
 
-  // Show asset loading screen after store is ready but before assets are loaded
+  // Skip HomeLoadingScreen if user just came from landing page (after "Ready! Entering game...")
+  // If user is initialized and connected, they just completed initialization on landing page
+  // Skip the asset loading screen to avoid double loading and go straight to home content
   if (!assetsLoaded) {
-    return <HomeLoadingScreen onLoadComplete={handleAssetsLoaded} />;
+    // If user is already initialized and connected, they just came from landing page
+    // Skip the loading screen and mark assets as loaded immediately
+    if (isInitialized && !storeLoading && isConnected) {
+      // Mark assets as loaded immediately without showing loading screen
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('homeAssetsLoaded', 'true');
+      }
+      setAssetsLoaded(true);
+    } else {
+      // Show asset loading screen for other cases (e.g., refresh, direct navigation)
+      return <HomeLoadingScreen onLoadComplete={handleAssetsLoaded} />;
+    }
   }
 
   return (
