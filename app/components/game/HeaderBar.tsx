@@ -72,7 +72,17 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
         onClick={onSettingsClick}
         aria-label="Open Settings"
       >
-        <div className={styles.burgerIcon}>
+        {/* SVG Background */}
+        <Image
+          src="/game/icons/Untitled-1.svg"
+          alt="Menu"
+          width={48}
+          height={48}
+          className={styles.menuBg}
+        />
+
+        {/* Burger Overlay (Light & Thin to match SVG style) */}
+        <div className={styles.burgerOverlay}>
           <div className={styles.burgerLine}></div>
           <div className={styles.burgerLine}></div>
           <div className={styles.burgerLine}></div>

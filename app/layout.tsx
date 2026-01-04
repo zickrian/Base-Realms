@@ -38,6 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
         },
       }),
     },
+    icons: "/game/icons/lead.svg",
   };
 }
 

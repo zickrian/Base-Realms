@@ -54,7 +54,7 @@ export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapC
         <button key="board-btn" className={styles.stageButton} onClick={onBoardClick}>
           <div className={styles.cardInner}>
             <Image
-              src={getGameIconUrl("stage-button.png")}
+              src="/game/icons/lead.svg"
               alt="Board"
               className={styles.pannelIcon}
               width={40}
@@ -65,8 +65,8 @@ export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapC
         </button>
 
         {/* Center: Battle Button */}
-        <button 
-          key="battle-btn" 
+        <button
+          key="battle-btn"
           className={`${styles.battleButton} ${isBattleDisabled ? styles.battleButtonLocked : ''}`}
           onClick={handleBattleClick}
           disabled={isBattleDisabled}
@@ -85,7 +85,7 @@ export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapC
         <button key="swap-btn" className={styles.swapButton} onClick={onSwapClick}>
           <div className={styles.cardInnerSwap}>
             <Image
-              src={getGameIconUrl("swords.png")}
+              src="/game/icons/swap.svg"
               alt="Swap"
               className={styles.pannelIcon}
               width={40}
