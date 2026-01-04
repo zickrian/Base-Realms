@@ -6,7 +6,8 @@
   gap: var(--spacing-md);
   background: transparent;
   position: relative;
-  z-index: 10; /* Lebih tinggi dari canvas agar button bisa diklik */
+  z-index: 10;
+  /* Lebih tinggi dari canvas agar button bisa diklik */
 }
 
 .packsSection {
@@ -22,7 +23,14 @@
   color: white;
   text-transform: uppercase;
   text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  /* Heavy black stroke */
+  text-shadow:
+    -1.5px -1.5px 0 #000,
+    1.5px -1.5px 0 #000,
+    -1.5px 1.5px 0 #000,
+    1.5px 1.5px 0 #000,
+    0 2px 0 #000;
+  font-weight: 900;
   white-space: nowrap;
 }
 
@@ -38,7 +46,8 @@
   border: none;
   background: transparent;
   transition: transform 0.2s;
-  z-index: 11; /* Lebih tinggi dari canvas */
+  z-index: 11;
+  /* Lebih tinggi dari canvas */
 }
 
 .packButton:hover {
@@ -84,7 +93,14 @@
   color: white;
   text-transform: uppercase;
   text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  /* Heavy black stroke */
+  text-shadow:
+    -1.5px -1.5px 0 #000,
+    1.5px -1.5px 0 #000,
+    -1.5px 1.5px 0 #000,
+    1.5px 1.5px 0 #000,
+    0 2px 0 #000;
+  font-weight: 900;
   white-space: nowrap;
 }
 
@@ -100,7 +116,8 @@
   border: none;
   background: transparent;
   transition: transform 0.2s;
-  z-index: 11; /* Lebih tinggi dari canvas */
+  z-index: 11;
+  /* Lebih tinggi dari canvas */
 }
 
 .questButton:hover {

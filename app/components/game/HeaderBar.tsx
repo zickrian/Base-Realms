@@ -5,7 +5,7 @@ import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
-import { useGameStore } from "../../stores/gameStore";
+
 import styles from "./HeaderBar.module.css";
 
 interface HeaderBarProps {
@@ -17,7 +17,6 @@ const BASE_CHAIN_ID = 8453;
 
 export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
-  const { profile, profileLoading } = useGameStore();
 
   const { data: ethBalanceData } = useBalance({
     address: address,
@@ -52,16 +51,6 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
     return value.toFixed(3);
   };
 
-  const formatAddress = (addr: string | undefined) => {
-    if (!addr) return "0x067AAAAAAAB...";
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  const level = profile?.level ?? 1;
-  const currentXP = profile?.currentXp ?? 0;
-  const maxXP = profile?.maxXp ?? 100;
-  const xpPercentage = profile?.xpPercentage ?? 0;
-
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -71,45 +60,25 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
   if (!mounted) {
     return (
       <div className={styles.header}>
-        <div className={styles.playerStats} style={{ opacity: 0 }}></div>
+        <div style={{ width: 48, height: 48 }}></div>
       </div>
     );
   }
 
   return (
     <div className={styles.header}>
-      <div className={styles.playerStats}>
-        <div className={styles.clickableArea} onClick={onSettingsClick}>
-          <div className={styles.levelBadge}>
-            <Image
-              src={getGameIconUrl("level-badge.png")}
-              alt="Level Badge"
-              width={60}
-              height={70}
-              className={styles.levelBadgeImage}
-            />
-            <span className={styles.levelNumber}>{level}</span>
-          </div>
-          <div className={styles.walletProgressSection}>
-            <span className={styles.addressText}>{formatAddress(address)}</span>
-            <div className={styles.xpProgressContainer}>
-              <div className={styles.progressBarBackground}>
-                <div
-                  className={styles.progressBarFill}
-                  style={{ width: `${xpPercentage}%` }}
-                >
-                  <div className={styles.progressBarShine}></div>
-                </div>
-              </div>
-              <div className={styles.xpContent}>
-                <span className={styles.xpText}>
-                  {profileLoading ? 'Loading...' : `${currentXP} / ${maxXP}`}
-                </span>
-              </div>
-            </div>
-          </div>
+      <button
+        className={styles.menuButton}
+        onClick={onSettingsClick}
+        aria-label="Open Settings"
+      >
+        <div className={styles.burgerIcon}>
+          <div className={styles.burgerLine}></div>
+          <div className={styles.burgerLine}></div>
+          <div className={styles.burgerLine}></div>
         </div>
-      </div>
+      </button>
+
       <div className={styles.currencySection}>
         <div className={styles.currencyItem}>
           <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
