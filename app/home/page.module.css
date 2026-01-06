@@ -8,11 +8,12 @@
   max-width: 430px;
   width: 100%;
   margin: 0 auto;
-  background: url(https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/background.png) no-repeat center top;
-  background-size: 100% auto;
-  background-attachment: local;
+  background: url(/Assets/bg.svg) no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
   position: relative;
-  padding-bottom: 90px;
+  /* padding-bottom removed as nav is gone */
+  padding-bottom: 0;
   overflow-x: hidden;
   overflow-y: hidden;
   /* Prevent vertical scroll */
@@ -171,4 +172,50 @@
 .popupOkButton:active {
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.grassContainer {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  /* Crop excess width */
+}
+
+.grassImage {
+  height: 180px;
+  /* Fixed height to ensure it covers the bottom area */
+  width: auto;
+  /* Let width scale naturally */
+  min-width: 100%;
+  /* Ensure full width */
+  image-rendering: pixelated;
+  object-fit: cover;
+  margin-bottom: -1px;
+  /* Fix any small gap */
+}
+
+/* Character Animation */
+.characterContainer {
+  position: absolute;
+  /* controlled by inline styles for left/bottom */
+  width: 40px;
+  height: 80px;
+  /* Match canvas display height */
+  z-index: 20;
+  /* Above grass */
+  pointer-events: none;
+  transform-origin: center bottom;
+  will-change: left, transform;
+  /* optimize for movement */
+  transition: transform 0.1s;
+  /* smooth flip */
 }

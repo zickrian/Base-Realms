@@ -7,12 +7,11 @@ import {
   HeaderBar,
   DailyPacks,
   StageDisplay,
-  BattleSection,
-  BottomNav,
   CardsMenu,
   QuestMenu,
   CardRevealModal,
   SettingsMenu,
+  CharacterCanvas,
 } from "../components/game";
 import { HomeLoadingScreen } from "../components/HomeLoadingScreen";
 import { LoadingState } from "../components/LoadingState";
@@ -70,6 +69,64 @@ export default function HomePage() {
     isVisible: false,
   });
 
+  // Character Movement State
+  const [charPos, setCharPos] = useState({ x: 50, y: 175 }); // Initial position (percentage x, fixed pixel y from bottom)
+  const [targetX, setTargetX] = useState<number | null>(null);
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const [isMoving, setIsMoving] = useState(false);
+
+  // Animation loop for character movement
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const animate = () => {
+      if (targetX !== null) {
+        setCharPos(prev => {
+          const dx = targetX - prev.x;
+
+          // Stop if close enough
+          if (Math.abs(dx) < 0.5) {
+            setIsMoving(false);
+            setTargetX(null);
+            return prev;
+          }
+
+          const speed = 0.8; // Movement speed
+          const move = Math.sign(dx) * speed;
+
+          return { ...prev, x: prev.x + move };
+        });
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    if (isMoving) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isMoving, targetX]);
+
+  // Handle screen click for movement
+  const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Ignore clicks on interactive elements (buttons, etc)
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) {
+      return;
+    }
+
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    const xPercent = (x / width) * 100;
+
+    setTargetX(xPercent);
+    setDirection(xPercent > charPos.x ? 'right' : 'left');
+    setIsMoving(true);
+  };
+
+
   const { packCount, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
@@ -90,21 +147,21 @@ export default function HomePage() {
     if (isConnected && isInitialized && !storeLoading) {
       // Track ready state
       hasEverBeenReady.current = true;
-      
+
       // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
       router.prefetch('/leaderboard');
       router.prefetch('/swap');
-      
+
       // Pre-fetch leaderboard data so it's ready when user clicks
       prefetchLeaderboard();
-      
+
       // Preload LoadingScreen assets in background
       const loadingAssets = [
         getStorageUrl('battle/gladiator.png'),
         getStorageUrl('battle/output-onlinegiftools.gif'),
       ];
-      
+
       loadingAssets.forEach((url) => {
         const img = new Image();
         img.src = url;
@@ -152,7 +209,7 @@ export default function HomePage() {
     // Navigate immediately - route is prefetched
     router.push('/swap');
   };
-  
+
   const handlePackClick = async () => {
     if (!address || !isConnected) {
       setToast({
@@ -206,11 +263,29 @@ export default function HomePage() {
       <HeaderBar onSettingsClick={() => setIsSettingsOpen(true)} />
       <DailyPacks onQuestClick={handleQuestClick} onPackClick={handlePackClick} />
       <StageDisplay />
-      <BattleSection onBattle={handleBattle} onBoardClick={handleBoardClick} onSwapClick={handleSwapClick} isSwapEnabled={false} />
+
+      {/* Grass Background */}
+      <div className={styles.grassContainer}>
+        <img
+          src="/Assets/grass.svg"
+          alt="Grass"
+          className={styles.grassImage}
+        />
+      </div>
+
+      {/* Character */}
+      <div
+        className={styles.characterContainer}
+        style={{
+          left: `${charPos.x}%`,
+          bottom: `${charPos.y}px`,
+          transform: `translateX(-50%)`
+        }}
+      >
+        <CharacterCanvas isMoving={isMoving} direction={direction} />
+      </div>
     </>
   );
-
-  const renderCardsView = () => <CardsMenu />;
 
   // NOW conditional returns are safe - all hooks have been called
   // Show loading while connecting, loading store, or not yet initialized
@@ -241,10 +316,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className={styles.container}>
-      {activeNav === "arena" && renderArenaView()}
-      {activeNav === "cards" && renderCardsView()}
-      <BottomNav activeItem={activeNav} onNavigate={setActiveNav} />
+    <div className={styles.container} onClick={handleScreenClick}>
+      {renderArenaView()}
+
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
@@ -264,7 +338,7 @@ export default function HomePage() {
         onMintSuccess={async (transactionHash) => {
           // Set minting in progress flag
           setIsMintingInProgress(true);
-          
+
           // Run backend operations in background without blocking UI
           // Card reveal should continue regardless of backend operations
           (async () => {
@@ -274,7 +348,7 @@ export default function HomePage() {
               // 2. Update quest progress for 'open_packs'
               // 3. Decrement pack_count
               await claimPack();
-              
+
               // Record mint transaction (non-blocking)
               if (address) {
                 fetch('/api/cards/record-mint', {
@@ -288,7 +362,7 @@ export default function HomePage() {
                   console.warn('Failed to record mint:', recordError);
                 });
               }
-              
+
               // Sync NFT from blockchain (non-blocking)
               if (address) {
                 fetch('/api/cards/sync-nft', {
@@ -331,13 +405,13 @@ export default function HomePage() {
         }}
       />
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-      
+
       {/* Already Claimed Popup */}
       {showAlreadyClaimedPopup && (
         <div className={styles.popupOverlay} onClick={() => setShowAlreadyClaimedPopup(false)}>
           <div className={`${styles.popupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
-            <button 
-              className={styles.popupCloseButton} 
+            <button
+              className={styles.popupCloseButton}
               onClick={() => setShowAlreadyClaimedPopup(false)}
               aria-label="Close"
             >
@@ -351,8 +425,8 @@ export default function HomePage() {
               Silakan kembali besok untuk claim pack gratis Anda!
             </p>
             <div className={styles.popupActions}>
-              <button 
-                className={styles.popupOkButton} 
+              <button
+                className={styles.popupOkButton}
                 onClick={() => setShowAlreadyClaimedPopup(false)}
               >
                 MENGERTI
