@@ -69,47 +69,79 @@ export default function HomePage() {
     isVisible: false,
   });
 
+  // World Constants
+  const VIEWPORT_WIDTH = 430; // Mobile viewport
+  const WORLD_WIDTH = 860; // 2x screens
+  const HOME_X = 215; // Center of screen 1
+  const SHOP_X = 545; // Center-ish of screen 2 shift
+
   // Character Movement State
-  const [charPos, setCharPos] = useState({ x: 50, y: 176 }); // Initial position (percentage x, fixed pixel y from bottom)
+  // Migrated from percentage (50%) to pixels (215px) relative to world start
+  const [charPos, setCharPos] = useState({ x: HOME_X, y: 176 });
+  const [cameraX, setCameraX] = useState(0);
+
   const [targetX, setTargetX] = useState<number | null>(null);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isMoving, setIsMoving] = useState(false);
 
-  // Animation loop for character movement
+  // Animation loop for character movement and camera
   useEffect(() => {
     let animationFrameId: number;
 
     const animate = () => {
+      // 1. Move Character
       if (targetX !== null) {
         setCharPos(prev => {
           const dx = targetX - prev.x;
 
           // Stop if close enough
-          if (Math.abs(dx) < 0.5) {
+          if (Math.abs(dx) < 2) { // 2px tolerance
             setIsMoving(false);
             setTargetX(null);
             return prev;
           }
 
-          const speed = 0.8; // Movement speed
+          const speed = 3; // Pixel speed (approx equivalent to previous speed)
           const move = Math.sign(dx) * speed;
 
           return { ...prev, x: prev.x + move };
         });
       }
+
+      // 2. Move Camera
+      // Logic: If character goes past right side of first screen (e.g. > 300px), 
+      // camera starts following to reveal right side.
+      // Offset = CharX - CenterOffset? 
+      // User said: "approaching right... camera shifts"
+
+      // Simple camera locking centered on character, but clamped to world bounds
+      // Center of view is Viewport/2 = 215.
+      // Desired Camera X = CharX - 215.
+      // Clanped between 0 and (WorldWidth - ViewportWidth).
+
+      setCameraX(prev => {
+        const desiredCamX = charPos.x - 215;
+        const clampedCamX = Math.max(0, Math.min(desiredCamX, WORLD_WIDTH - VIEWPORT_WIDTH));
+        // Smooth lerp could be added, but simple clamp is robust
+        return clampedCamX;
+      });
+
       animationFrameId = requestAnimationFrame(animate);
     };
 
+    // Always run loop to update camera even if not moving target (though mostly needed when moving)
+    // Optimization: only run if moving or camera needs update? 
+    // To be safe for smooth interactions, run if moving or if camera mismatch.
     if (isMoving) {
       animationFrameId = requestAnimationFrame(animate);
     }
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isMoving, targetX]);
+  }, [isMoving, targetX, charPos.x]);
 
   // Handle screen click for movement
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Ignore clicks on interactive elements (buttons, etc)
+    // Ignore clicks on interactive elements
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('[role="button"]')) {
       return;
@@ -117,16 +149,29 @@ export default function HomePage() {
 
     const container = e.currentTarget;
     const rect = container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const width = rect.width;
-    const xPercent = (x / width) * 100;
+    const clickScreenX = e.clientX - rect.left;
 
-    setTargetX(xPercent);
-    setDirection(xPercent > charPos.x ? 'right' : 'left');
+    // Convert screen click to world click
+    // WorldX = ScreenX + CameraX
+    // The previous logic used percentages of container width. 
+    // Container width is actual screen width (e.g. might be < 430 on small phones).
+    // We need to map the visual click to our logical 430px coordinate system.
+
+    // Scale factor if real screen != 430
+    // Assuming design is fixed 430 max width.
+    // If rect.width is smaller, we scale? 
+    // Let's assume 1:1 for simplicity if rect.width is approx 430.
+    // If responsive, we should scale: (clickScreenX / rect.width) * 430
+
+    const scaleFactor = 430 / rect.width;
+    const clickLogicalX = clickScreenX * scaleFactor;
+
+    const worldTargetX = clickLogicalX + cameraX;
+
+    setTargetX(worldTargetX);
+    setDirection(worldTargetX > charPos.x ? 'right' : 'left');
     setIsMoving(true);
   };
-
-
   const { packCount, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
@@ -264,32 +309,51 @@ export default function HomePage() {
       <DailyPacks onQuestClick={handleQuestClick} onPackClick={handlePackClick} />
       <StageDisplay />
 
-      {/* Grass Background */}
-      <div className={styles.grassContainer}>
-        <img
-          src="/Assets/grass.svg"
-          alt="Grass"
-          className={styles.grassImage}
-        />
-      </div>
-
-      {/* Home Building */}
-      <img
-        src="/Assets/home.svg"
-        alt="Home"
-        className={styles.homeBuilding}
-      />
-
-      {/* Character */}
+      {/* World Container for Scrolling Content */}
       <div
-        className={styles.characterContainer}
-        style={{
-          left: `${charPos.x}%`,
-          bottom: `${charPos.y}px`,
-          transform: `translateX(-50%)`
-        }}
+        className={styles.worldContainer}
+        style={{ transform: `translateX(${-cameraX}px)` }}
       >
-        <CharacterCanvas isMoving={isMoving} direction={direction} />
+        {/* Grass Background - Tiled/Extended */}
+        <div className={styles.grassContainer}>
+          <img
+            src="/Assets/grass.svg"
+            alt="Grass"
+            className={styles.grassImage}
+          />
+          <img
+            src="/Assets/grass.svg"
+            alt="Grass"
+            className={styles.grassImage}
+          />
+        </div>
+
+        {/* Home Building */}
+        {/* Positioned at HomeX (215) */}
+        <img
+          src="/Assets/home.svg"
+          alt="Home"
+          className={styles.homeBuilding}
+        />
+
+        {/* Shop Building */}
+        <img
+          src="/Assets/shop.svg"
+          alt="Shop"
+          className={styles.shopBuilding}
+        />
+
+        {/* Character */}
+        <div
+          className={styles.characterContainer}
+          style={{
+            left: `${charPos.x}px`,
+            bottom: `${charPos.y}px`,
+            transform: `translateX(-50%)`
+          }}
+        >
+          <CharacterCanvas isMoving={isMoving} direction={direction} />
+        </div>
       </div>
     </>
   );

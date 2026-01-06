@@ -177,30 +177,24 @@
 .grassContainer {
   position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 430px;
+  /* Full world width */
   z-index: 10;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
   pointer-events: none;
-  overflow: hidden;
-  /* Crop excess width */
 }
 
 .grassImage {
   height: 180px;
-  /* Fixed height to ensure it covers the bottom area */
-  width: auto;
-  /* Let width scale naturally */
-  min-width: 100%;
-  /* Ensure full width */
+  width: 430px;
+  /* Exact screen width per tile */
+  min-width: 430px;
   image-rendering: pixelated;
   object-fit: cover;
   margin-bottom: -1px;
-  /* Fix any small gap */
 }
 
 /* Character Animation */
@@ -222,15 +216,40 @@
 
 .homeBuilding {
   position: absolute;
-  bottom: 176px;
-  /* Matches ground level */
-  left: 50%;
+  bottom: 177px;
+  left: 215px;
+  /* Center of screen 1 */
   transform: translateX(-50%);
   z-index: 15;
-  /* Between grass (10) and character (20) */
   pointer-events: none;
   width: auto;
-  height: auto;
+  height: 160px;
+  /* Fixed height for consistency */
   image-rendering: pixelated;
-  /* Assuming pixel art style */
+}
+
+.shopBuilding {
+  position: absolute;
+  bottom: 177px;
+  left: 645px;
+  /* Center of screen 2 (430 + 215) */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 160px;
+  /* Fixed height to match Home */
+  image-rendering: pixelated;
+}
+
+.worldContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 860px;
+  /* Explicit world width (2x 430px) */
+  height: 100%;
+  transition: transform 0.1s linear;
+  /* Smooth camera pan */
+  will-change: transform;
 }
