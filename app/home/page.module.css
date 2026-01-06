@@ -201,9 +201,9 @@
 .characterContainer {
   position: absolute;
   /* controlled by inline styles for left/bottom */
-  width: 40px;
-  height: 80px;
-  /* Match canvas display height */
+  width: 108px; /* Updated: 30 unit * 3.6px/unit = 108px (proportional to grass) */
+  height: 140px; /* Updated: 39 unit * 3.6px/unit = 140px (proportional to grass) */
+  /* Proportional to grass: 39 unit * 3.6px/unit = 140px (grass: 50 unit * 3.6 = 180px) */
   z-index: 20;
   /* Above grass */
   pointer-events: none;
@@ -212,34 +212,64 @@
   /* optimize for movement */
   transition: transform 0.1s;
   /* smooth flip */
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  /* Ensure canvas aligns to bottom of container like home/shop buildings */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Ensure no line-height or other spacing */
+  line-height: 0;
+  font-size: 0;
 }
 
 .homeBuilding {
   position: absolute;
-  bottom: 177px;
+  bottom: 179px;
+  /* Positioned slightly above grass to compensate for SVG bottom space */
   left: 215px;
   /* Center of screen 1 */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
   width: auto;
-  height: 160px;
-  /* Fixed height for consistency */
+  height: 266px;
+  /* Proportional to grass: 74 unit * 3.6px/unit = 266.4px (grass: 50 unit * 3.6 = 180px) */
   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
 }
 
 .shopBuilding {
   position: absolute;
-  bottom: 177px;
+  bottom: 179px;
+  /* Positioned slightly above grass to compensate for SVG bottom space */
   left: 645px;
   /* Center of screen 2 (430 + 215) */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
   width: auto;
-  height: 160px;
-  /* Fixed height to match Home */
+  height: 266px;
+  /* Proportional to grass: 74 unit * 3.6px/unit = 266.4px (grass: 50 unit * 3.6 = 180px) */
   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
 }
 
 .worldContainer {

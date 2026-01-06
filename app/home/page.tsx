@@ -77,7 +77,8 @@ export default function HomePage() {
 
   // Character Movement State
   // Migrated from percentage (50%) to pixels (215px) relative to world start
-  const [charPos, setCharPos] = useState({ x: HOME_X, y: 176 });
+  // y: 179px to match home/shop bottom position exactly
+  const [charPos, setCharPos] = useState({ x: HOME_X, y: 179 });
   const [cameraX, setCameraX] = useState(0);
 
   const [targetX, setTargetX] = useState<number | null>(null);
