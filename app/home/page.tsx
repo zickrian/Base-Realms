@@ -70,7 +70,7 @@ export default function HomePage() {
   });
 
   // Character Movement State
-  const [charPos, setCharPos] = useState({ x: 50, y: 175 }); // Initial position (percentage x, fixed pixel y from bottom)
+  const [charPos, setCharPos] = useState({ x: 50, y: 176 }); // Initial position (percentage x, fixed pixel y from bottom)
   const [targetX, setTargetX] = useState<number | null>(null);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isMoving, setIsMoving] = useState(false);
@@ -272,6 +272,13 @@ export default function HomePage() {
           className={styles.grassImage}
         />
       </div>
+
+      {/* Home Building */}
+      <img
+        src="/Assets/home.svg"
+        alt="Home"
+        className={styles.homeBuilding}
+      />
 
       {/* Character */}
       <div

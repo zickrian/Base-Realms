@@ -219,3 +219,18 @@
   transition: transform 0.1s;
   /* smooth flip */
 }
+
+.homeBuilding {
+  position: absolute;
+  bottom: 176px;
+  /* Matches ground level */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  /* Between grass (10) and character (20) */
+  pointer-events: none;
+  width: auto;
+  height: auto;
+  image-rendering: pixelated;
+  /* Assuming pixel art style */
+}
