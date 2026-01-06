@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useUserSettings } from './useUserSettings';
-import { getStorageUrl } from '../utils/supabaseStorage';
 
 /**
- * Hook untuk play ambient sound di home page
- * - Play sound dari Supabase Storage: public/sound/ambient.ogg
+ * Hook untuk play background music di home page
+ * - Play music.mp3 dari public/sound/music.mp3
  * - Volume dikontrol oleh sound volume setting
  * - Loop sound secara otomatis
  * - Stop saat unmount atau settings berubah
@@ -57,11 +56,9 @@ export function useAmbientSound(enabled: boolean = true) {
 
     // Create audio element
     const audio = new Audio();
-    // Sound file path: sound/Ambient.ogg in Supabase Storage
-    // File is in bucket "assets" at path "sound/Ambient.ogg" (case-sensitive!)
-    const soundUrl = getStorageUrl('sound/Ambient.ogg');
-    console.log('Ambient sound URL:', soundUrl); // Debug: verify URL
-    audio.src = soundUrl;
+    // Sound file path: music.mp3 in public/sound folder
+    // File is in public/sound/music.mp3
+    audio.src = '/sound/music.mp3';
     audio.loop = true;
     audio.preload = 'auto';
 

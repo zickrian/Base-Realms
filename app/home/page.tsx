@@ -16,6 +16,7 @@ import {
 import { HomeLoadingScreen } from "../components/HomeLoadingScreen";
 import { LoadingState } from "../components/LoadingState";
 import { useAmbientSound } from "../hooks/useAmbientSound";
+import { useWalkSound } from "../hooks/useWalkSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
@@ -178,6 +179,7 @@ export default function HomePage() {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
+  useWalkSound(isMoving); // Play walk sound only when character is moving
 
   // Callback for when assets are loaded
   const handleAssetsLoaded = useCallback(() => {
