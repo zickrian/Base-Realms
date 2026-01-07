@@ -276,7 +276,7 @@
   position: absolute;
   bottom: 179px;
   /* Positioned slightly above grass to compensate for SVG bottom space */
-  left: 630px;
+  left: 680px;
   /* Shifted right with spacing after leaderboard */
   transform: translateX(-50%);
   z-index: 15;
@@ -296,12 +296,36 @@
   vertical-align: bottom;
 }
 
+.questboard {
+  position: absolute;
+  bottom: 179px;
+  /* Positioned at top of grass (same as other buildings) */
+  left: 1000px;
+  /* Positioned after home building, shifted right */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 209px;
+  /* Proportional to grass: 58 unit * 3.6px/unit = 208.8px ≈ 209px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .shopBuilding {
   position: absolute;
   bottom: 179px;
   /* Positioned slightly above grass to compensate for SVG bottom space */
-  left: 1010px;
-  /* Shifted right to make room for new buildings */
+  left: 1380px;
+  /* Shifted right to make room for questboard */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
@@ -324,8 +348,8 @@
   position: absolute;
   bottom: 179px;
   /* Positioned at top of grass (same as shop) */
-  left: 1265px;
-  /* Shifted right to make room for new buildings */
+  left: 1635px;
+  /* Shifted right to make room for questboard */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
@@ -348,8 +372,8 @@
   position: absolute;
   bottom: 179px;
   /* Positioned at top of grass (same as shop) */
-  left: 1615px;
-  /* Shifted right to make room for new buildings */
+  left: 1985px;
+  /* Shifted right to make room for questboard */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
@@ -372,8 +396,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 1900px;
-  /* Extended world width to accommodate all buildings: atm, leaderboard, home, shop, trees, seum */
+  width: 2100px;
+  /* Extended world width to accommodate all buildings: atm, leaderboard, home, questboard, shop, trees, seum */
   height: 100%;
   transition: transform 0.1s linear;
   /* Smooth camera pan */

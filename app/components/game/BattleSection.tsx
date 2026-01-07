@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { useGameStore } from "../../stores/gameStore";
-import { getGameIconUrl } from "../../utils/supabaseStorage";
 import styles from "./BattleSection.module.css";
 
 interface BattleSectionProps {

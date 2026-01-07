@@ -47,20 +47,33 @@
   overflow: visible; /* Changed from hidden to visible to show full cloud */
 }
 
-.gameCanvas {
+.cloudWrapper {
+  position: absolute;
+  top: 100px;
+  left: 0;
   width: 100%;
-  height: 100%;
   max-width: 430px;
-  max-height: 350px; /* Increased from 259px to match canvas height */
+  height: auto;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cloudContainer {
+  display: flex;
+  position: relative;
+  will-change: transform;
+}
+
+.cloudImage {
+  width: 700px;
+  height: auto;
   display: block;
-  background: transparent;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  pointer-events: none; /* Agar button di atasnya bisa diklik */
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
 }
 

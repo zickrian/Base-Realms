@@ -65,7 +65,7 @@ export function Game2D() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const handlePointerDown = (e: PointerEvent | TouchEvent) => {
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -86,16 +86,19 @@ export function Game2D() {
       setIsMovingRight(false);
     };
 
-    canvas.addEventListener("mousedown", handlePointerDown);
+    const handleMouseDown = (e: MouseEvent) => handlePointerDown(e);
+    const handleTouchStart = (e: TouchEvent) => handlePointerDown(e);
+
+    canvas.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handlePointerUp);
-    canvas.addEventListener("touchstart", handlePointerDown);
+    canvas.addEventListener("touchstart", handleTouchStart);
     window.addEventListener("touchend", handlePointerUp);
     window.addEventListener("touchcancel", handlePointerUp);
 
     return () => {
-      canvas.removeEventListener("mousedown", handlePointerDown);
+      canvas.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handlePointerUp);
-      canvas.removeEventListener("touchstart", handlePointerDown);
+      canvas.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handlePointerUp);
       window.removeEventListener("touchcancel", handlePointerUp);
     };

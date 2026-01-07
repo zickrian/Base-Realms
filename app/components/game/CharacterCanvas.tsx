@@ -30,17 +30,17 @@ export const CharacterCanvas = ({ isMoving, direction }: CharacterProps) => {
         if (!isMoving) {
             setCurrentFrame(0); // Idle
             return;
-        }
+            }
 
         let animationFrameId: number;
         const animate = (timestamp: number) => {
-            if (timestamp - lastUpdateRef.current > ANIMATION_SPEED) {
-                // Cycle frames 1, 2, 3 (walking)
-                frameRef.current = frameRef.current < 1 ? 1 : frameRef.current + 1;
-                if (frameRef.current > 3) frameRef.current = 1;
+                if (timestamp - lastUpdateRef.current > ANIMATION_SPEED) {
+                    // Cycle frames 1, 2, 3 (walking)
+                    frameRef.current = frameRef.current < 1 ? 1 : frameRef.current + 1;
+                    if (frameRef.current > 3) frameRef.current = 1;
                 setCurrentFrame(frameRef.current);
-                lastUpdateRef.current = timestamp;
-            }
+                    lastUpdateRef.current = timestamp;
+                }
             animationFrameId = requestAnimationFrame(animate);
         };
 
@@ -56,8 +56,6 @@ export const CharacterCanvas = ({ isMoving, direction }: CharacterProps) => {
             src={currentSrc}
             alt="Character"
             style={{
-                imageRendering: '-moz-crisp-edges',
-                imageRendering: 'crisp-edges',
                 imageRendering: 'pixelated',
                 width: '108px',
                 height: '140px',

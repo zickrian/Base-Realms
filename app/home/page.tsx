@@ -7,7 +7,6 @@ import {
   HeaderBar,
   DailyPacks,
   StageDisplay,
-  CardsMenu,
   QuestMenu,
   CardRevealModal,
   SettingsMenu,
@@ -39,7 +38,7 @@ export default function HomePage() {
   const hasEverBeenReady = useRef(false);
   const redirectAttempted = useRef(false);
 
-  const [activeNav, setActiveNav] = useState<"cards" | "arena" | "market">("arena");
+  const [_activeNav, _setActiveNav] = useState<"cards" | "arena" | "market">("arena");
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -72,9 +71,9 @@ export default function HomePage() {
 
   // World Constants
   const VIEWPORT_WIDTH = 430; // Mobile viewport
-  const WORLD_WIDTH = 1900; // Extended to accommodate all buildings: atm (250px), leaderboard (400px), home (630px), shop (1010px), trees (1265px), seum (1615px) + margin
-  const HOME_X = 630; // Updated: shifted right with spacing after leaderboard
-  const SHOP_X = 1010; // Updated: shifted right
+  const WORLD_WIDTH = 2100; // Extended to accommodate all buildings: atm (250px), leaderboard (400px), home (680px), questboard (1000px), shop (1380px), trees (1635px), seum (1985px) + margin
+  const HOME_X = 680; // Updated: shifted right with spacing after leaderboard
+  const _SHOP_X = 1010; // Updated: shifted right
 
   // Character Movement State
   // Migrated from percentage (50%) to pixels (215px) relative to world start
@@ -134,7 +133,7 @@ export default function HomePage() {
       // Desired Camera X = CharX - 215.
       // Clanped between 0 and (WorldWidth - ViewportWidth).
 
-      setCameraX(prev => {
+      setCameraX(_prev => {
         const desiredCamX = charPos.x - 215;
         const clampedCamX = Math.max(0, Math.min(desiredCamX, WORLD_WIDTH - VIEWPORT_WIDTH));
         // Smooth lerp could be added, but simple clamp is robust
@@ -267,13 +266,13 @@ export default function HomePage() {
   }, [isConnected, isConnecting, isInitialized, storeLoading, router]);
 
   // Define handlers BEFORE conditional returns (but after hooks)
-  const handleBattle = () => { };
-  const handleBoardClick = () => {
+  const _handleBattle = () => { };
+  const _handleBoardClick = () => {
     // Navigate immediately - route is prefetched
     router.push('/leaderboard');
   };
   const handleQuestClick = () => setIsQuestMenuOpen(true);
-  const handleSwapClick = () => {
+  const _handleSwapClick = () => {
     // Navigate immediately - route is prefetched
     router.push('/swap');
   };
@@ -386,6 +385,13 @@ export default function HomePage() {
           src="/Assets/home.svg"
           alt="Home"
           className={styles.homeBuilding}
+        />
+
+        {/* Questboard */}
+        <img
+          src="/Assets/questboard.svg"
+          alt="Questboard"
+          className={styles.questboard}
         />
 
         {/* Shop Building */}
