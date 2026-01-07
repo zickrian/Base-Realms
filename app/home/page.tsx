@@ -72,9 +72,9 @@ export default function HomePage() {
 
   // World Constants
   const VIEWPORT_WIDTH = 430; // Mobile viewport
-  const WORLD_WIDTH = 860; // 2x screens
-  const HOME_X = 215; // Center of screen 1
-  const SHOP_X = 545; // Center-ish of screen 2 shift
+  const WORLD_WIDTH = 1900; // Extended to accommodate all buildings: atm (250px), leaderboard (400px), home (630px), shop (1010px), trees (1265px), seum (1615px) + margin
+  const HOME_X = 630; // Updated: shifted right with spacing after leaderboard
+  const SHOP_X = 1010; // Updated: shifted right
 
   // Character Movement State
   // Migrated from percentage (50%) to pixels (215px) relative to world start
@@ -105,8 +105,21 @@ export default function HomePage() {
 
           const speed = 3; // Pixel speed (approx equivalent to previous speed)
           const move = Math.sign(dx) * speed;
+          const newX = prev.x + move;
 
-          return { ...prev, x: prev.x + move };
+          // Boundary check: clamp character position to world bounds
+          // Character width is approximately 108px, so we need to account for half width
+          const characterHalfWidth = 54; // Half of 108px
+          const clampedX = Math.max(characterHalfWidth, Math.min(newX, WORLD_WIDTH - characterHalfWidth));
+
+          // If we hit a boundary, stop movement
+          if (clampedX !== newX) {
+            setIsMoving(false);
+            setTargetX(null);
+            return { ...prev, x: clampedX };
+          }
+
+          return { ...prev, x: newX };
         });
       }
 
@@ -170,8 +183,15 @@ export default function HomePage() {
 
     const worldTargetX = clickLogicalX + cameraX;
 
-    setTargetX(worldTargetX);
-    setDirection(worldTargetX > charPos.x ? 'right' : 'left');
+    // Clamp target to world bounds (accounting for character width)
+    const characterHalfWidth = 54; // Half of character width (108px)
+    const clampedTargetX = Math.max(
+      characterHalfWidth,
+      Math.min(worldTargetX, WORLD_WIDTH - characterHalfWidth)
+    );
+
+    setTargetX(clampedTargetX);
+    setDirection(clampedTargetX > charPos.x ? 'right' : 'left');
     setIsMoving(true);
   };
   const { packCount, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
@@ -329,7 +349,36 @@ export default function HomePage() {
             alt="Grass"
             className={styles.grassImage}
           />
+          <img
+            src="/Assets/grass.svg"
+            alt="Grass"
+            className={styles.grassImage}
+          />
+          <img
+            src="/Assets/grass.svg"
+            alt="Grass"
+            className={styles.grassImage}
+          />
+          <img
+            src="/Assets/grass.svg"
+            alt="Grass"
+            className={styles.grassImage}
+          />
         </div>
+
+        {/* ATM */}
+        <img
+          src="/Assets/atm.svg"
+          alt="ATM"
+          className={styles.atm}
+        />
+
+        {/* Leaderboard */}
+        <img
+          src="/Assets/leaderboard.svg"
+          alt="Leaderboard"
+          className={styles.leaderboard}
+        />
 
         {/* Home Building */}
         {/* Positioned at HomeX (215) */}
@@ -344,6 +393,20 @@ export default function HomePage() {
           src="/Assets/shop.svg"
           alt="Shop"
           className={styles.shopBuilding}
+        />
+
+        {/* Trees */}
+        <img
+          src="/Assets/trees.svg"
+          alt="Trees"
+          className={styles.trees}
+        />
+
+        {/* Seum */}
+        <img
+          src="/Assets/seum.svg"
+          alt="Seum"
+          className={styles.seum}
         />
 
         {/* Character */}

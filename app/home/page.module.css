@@ -224,12 +224,60 @@
   font-size: 0;
 }
 
+.atm {
+  position: absolute;
+  bottom: 179px;
+  /* Positioned at top of grass (same as other buildings) */
+  left: 250px;
+  /* First building on the left, shifted right */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 130px;
+  /* Proportional to grass: 36 unit * 3.6px/unit = 129.6px ≈ 130px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.leaderboard {
+  position: absolute;
+  bottom: 179px;
+  /* Positioned at top of grass (same as other buildings) */
+  left: 400px;
+  /* Second building, after ATM with spacing, shifted right */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 144px;
+  /* Proportional to grass: 40 unit * 3.6px/unit = 144px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .homeBuilding {
   position: absolute;
   bottom: 179px;
   /* Positioned slightly above grass to compensate for SVG bottom space */
-  left: 215px;
-  /* Center of screen 1 */
+  left: 630px;
+  /* Shifted right with spacing after leaderboard */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
@@ -252,8 +300,8 @@
   position: absolute;
   bottom: 179px;
   /* Positioned slightly above grass to compensate for SVG bottom space */
-  left: 645px;
-  /* Center of screen 2 (430 + 215) */
+  left: 1010px;
+  /* Shifted right to make room for new buildings */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
@@ -272,12 +320,60 @@
   vertical-align: bottom;
 }
 
+.trees {
+  position: absolute;
+  bottom: 179px;
+  /* Positioned at top of grass (same as shop) */
+  left: 1265px;
+  /* Shifted right to make room for new buildings */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 342px;
+  /* Proportional to grass: 95 unit * 3.6px/unit = 342px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.seum {
+  position: absolute;
+  bottom: 179px;
+  /* Positioned at top of grass (same as shop) */
+  left: 1615px;
+  /* Shifted right to make room for new buildings */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 443px;
+  /* Proportional to grass: 123 unit * 3.6px/unit = 442.8px ≈ 443px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure no sub-pixel rendering */
+  transform-origin: center bottom;
+  /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .worldContainer {
   position: absolute;
   top: 0;
   left: 0;
-  width: 860px;
-  /* Explicit world width (2x 430px) */
+  width: 1900px;
+  /* Extended world width to accommodate all buildings: atm, leaderboard, home, shop, trees, seum */
   height: 100%;
   transition: transform 0.1s linear;
   /* Smooth camera pan */
