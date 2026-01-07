@@ -12,7 +12,7 @@ export const StageDisplay = memo(function StageDisplay() {
   const lastTimeRef = useRef<number>(0);
 
   const speed = 15; // pixels per second
-  const cloudWidth = 700; // Cloud size
+  const cloudWidth = 1050; // Cloud size (700 * 1.5)
 
   // Animate cloud movement
   useEffect(() => {
@@ -26,6 +26,8 @@ export const StageDisplay = memo(function StageDisplay() {
 
       cloudXRef.current -= speed * deltaTime;
 
+      // Smooth looping: reset when first cloud is completely off-screen
+      // This ensures seamless transition without gaps
       if (cloudXRef.current <= -cloudWidth) {
         cloudXRef.current += cloudWidth;
       }
@@ -51,6 +53,11 @@ export const StageDisplay = memo(function StageDisplay() {
       <div className={styles.islandContainer}>
         <div className={styles.cloudWrapper}>
           <div ref={cloudContainerRef} className={styles.cloudContainer}>
+            <img
+              src="/Assets/cloud.svg"
+              alt="Cloud"
+              className={styles.cloudImage}
+            />
             <img
               src="/Assets/cloud.svg"
               alt="Cloud"
