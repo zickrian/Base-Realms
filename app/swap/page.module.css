@@ -246,10 +246,15 @@
 }
 
 .toggleContainer button svg {
-  color: #3e1f08 !important;
-  fill: #3e1f08 !important;
+  color: #000000 !important;
+  fill: #000000 !important;
   width: 20px !important;
   height: 20px !important;
+}
+
+.toggleContainer button svg path {
+  fill: #000000 !important;
+  color: #000000 !important;
 }
 
 /* Swap Action Button */
