@@ -176,6 +176,34 @@
   box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
 }
 
+.popupCancelButton {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #3e1f08;
+  border-radius: 0;
+  font-family: 'VT323', monospace;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #f3e5c9;
+  transition: all 0.1s;
+  font-weight: bold;
+  text-transform: uppercase;
+  image-rendering: pixelated;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+  background: #a52a2a;
+}
+
+.popupCancelButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+  background: #c0392b;
+}
+
+.popupCancelButton:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+
 .grassContainer {
   position: absolute;
   bottom: 0;
@@ -312,19 +340,35 @@
   left: 250px;
   /* Center aligned with ATM building */
   transform: translateX(-50%);
-  z-index: 20;
-  pointer-events: none;
-  width: auto;
-  height: 47px;
-  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  z-index: 25;
+  /* Above buildings, clickable */
+  pointer-events: auto;
+  /* Button reset */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: block;
+  transition: transform 0.1s ease;
+}
+
+.goButtonAtm:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.goButtonAtm:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.goButtonAtm img {
+  width: 35px;
+  height: 35px;
+  /* Consistent size with other Go buttons */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  transform-origin: center bottom;
-  margin: 0;
-  padding: 0;
   display: block;
-  vertical-align: bottom;
 }
 
 .goButtonLeaderboard {
@@ -334,19 +378,35 @@
   left: 400px;
   /* Center aligned with Leaderboard building */
   transform: translateX(-50%);
-  z-index: 20;
-  pointer-events: none;
-  width: auto;
-  height: 47px;
-  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  z-index: 25;
+  /* Above buildings, clickable */
+  pointer-events: auto;
+  /* Button reset */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: block;
+  transition: transform 0.1s ease;
+}
+
+.goButtonLeaderboard:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.goButtonLeaderboard:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.goButtonLeaderboard img {
+  width: 35px;
+  height: 35px;
+  /* Consistent size with other Go buttons */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  transform-origin: center bottom;
-  margin: 0;
-  padding: 0;
   display: block;
-  vertical-align: bottom;
 }
 
 .goButton {
@@ -381,19 +441,40 @@
   left: 1000px;
   /* Center aligned with Questboard building */
   transform: translateX(-50%);
-  z-index: 20;
-  pointer-events: none;
-  width: auto;
-  height: 47px;
-  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  z-index: 25;
+  /* Above buildings, clickable */
+  pointer-events: auto;
+  /* Button reset */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 35px;
+  min-height: 35px;
+  overflow: visible;
+  transition: transform 0.1s ease;
+}
+
+.goButtonQuestboard:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.goButtonQuestboard:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.goButtonQuestboard img {
+  width: 35px;
+  height: 35px;
+  /* Fixed size to ensure visibility */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  transform-origin: center bottom;
-  margin: 0;
-  padding: 0;
   display: block;
-  vertical-align: bottom;
 }
 
 .goButtonShop {
@@ -425,19 +506,35 @@
   left: 1985px;
   /* Center aligned with Seum building */
   transform: translateX(-50%);
-  z-index: 20;
-  pointer-events: none;
-  width: auto;
-  height: 47px;
-  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  z-index: 25;
+  /* Above buildings, clickable */
+  pointer-events: auto;
+  /* Button reset */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: block;
+  transition: transform 0.1s ease;
+}
+
+.goButtonSeum:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.goButtonSeum:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.goButtonSeum img {
+  width: 35px;
+  height: 35px;
+  /* Consistent size with other Go buttons */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  transform-origin: center bottom;
-  margin: 0;
-  padding: 0;
   display: block;
-  vertical-align: bottom;
 }
 
 .questboard {

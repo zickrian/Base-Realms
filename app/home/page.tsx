@@ -43,6 +43,7 @@ export default function HomePage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
   const [showAlreadyClaimedPopup, setShowAlreadyClaimedPopup] = useState(false);
+  const [showBattleConfirmPopup, setShowBattleConfirmPopup] = useState(false);
   // Check if assets were already loaded in this session
   const [assetsLoaded, setAssetsLoaded] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -82,12 +83,46 @@ export default function HomePage() {
   // Character Movement State
   // Migrated from percentage (50%) to pixels (215px) relative to world start
   // y: 179px to match home/shop bottom position exactly
-  const [charPos, setCharPos] = useState({ x: HOME_X, y: 179 });
-  const [cameraX, setCameraX] = useState(0);
+  // Load saved position from sessionStorage if available
+  const [charPos, setCharPos] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedX = sessionStorage.getItem('characterPosX');
+      if (savedX) {
+        return { x: parseFloat(savedX), y: 179 };
+      }
+    }
+    return { x: HOME_X, y: 179 };
+  });
+  const [cameraX, setCameraX] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedCameraX = sessionStorage.getItem('cameraX');
+      if (savedCameraX) {
+        return parseFloat(savedCameraX);
+      }
+    }
+    return 0;
+  });
 
   const [targetX, setTargetX] = useState<number | null>(null);
-  const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const [direction, setDirection] = useState<'left' | 'right'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedDirection = sessionStorage.getItem('characterDirection');
+      if (savedDirection === 'left' || savedDirection === 'right') {
+        return savedDirection;
+      }
+    }
+    return 'right';
+  });
   const [isMoving, setIsMoving] = useState(false);
+
+  // Save character position to sessionStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('characterPosX', charPos.x.toString());
+      sessionStorage.setItem('cameraX', cameraX.toString());
+      sessionStorage.setItem('characterDirection', direction);
+    }
+  }, [charPos.x, cameraX, direction]);
 
   // Animation loop for character movement and camera
   useEffect(() => {
@@ -377,11 +412,16 @@ export default function HomePage() {
 
         {/* Go Button for ATM - Only visible when character is near ATM */}
         {Math.abs(charPos.x - ATM_X) < 150 && (
-          <img
-            src="/button/buttongo.svg"
-            alt="Go"
+          <button
+            key="go-btn-atm"
             className={styles.goButtonAtm}
-          />
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push('/swap');
+            }}
+          >
+            <img src="/button/buttongo.svg" alt="Go to Swap" />
+          </button>
         )}
 
         {/* Leaderboard */}
@@ -393,11 +433,16 @@ export default function HomePage() {
 
         {/* Go Button for Leaderboard - Only visible when character is near Leaderboard */}
         {Math.abs(charPos.x - LEADERBOARD_X) < 150 && (
-          <img
-            src="/button/buttongo.svg"
-            alt="Go"
+          <button
+            key="go-btn-leaderboard"
             className={styles.goButtonLeaderboard}
-          />
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push('/leaderboard');
+            }}
+          >
+            <img src="/button/buttongo.svg" alt="Go to Leaderboard" />
+          </button>
         )}
 
         {/* Home Building */}
@@ -411,6 +456,7 @@ export default function HomePage() {
         {/* Go Button for Home - Only visible when character is near home */}
         {Math.abs(charPos.x - HOME_X) < 150 && (
           <img
+            key="go-btn-home"
             src="/button/buttongo.svg"
             alt="Go"
             className={styles.goButton}
@@ -425,12 +471,17 @@ export default function HomePage() {
         />
 
         {/* Go Button for Questboard - Only visible when character is near Questboard */}
-        {Math.abs(charPos.x - QUESTBOARD_X) < 150 && (
-          <img
-            src="/button/buttongo.svg"
-            alt="Go"
+        {Math.abs(charPos.x - QUESTBOARD_X) < 200 && (
+          <button
+            key="go-btn-questboard"
             className={styles.goButtonQuestboard}
-          />
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsQuestMenuOpen(true);
+            }}
+          >
+            <img src="/button/buttongo.svg" alt="Open Quest Menu" />
+          </button>
         )}
 
         {/* Shop Building */}
@@ -443,6 +494,7 @@ export default function HomePage() {
         {/* Go Button for Shop - Only visible when character is near Shop */}
         {Math.abs(charPos.x - SHOP_X) < 150 && (
           <img
+            key="go-btn-shop"
             src="/button/buttongo.svg"
             alt="Go"
             className={styles.goButtonShop}
@@ -463,13 +515,18 @@ export default function HomePage() {
           className={styles.seum}
         />
 
-        {/* Go Button for Seum - Only visible when character is near Seum */}
+        {/* Go Button for Seum (Colosseum) - Only visible when character is near Seum */}
         {Math.abs(charPos.x - SEUM_X) < 150 && (
-          <img
-            src="/button/buttongo.svg"
-            alt="Go"
+          <button
+            key="go-btn-seum"
             className={styles.goButtonSeum}
-          />
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowBattleConfirmPopup(true);
+            }}
+          >
+            <img src="/button/buttongo.svg" alt="Go to Battle" />
+          </button>
         )}
 
         {/* Character */}
@@ -630,6 +687,45 @@ export default function HomePage() {
                 onClick={() => setShowAlreadyClaimedPopup(false)}
               >
                 MENGERTI
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Battle Confirmation Popup */}
+      {showBattleConfirmPopup && (
+        <div className={styles.popupOverlay} onClick={() => setShowBattleConfirmPopup(false)}>
+          <div className={`${styles.popupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.popupCloseButton}
+              onClick={() => setShowBattleConfirmPopup(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h3 className={styles.popupTitle}>ENTER BATTLE?</h3>
+            <p className={styles.popupDescription}>
+              Are you sure you want to enter the Colosseum and start a battle?
+            </p>
+            <p className={styles.popupDescription}>
+              <strong>Make sure you have selected a card!</strong>
+            </p>
+            <div className={styles.popupActions}>
+              <button
+                className={styles.popupCancelButton}
+                onClick={() => setShowBattleConfirmPopup(false)}
+              >
+                NO
+              </button>
+              <button
+                className={styles.popupOkButton}
+                onClick={() => {
+                  setShowBattleConfirmPopup(false);
+                  router.push('/battle');
+                }}
+              >
+                YES, BATTLE!
               </button>
             </div>
           </div>

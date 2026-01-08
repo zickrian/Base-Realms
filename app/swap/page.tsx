@@ -4,12 +4,12 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAccount } from 'wagmi';
-import { 
-  Swap, 
-  SwapAmountInput, 
-  SwapToggleButton, 
-  SwapButton, 
-  SwapMessage, 
+import {
+  Swap,
+  SwapAmountInput,
+  SwapToggleButton,
+  SwapButton,
+  SwapMessage,
   SwapToast,
 } from '@coinbase/onchainkit/swap';
 import type { Token } from '@coinbase/onchainkit/token';
@@ -78,23 +78,27 @@ export default function SwapPage() {
               <div className={styles.swapWrapper}>
                 <Swap experimental={{ useAggregator: true }}>
                   <div className={styles.swapContainer}>
-                    <SwapAmountInput
-                      label="Sell"
-                      swappableTokens={swappableTokens}
-                      token={ETH_TOKEN}
-                      type="from"
-                    />
-                    
+                    <div className={styles.inputWrapper}>
+                      <SwapAmountInput
+                        label="Sell"
+                        swappableTokens={swappableTokens}
+                        token={ETH_TOKEN}
+                        type="from"
+                      />
+                    </div>
+
                     <div className={styles.toggleContainer}>
                       <SwapToggleButton />
                     </div>
 
-                    <SwapAmountInput
-                      label="Buy"
-                      swappableTokens={swappableTokens}
-                      token={IDRX_TOKEN}
-                      type="to"
-                    />
+                    <div className={styles.inputWrapper}>
+                      <SwapAmountInput
+                        label="Buy"
+                        swappableTokens={swappableTokens}
+                        token={IDRX_TOKEN}
+                        type="to"
+                      />
+                    </div>
 
                     <div className={styles.swapButtonContainer}>
                       <SwapButton />

@@ -6,6 +6,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -16,6 +17,7 @@
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -25,12 +27,12 @@
 @layer base {
   :root {
     /* Supabase Storage URL */
-    --supabase-storage-url: https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets;
-    
-    /* Dark theme colors for pixel art style */
-    --background: #1a1a2e;
+    --supabase-storage-url: https: //htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets;
+
+      /* Dark theme colors for pixel art style */
+      --background: #1a1a2e;
     --foreground: #f5f5dc;
-    
+
     /* Color palette */
     --color-primary: #3b82f6;
     --color-primary-hover: #2563eb;
@@ -40,7 +42,7 @@
     --color-link-blue: #60a5fa;
     --color-border: #333344;
     --color-card-bg: #16162a;
-    
+
     /* Game-specific colors */
     --game-bg-cyan: #4ecdc4;
     --game-bg-gradient-start: #87ceeb;
@@ -57,7 +59,7 @@
     --color-navy-dark: #0f1c2e;
     --color-idrx-blue: #3b82f6;
     --color-eth-purple: #627eea;
-    
+
     /* Spacing system */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -65,7 +67,7 @@
     --spacing-lg: 16px;
     --spacing-xl: 24px;
     --spacing-2xl: 32px;
-    
+
     /* Typography */
     --font-pixelify: 'Pixelify Sans', cursive;
     --font-size-xs: 0.625rem;
@@ -103,6 +105,7 @@
 
   /* Prevent scroll on mobile devices */
   @media (max-width: 768px) {
+
     html,
     body {
       position: fixed;
@@ -159,6 +162,7 @@
 
   /* Mobile-specific fix for background */
   @supports (-webkit-touch-callout: none) {
+
     /* iOS Safari specific */
     body::before {
       background-attachment: scroll;
@@ -222,7 +226,7 @@
   /* 16-bit Button Style */
   .bit16-button {
     position: relative;
-    border-image: url("https://github.com/devMiguelCarrero/cool-jsx-buttons/blob/main/public/img/frame-hd.png?raw=true");
+    border-image: url("/ui/frame-hd.png");
     background-color: #4bb244;
     border-image-repeat: initial;
     padding: 3px 12px;
@@ -273,18 +277,16 @@
     background-color: rgba(0, 0, 0, 0.2);
     left: -4px;
     top: calc(100% - 4px);
-    clip-path: polygon(
-      0 8px,
-      calc(100% - 8px) 8px,
-      calc(100% - 8px) 4px,
-      calc(100% - 4px) 4px,
-      calc(100% - 4px) 0,
-      100% 0,
-      100% 8px,
-      calc(100% - 4px) 8px,
-      calc(100% - 4px) 100%,
-      0 100%
-    );
+    clip-path: polygon(0 8px,
+        calc(100% - 8px) 8px,
+        calc(100% - 8px) 4px,
+        calc(100% - 4px) 4px,
+        calc(100% - 4px) 0,
+        100% 0,
+        100% 8px,
+        calc(100% - 4px) 8px,
+        calc(100% - 4px) 100%,
+        0 100%);
   }
 
   .bit16-button::after {
@@ -292,18 +294,16 @@
     right: -4px;
     bottom: calc(100% - 4px);
     transform: rotate(0.5turn);
-    clip-path: polygon(
-      0 8px,
-      calc(100% - 8px) 8px,
-      calc(100% - 8px) 4px,
-      calc(100% - 4px) 4px,
-      calc(100% - 4px) 0,
-      100% 0,
-      100% 8px,
-      calc(100% - 4px) 8px,
-      calc(100% - 4px) 100%,
-      0 100%
-    );
+    clip-path: polygon(0 8px,
+        calc(100% - 8px) 8px,
+        calc(100% - 8px) 4px,
+        calc(100% - 4px) 4px,
+        calc(100% - 4px) 0,
+        100% 0,
+        100% 8px,
+        calc(100% - 4px) 8px,
+        calc(100% - 4px) 100%,
+        0 100%);
   }
 
   .bit16-button:hover:not(:disabled)::before {
@@ -330,7 +330,7 @@
   /* 16-bit Container Style - for modals and popups */
   .bit16-container {
     position: relative;
-    border-image: url("https://github.com/devMiguelCarrero/cool-jsx-buttons/blob/main/public/img/frame-hd.png?raw=true");
+    border-image: url("/ui/frame-hd.png");
     border-image-repeat: initial;
     border-image-slice: 12;
     border-width: 8px;
@@ -356,18 +356,16 @@
     background-color: rgba(0, 0, 0, 0.2);
     left: -4px;
     top: calc(100% - 4px);
-    clip-path: polygon(
-      0 8px,
-      calc(100% - 8px) 8px,
-      calc(100% - 8px) 4px,
-      calc(100% - 4px) 4px,
-      calc(100% - 4px) 0,
-      100% 0,
-      100% 8px,
-      calc(100% - 4px) 8px,
-      calc(100% - 4px) 100%,
-      0 100%
-    );
+    clip-path: polygon(0 8px,
+        calc(100% - 8px) 8px,
+        calc(100% - 8px) 4px,
+        calc(100% - 4px) 4px,
+        calc(100% - 4px) 0,
+        100% 0,
+        100% 8px,
+        calc(100% - 4px) 8px,
+        calc(100% - 4px) 100%,
+        0 100%);
   }
 
   .bit16-container::after {
@@ -375,17 +373,15 @@
     right: -4px;
     bottom: calc(100% - 4px);
     transform: rotate(0.5turn);
-    clip-path: polygon(
-      0 8px,
-      calc(100% - 8px) 8px,
-      calc(100% - 8px) 4px,
-      calc(100% - 4px) 4px,
-      calc(100% - 4px) 0,
-      100% 0,
-      100% 8px,
-      calc(100% - 4px) 8px,
-      calc(100% - 4px) 100%,
-      0 100%
-    );
+    clip-path: polygon(0 8px,
+        calc(100% - 8px) 8px,
+        calc(100% - 8px) 4px,
+        calc(100% - 4px) 4px,
+        calc(100% - 4px) 0,
+        100% 0,
+        100% 8px,
+        calc(100% - 4px) 8px,
+        calc(100% - 4px) 100%,
+        0 100%);
   }
 }
