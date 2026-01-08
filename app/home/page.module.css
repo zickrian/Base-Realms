@@ -349,7 +349,11 @@
   cursor: pointer;
   padding: 0;
   margin: 0;
-  display: block;
+  width: 47px;
+  height: 47px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   transition: transform 0.1s ease;
 }
 
@@ -362,13 +366,16 @@
 }
 
 .goButtonAtm img {
-  width: 35px;
-  height: 35px;
-  /* Consistent size with other Go buttons */
+  width: 47px;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px (grass: 50 unit * 3.6 = 180px) */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
 }
 
 .goButtonLeaderboard {
@@ -387,7 +394,11 @@
   cursor: pointer;
   padding: 0;
   margin: 0;
-  display: block;
+  width: 47px;
+  height: 47px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   transition: transform 0.1s ease;
 }
 
@@ -400,13 +411,16 @@
 }
 
 .goButtonLeaderboard img {
-  width: 35px;
-  height: 35px;
-  /* Consistent size with other Go buttons */
+  width: 47px;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px (grass: 50 unit * 3.6 = 180px) */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
 }
 
 .goButton {
@@ -450,12 +464,11 @@
   cursor: pointer;
   padding: 0;
   margin: 0;
+  width: 47px;
+  height: 47px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  min-width: 35px;
-  min-height: 35px;
-  overflow: visible;
   transition: transform 0.1s ease;
 }
 
@@ -468,13 +481,16 @@
 }
 
 .goButtonQuestboard img {
-  width: 35px;
-  height: 35px;
-  /* Fixed size to ensure visibility */
+  width: 47px;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px (grass: 50 unit * 3.6 = 180px) */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
 }
 
 .goButtonShop {
@@ -515,7 +531,11 @@
   cursor: pointer;
   padding: 0;
   margin: 0;
-  display: block;
+  width: 47px;
+  height: 47px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   transition: transform 0.1s ease;
 }
 
@@ -528,13 +548,16 @@
 }
 
 .goButtonSeum img {
-  width: 35px;
-  height: 35px;
-  /* Consistent size with other Go buttons */
+  width: 47px;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px (grass: 50 unit * 3.6 = 180px) */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
 }
 
 .questboard {
