@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import {
   HeaderBar,
-  DailyPacks,
   StageDisplay,
   QuestMenu,
   CardRevealModal,
@@ -328,7 +327,6 @@ export default function HomePage() {
   const renderArenaView = () => (
     <>
       <HeaderBar onSettingsClick={() => setIsSettingsOpen(true)} />
-      <DailyPacks onQuestClick={handleQuestClick} onPackClick={handlePackClick} />
       <StageDisplay />
 
       {/* World Container for Scrolling Content */}
@@ -386,6 +384,15 @@ export default function HomePage() {
           alt="Home"
           className={styles.homeBuilding}
         />
+
+        {/* Go Button - Only visible when character is near home */}
+        {Math.abs(charPos.x - HOME_X) < 150 && (
+          <img
+            src="/button/buttongo.svg"
+            alt="Go"
+            className={styles.goButton}
+          />
+        )}
 
         {/* Questboard */}
         <img
