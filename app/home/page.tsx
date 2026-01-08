@@ -71,8 +71,13 @@ export default function HomePage() {
   // World Constants
   const VIEWPORT_WIDTH = 430; // Mobile viewport
   const WORLD_WIDTH = 2100; // Extended to accommodate all buildings: atm (250px), leaderboard (400px), home (680px), questboard (1000px), shop (1380px), trees (1635px), seum (1985px) + margin
+  const ATM_X = 250;
+  const LEADERBOARD_X = 400;
   const HOME_X = 680; // Updated: shifted right with spacing after leaderboard
-  const _SHOP_X = 1010; // Updated: shifted right
+  const QUESTBOARD_X = 1000;
+  const SHOP_X = 1380;
+  const SEUM_X = 1985;
+  const _SHOP_X_OLD = 1010; // Updated: shifted right
 
   // Character Movement State
   // Migrated from percentage (50%) to pixels (215px) relative to world start
@@ -370,12 +375,30 @@ export default function HomePage() {
           className={styles.atm}
         />
 
+        {/* Go Button for ATM - Only visible when character is near ATM */}
+        {Math.abs(charPos.x - ATM_X) < 150 && (
+          <img
+            src="/button/buttongo.svg"
+            alt="Go"
+            className={styles.goButtonAtm}
+          />
+        )}
+
         {/* Leaderboard */}
         <img
           src="/Assets/leaderboard.svg"
           alt="Leaderboard"
           className={styles.leaderboard}
         />
+
+        {/* Go Button for Leaderboard - Only visible when character is near Leaderboard */}
+        {Math.abs(charPos.x - LEADERBOARD_X) < 150 && (
+          <img
+            src="/button/buttongo.svg"
+            alt="Go"
+            className={styles.goButtonLeaderboard}
+          />
+        )}
 
         {/* Home Building */}
         {/* Positioned at HomeX (215) */}
@@ -385,7 +408,7 @@ export default function HomePage() {
           className={styles.homeBuilding}
         />
 
-        {/* Go Button - Only visible when character is near home */}
+        {/* Go Button for Home - Only visible when character is near home */}
         {Math.abs(charPos.x - HOME_X) < 150 && (
           <img
             src="/button/buttongo.svg"
@@ -401,12 +424,30 @@ export default function HomePage() {
           className={styles.questboard}
         />
 
+        {/* Go Button for Questboard - Only visible when character is near Questboard */}
+        {Math.abs(charPos.x - QUESTBOARD_X) < 150 && (
+          <img
+            src="/button/buttongo.svg"
+            alt="Go"
+            className={styles.goButtonQuestboard}
+          />
+        )}
+
         {/* Shop Building */}
         <img
           src="/Assets/shop.svg"
           alt="Shop"
           className={styles.shopBuilding}
         />
+
+        {/* Go Button for Shop - Only visible when character is near Shop */}
+        {Math.abs(charPos.x - SHOP_X) < 150 && (
+          <img
+            src="/button/buttongo.svg"
+            alt="Go"
+            className={styles.goButtonShop}
+          />
+        )}
 
         {/* Trees */}
         <img
@@ -421,6 +462,15 @@ export default function HomePage() {
           alt="Seum"
           className={styles.seum}
         />
+
+        {/* Go Button for Seum - Only visible when character is near Seum */}
+        {Math.abs(charPos.x - SEUM_X) < 150 && (
+          <img
+            src="/button/buttongo.svg"
+            alt="Go"
+            className={styles.goButtonSeum}
+          />
+        )}
 
         {/* Character */}
         <div

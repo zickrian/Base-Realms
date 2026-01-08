@@ -296,6 +296,50 @@
   vertical-align: bottom;
 }
 
+.goButtonAtm {
+  position: absolute;
+  bottom: 319px;
+  /* 10px above top of ATM (179px bottom + 130px height + 10px gap = 319px) */
+  left: 250px;
+  /* Center aligned with ATM building */
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  width: auto;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.goButtonLeaderboard {
+  position: absolute;
+  bottom: 333px;
+  /* 10px above top of Leaderboard (179px bottom + 144px height + 10px gap = 333px) */
+  left: 400px;
+  /* Center aligned with Leaderboard building */
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  width: auto;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .goButton {
   position: absolute;
   bottom: 455px;
@@ -315,6 +359,72 @@
   /* Ensure no sub-pixel rendering */
   transform-origin: center bottom;
   /* Remove any default margins/padding that could cause gaps */
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.goButtonQuestboard {
+  position: absolute;
+  bottom: 398px;
+  /* 10px above top of Questboard (179px bottom + 209px height + 10px gap = 398px) */
+  left: 1000px;
+  /* Center aligned with Questboard building */
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  width: auto;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.goButtonShop {
+  position: absolute;
+  bottom: 455px;
+  /* 10px above top of Shop (179px bottom + 266px height + 10px gap = 455px) */
+  left: 1380px;
+  /* Center aligned with Shop building */
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  width: auto;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.goButtonSeum {
+  position: absolute;
+  bottom: 632px;
+  /* 10px above top of Seum (179px bottom + 443px height + 10px gap = 632px) */
+  left: 1985px;
+  /* Center aligned with Seum building */
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  width: auto;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
   margin: 0;
   padding: 0;
   display: block;
