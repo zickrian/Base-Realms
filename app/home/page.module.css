@@ -18,6 +18,8 @@
   overflow-y: hidden;
   /* Prevent vertical scroll */
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Ensure the stage display takes remaining space */
@@ -185,6 +187,8 @@
   align-items: flex-end;
   justify-content: flex-start;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .grassImage {
@@ -195,14 +199,19 @@
   image-rendering: pixelated;
   object-fit: cover;
   margin-bottom: -1px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Character Animation */
 .characterContainer {
   position: absolute;
   /* controlled by inline styles for left/bottom */
-  width: 108px; /* Updated: 30 unit * 3.6px/unit = 108px (proportional to grass) */
-  height: 140px; /* Updated: 39 unit * 3.6px/unit = 140px (proportional to grass) */
+  width: 108px;
+  /* Updated: 30 unit * 3.6px/unit = 108px (proportional to grass) */
+  height: 140px;
+  /* Updated: 39 unit * 3.6px/unit = 140px (proportional to grass) */
   /* Proportional to grass: 39 unit * 3.6px/unit = 140px (grass: 50 unit * 3.6 = 180px) */
   z-index: 20;
   /* Above grass */
