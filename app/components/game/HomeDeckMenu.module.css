@@ -1,0 +1,191 @@
+/* VT323 font and fadeIn/popIn animations moved to globals.css */
+
+/* Container - Overlay */
+.container {
+    font-family: 'VT323', monospace;
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Main Box - Paper Style */
+.menuBox {
+    width: 90%;
+    max-width: 450px;
+    /* Slightly wider for cards */
+    height: 80vh;
+    max-height: 700px;
+    background-color: #e8be82;
+    box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    color: #3e1f08;
+    padding: 6px;
+    animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1;
+    image-rendering: pixelated;
+}
+
+/* Header */
+.header {
+    background: transparent;
+    color: #3e1f08;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    border-bottom: 3px dashed #8b5a2b;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+    flex: 1;
+    text-align: center;
+}
+
+.closeButton {
+    /* 16-bit button style - inherits from globals.css .bit16-button */
+    width: 28px;
+    height: 28px;
+    padding: 2px;
+    font-size: 16px;
+    background-color: #f22561;
+    color: #ffffff;
+}
+
+/* Content Area */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Custom Scrollbar styled for "paper" feel */
+.content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: rgba(62, 31, 8, 0.05);
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: rgba(62, 31, 8, 0.3);
+    border-radius: 3px;
+}
+
+/* Cards Grid */
+.cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding-bottom: 20px;
+}
+
+.cardSlotWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.cardSlot {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: rgba(62, 31, 8, 0.1);
+    border: 4px solid #8b5a2b;
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.cardSlotSelected {
+    border-color: #f22561;
+    box-shadow: 0 0 10px rgba(242, 37, 97, 0.5);
+    background: rgba(242, 37, 97, 0.1);
+}
+
+.cardInner {
+    width: 100%;
+    height: 100%;
+    padding: 4px;
+}
+
+.cardImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.2));
+}
+
+.cardEmpty {
+    width: 100%;
+    height: 100%;
+    border: 2px dashed rgba(62, 31, 8, 0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+}
+
+.cardEmptyLabel {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: rgba(62, 31, 8, 0.5);
+    text-transform: uppercase;
+}
+
+/* Use Button */
+.useButton {
+    /* 16-bit button style */
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    padding: 4px 12px;
+    width: 100%;
+    text-transform: uppercase;
+    background-color: #5e9c6f;
+    /* Greenish */
+}
+
+.useButtonSelected {
+    background-color: #f22561;
+    /* Red for 'selected' state */
+}
+
+.emptyButtonPlaceholder {
+    height: 32px;
+    /* Match button height to keep grid aligned */
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .menuBox {
+        width: 95%;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+}

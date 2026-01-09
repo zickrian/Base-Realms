@@ -17,3 +17,4 @@ export { LoadingScreen } from "./LoadingScreen";
 export { ResultModal } from "./ResultModal";
 export { BattleArena } from "./BattleArena";
 export { CharacterCanvas } from "./CharacterCanvas";
+export { HomeDeckMenu } from "./HomeDeckMenu";
