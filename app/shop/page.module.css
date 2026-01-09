@@ -166,3 +166,168 @@
   margin: 0;
   padding: 0;
 }
+
+.cashier {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as building */
+  left: 560px;
+  /* Right corner of world container */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 90px;
+  /* 25 units * 3.6px/unit = 90px */
+  height: 90px;
+  /* 25 units * 3.6px/unit = 90px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: right bottom;
+  /* Anchor from right bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.cashierButton {
+  position: absolute;
+  bottom: 279px;
+  /* 10px above cashier (179px bottom + 90px cashier height + 10px gap = 279px) */
+  left: 581.5px;
+  /* Centered above cashier (560px + (90px - 47px)/2 = 581.5px) */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.cashierButton:hover {
+  transform: scale(1.1);
+}
+
+.cashierButton:active {
+  transform: scale(0.95);
+}
+
+.cashierButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.pots1 {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as cashier */
+  left: 460px;
+  /* Left side of cashier (560px - 68px pots width - 2px spacing = 490px) */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 68px;
+  /* 19 units * 3.6px/unit = 68.4px ≈ 68px */
+  height: 115px;
+  /* 32 units * 3.6px/unit = 115.2px ≈ 115px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: left bottom;
+  /* Anchor from left bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.atm {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as other elements */
+  left: 250px;
+  /* Left side of pots1 (460px - 79px atm width - 11px spacing = 370px) */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 79px;
+  /* 22 units * 3.6px/unit = 79.2px ≈ 79px */
+  height: 130px;
+  /* 36 units * 3.6px/unit = 129.6px ≈ 130px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: left bottom;
+  /* Anchor from left bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.atmButton {
+  position: absolute;
+  bottom: 319px;
+  /* 10px above ATM (179px bottom + 130px ATM height + 10px gap = 319px) */
+  left: 266px;
+  /* Centered above ATM (250px + (79px - 47px)/2 = 266px) */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.atmButton:hover {
+  transform: scale(1.1);
+}
+
+.atmButton:active {
+  transform: scale(0.95);
+}
+
+.atmButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
