@@ -572,6 +572,7 @@ export default function HomePage() {
             className={styles.goButtonSeum}
             onClick={(e) => {
               e.stopPropagation();
+              console.log('Battle button clicked');
               setShowBattleConfirmPopup(true);
             }}
           >
@@ -755,12 +756,9 @@ export default function HomePage() {
             >
               ×
             </button>
-            <h3 className={styles.popupTitle}>ENTER BATTLE?</h3>
+            <h3 className={styles.popupTitle}>BATTLE CONFIRMATION</h3>
             <p className={styles.popupDescription}>
-              Are you sure you want to enter the Colosseum and start a battle?
-            </p>
-            <p className={styles.popupDescription}>
-              <strong>Make sure you have selected a card!</strong>
+              Are you sure you want to battle?
             </p>
             <div className={styles.popupActions}>
               <button
