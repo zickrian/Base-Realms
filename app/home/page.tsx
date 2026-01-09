@@ -71,7 +71,7 @@ export default function HomePage() {
 
   // World Constants
   const VIEWPORT_WIDTH = 430; // Mobile viewport
-  const WORLD_WIDTH = 2100; // Extended to accommodate all buildings: atm (250px), leaderboard (400px), home (680px), questboard (1000px), shop (1380px), trees (1635px), seum (1985px) + margin
+  const WORLD_WIDTH = 2500; // Extended to accommodate all buildings plus extra space to walk past seum
   const ATM_X = 250;
   const LEADERBOARD_X = 400;
   const HOME_X = 680; // Updated: shifted right with spacing after leaderboard
@@ -401,6 +401,11 @@ export default function HomePage() {
             alt="Grass"
             className={styles.grassImage}
           />
+          <img
+            src="/Assets/grass.svg"
+            alt="Grass"
+            className={styles.grassImage}
+          />
         </div>
 
         {/* ATM */}
@@ -445,12 +450,33 @@ export default function HomePage() {
           </button>
         )}
 
+        {/* Trees Decoration - to the left/front of Home */}
+        <img
+          src="/Assets/trees.svg"
+          alt="Trees"
+          className={styles.homeTreesLeft}
+        />
+
+        {/* Small Grass Decoration - to the left/front of Home */}
+        <img
+          src="/decoration/smallgrass.svg"
+          alt="Small Grass"
+          className={styles.smallGrassLeft}
+        />
+
         {/* Home Building */}
         {/* Positioned at HomeX (215) */}
         <img
           src="/Assets/home.svg"
           alt="Home"
           className={styles.homeBuilding}
+        />
+
+        {/* Barrel Decoration - to the right/front of Home */}
+        <img
+          src="/decoration/barrel.svg"
+          alt="Barrel"
+          className={styles.barrel}
         />
 
         {/* Go Button for Home - Only visible when character is near home */}
@@ -468,6 +494,13 @@ export default function HomePage() {
           src="/Assets/questboard.svg"
           alt="Questboard"
           className={styles.questboard}
+        />
+
+        {/* Blueberry Decoration - to the right/front of Questboard */}
+        <img
+          src="/decoration/blueberry.svg"
+          alt="Blueberry"
+          className={styles.blueberry}
         />
 
         {/* Go Button for Questboard - Only visible when character is near Questboard */}
@@ -489,6 +522,13 @@ export default function HomePage() {
           src="/Assets/shop.svg"
           alt="Shop"
           className={styles.shopBuilding}
+        />
+
+        {/* Strawberry Decoration - to the right/front of Shop */}
+        <img
+          src="/decoration/strawberry.svg"
+          alt="Strawberry"
+          className={styles.strawberry}
         />
 
         {/* Go Button for Shop - Only visible when character is near Shop */}

@@ -333,6 +333,97 @@
   vertical-align: bottom;
 }
 
+.barrel {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same baseline as buildings */
+  left: 825px;
+  /* Slightly to the right/front of home */
+  transform: translateX(-50%);
+  z-index: 18;
+  /* In front of home (15) but below UI buttons (25) */
+  pointer-events: none;
+  width: auto;
+  height: 97px;
+  /* Proportional to grass: 27 unit * 3.6px/unit = 97.2px ≈ 97px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.homeTreesLeft {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same baseline as buildings */
+  left: 525px;
+  /* Slightly to the left/front of home (between leaderboard and home) */
+  transform: translateX(-50%);
+  z-index: 14;
+  /* Behind leaderboard/home (15) but above grass */
+  pointer-events: none;
+  width: auto;
+  height: 342px;
+  /* Proportional to grass: 95 unit * 3.6px/unit = 342px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.strawberry {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same baseline as buildings */
+  left: 1555px;
+  /* Slightly to the right/front of shop */
+  transform: translateX(-50%);
+  z-index: 18;
+  /* In front of shop (15) but below UI buttons (25) */
+  pointer-events: none;
+  width: auto;
+  height: 72px;
+  /* Proportional to grass: 20 unit * 3.6px/unit = 72px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.smallGrassLeft {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same baseline as buildings */
+  left: 600px;
+  /* Slightly to the left/front of home, between trees and home */
+  transform: translateX(-50%);
+  z-index: 16;
+  /* In front of trees (14) and home base, but below UI buttons (25) */
+  pointer-events: none;
+  width: auto;
+  height: 14px;
+  /* Proportional to grass: 4 unit * 3.6px/unit = 14.4px ≈ 14px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .goButtonAtm {
   position: absolute;
   bottom: 319px;
@@ -584,6 +675,29 @@
   vertical-align: bottom;
 }
 
+.blueberry {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same baseline as buildings */
+  left: 1120px;
+  /* Slightly to the right/front of questboard */
+  transform: translateX(-50%);
+  z-index: 18;
+  /* In front of questboard (15) but below UI buttons (25) */
+  pointer-events: none;
+  width: auto;
+  height: 72px;
+  /* Proportional to grass: 20 unit * 3.6px/unit = 72px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .shopBuilding {
   position: absolute;
   bottom: 179px;
@@ -660,8 +774,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 2100px;
-  /* Extended world width to accommodate all buildings: atm, leaderboard, home, questboard, shop, trees, seum */
+  width: 2500px;
+  /* Extended world width to accommodate all buildings plus extra walkable space past seum */
   height: 100%;
   transition: transform 0.1s linear;
   /* Smooth camera pan */
