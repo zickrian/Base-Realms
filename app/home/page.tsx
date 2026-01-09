@@ -533,12 +533,16 @@ export default function HomePage() {
 
         {/* Go Button for Shop - Only visible when character is near Shop */}
         {Math.abs(charPos.x - SHOP_X) < 150 && (
-          <img
+          <button
             key="go-btn-shop"
-            src="/button/buttongo.svg"
-            alt="Go"
             className={styles.goButtonShop}
-          />
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push('/shop');
+            }}
+          >
+            <img src="/button/buttongo.svg" alt="Go to Shop" />
+          </button>
         )}
 
         {/* Trees */}

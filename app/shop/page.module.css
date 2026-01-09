@@ -1,0 +1,168 @@
+/* Shop Page Styles - Consistent pixel scaling with home (3.6px per unit) */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  max-width: 430px;
+  width: 100%;
+  margin: 0 auto;
+  background: url(/building/shop/bgshop.svg) no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+  position: relative;
+  padding-bottom: 0;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.worldContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 720px;
+  /* 200 units * 3.6 px/unit = 720px (matches grassshop.svg viewBox) */
+  height: 100%;
+  transition: transform 0.1s linear;
+  /* Smooth camera pan */
+  will-change: transform;
+}
+
+.grassContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  /* Full world width */
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.grassImage {
+  height: 180px;
+  /* 50 units * 3.6 px/unit = 180px (base scale) */
+  width: 720px;
+  /* 200 units * 3.6 px/unit = 720px - full world width */
+  min-width: 720px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin-bottom: -1px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  object-fit: cover;
+}
+
+.buildingShop {
+  position: absolute !important;
+  bottom: 179px !important;
+  left: 0 !important;
+  width: 720px !important;
+  /* 200 units * 3.6px/unit = 720px - EXACT same as grass width */
+  height: 216px !important;
+  /* 60 units * 3.6px/unit = 216px - same pixel scale as grass (grass: 50 unit * 3.6 = 180px) */
+  min-width: 720px !important;
+  max-width: 720px !important;
+  min-height: 216px !important;
+  max-height: 216px !important;
+  image-rendering: pixelated !important;
+  image-rendering: -moz-crisp-edges !important;
+  image-rendering: crisp-edges !important;
+  transform-origin: left bottom !important;
+  /* Anchor from left bottom */
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  z-index: 15 !important;
+  pointer-events: none !important;
+  /* Building doesn't block clicks - character can walk through */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+  box-sizing: border-box !important;
+}
+
+.characterContainer {
+  position: absolute;
+  bottom: 179px;
+  /* Same as home: on top of grass */
+  transform: translateX(-50%);
+  width: 108px;
+  /* 30 units * 3.6 px/unit = 108px */
+  height: 140px;
+  /* 39 units * 3.6 px/unit = 140.4px ≈ 140px */
+  z-index: 20;
+  /* Above building but below click overlay */
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 0;
+  font-size: 0;
+}
+
+.clickOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.shopButton {
+  position: absolute;
+  bottom: 230px;
+  /* 10px above grass (179px bottom + 10px gap = 189px) */
+  left: 30px;
+  /* Left corner, on top of grass */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px (same pixel scale as grass) */
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.shopButton:hover {
+  transform: scale(1.1);
+}
+
+.shopButton:active {
+  transform: scale(0.95);
+}
+
+.shopButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}

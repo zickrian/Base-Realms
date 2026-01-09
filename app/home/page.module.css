@@ -591,18 +591,38 @@
   left: 1380px;
   /* Center aligned with Shop building */
   transform: translateX(-50%);
-  z-index: 20;
-  pointer-events: none;
-  width: auto;
+  z-index: 25;
+  pointer-events: auto;
   height: 47px;
+  width: 47px;
   /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.goButtonShop:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.goButtonShop:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.goButtonShop img {
+  width: 47px;
+  height: 47px;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  transform-origin: center bottom;
+  display: block;
   margin: 0;
   padding: 0;
-  display: block;
   vertical-align: bottom;
 }
 
