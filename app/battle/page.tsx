@@ -19,7 +19,7 @@ type BattlePhase = 'loading' | 'battle' | 'error';
 export default function BattlePage() {
   const router = useRouter();
   const { address } = useAccount();
-  const { profile, refreshProfile } = useGameStore();
+  const { profile, refreshProfile, selectCard } = useGameStore();
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
   const { initBattle, resetBattle } = useBattleStore();
@@ -92,10 +92,18 @@ export default function BattlePage() {
   }, [initBattle, address, profile, router]);
 
   // Handle battle end - navigate back to home (use replace to avoid back button issues)
-  const handleBattleEnd = useCallback(() => {
+  const handleBattleEnd = useCallback(async () => {
     resetBattle();
+    // Clear selected card before returning to home to prevent auto-trigger
+    if (address) {
+      try {
+        await selectCard(address, null);
+      } catch (error) {
+        console.error('Failed to clear selected card:', error);
+      }
+    }
     router.replace('/home');
-  }, [resetBattle, router]);
+  }, [resetBattle, router, address, selectCard]);
 
   // Handle retry on error
   const handleRetry = useCallback(() => {

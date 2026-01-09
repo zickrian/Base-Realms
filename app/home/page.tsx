@@ -10,6 +10,7 @@ import {
   CardRevealModal,
   SettingsMenu,
   CharacterCanvas,
+  HomeDeckMenu,
 } from "../components/game";
 import { HomeLoadingScreen } from "../components/HomeLoadingScreen";
 import { LoadingState } from "../components/LoadingState";
@@ -39,6 +40,7 @@ export default function HomePage() {
 
   const [_activeNav, _setActiveNav] = useState<"cards" | "arena" | "market">("arena");
   const [isQuestMenuOpen, setIsQuestMenuOpen] = useState(false);
+  const [isHomeDeckMenuOpen, setIsHomeDeckMenuOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
@@ -481,12 +483,16 @@ export default function HomePage() {
 
         {/* Go Button for Home - Only visible when character is near home */}
         {Math.abs(charPos.x - HOME_X) < 150 && (
-          <img
+          <button
             key="go-btn-home"
-            src="/button/buttongo.svg"
-            alt="Go"
             className={styles.goButton}
-          />
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsHomeDeckMenuOpen(true);
+            }}
+          >
+            <img src="/button/buttongo.svg" alt="Open Deck" />
+          </button>
         )}
 
         {/* Questboard */}
@@ -566,6 +572,7 @@ export default function HomePage() {
             className={styles.goButtonSeum}
             onClick={(e) => {
               e.stopPropagation();
+              console.log('Battle button clicked');
               setShowBattleConfirmPopup(true);
             }}
           >
@@ -621,6 +628,7 @@ export default function HomePage() {
       {renderArenaView()}
 
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
+      <HomeDeckMenu isOpen={isHomeDeckMenuOpen} onClose={() => setIsHomeDeckMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
         onClose={() => {
@@ -748,12 +756,9 @@ export default function HomePage() {
             >
               ×
             </button>
-            <h3 className={styles.popupTitle}>ENTER BATTLE?</h3>
+            <h3 className={styles.popupTitle}>BATTLE CONFIRMATION</h3>
             <p className={styles.popupDescription}>
-              Are you sure you want to enter the Colosseum and start a battle?
-            </p>
-            <p className={styles.popupDescription}>
-              <strong>Make sure you have selected a card!</strong>
+              Are you sure you want to battle?
             </p>
             <div className={styles.popupActions}>
               <button
