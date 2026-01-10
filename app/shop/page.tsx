@@ -182,7 +182,7 @@ export default function ShopPage() {
       {/* World Container (scrolling horizontally) */}
       <div
         className={styles.worldContainer}
-        style={{ transform: `translateX(${-cameraX}px)` }}
+        style={{ transform: `translate3d(${-cameraX}px, 0, 0)` }}
       >
         {/* Grass Container */}
         <div className={styles.grassContainer}>

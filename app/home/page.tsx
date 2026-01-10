@@ -385,7 +385,7 @@ export default function HomePage() {
       {/* World Container for Scrolling Content */}
       <div
         className={styles.worldContainer}
-        style={{ transform: `translateX(${-cameraX}px)` }}
+        style={{ transform: `translate3d(${-cameraX}px, 0, 0)` }}
       >
         {/* Grass Background - Tiled/Extended */}
         <div className={styles.grassContainer}>

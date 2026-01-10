@@ -27,9 +27,13 @@
   width: 720px;
   /* 200 units * 3.6 px/unit = 720px (matches grassshop.svg viewBox) */
   height: 100%;
-  transition: transform 0.1s linear;
-  /* Smooth camera pan */
+  /* Removed transition - using JavaScript lerp for smooth movement */
   will-change: transform;
+  /* Force hardware acceleration for Safari */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   z-index: 105;
   pointer-events: none;
 }
@@ -99,7 +103,8 @@
   position: absolute;
   bottom: 179px;
   /* Same as home: on top of grass */
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
+  -webkit-transform: translateX(-50%) translateZ(0);
   width: 108px;
   /* 30 units * 3.6 px/unit = 108px */
   height: 140px;
@@ -114,6 +119,10 @@
   justify-content: center;
   line-height: 0;
   font-size: 0;
+  /* Force hardware acceleration for Safari */
+  will-change: transform, left;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .clickOverlay {

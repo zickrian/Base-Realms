@@ -246,9 +246,12 @@
   pointer-events: none;
   transform-origin: center bottom;
   will-change: left, transform;
-  /* optimize for movement */
-  transition: transform 0.1s;
-  /* smooth flip */
+  /* Removed transition - transform handled by JavaScript */
+  /* Force hardware acceleration for Safari */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   /* Remove any default margins/padding that could cause gaps */
   margin: 0;
   padding: 0;
@@ -828,9 +831,13 @@
   width: 2500px;
   /* Extended world width to accommodate all buildings plus extra walkable space past seum */
   height: 100%;
-  transition: transform 0.1s linear;
-  /* Smooth camera pan */
+  /* Removed transition - using JavaScript lerp for smooth movement */
   will-change: transform;
+  /* Force hardware acceleration for Safari */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   z-index: 105;
   pointer-events: none;
 }
