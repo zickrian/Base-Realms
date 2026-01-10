@@ -649,7 +649,7 @@
 
 .goButtonSeum {
   position: absolute;
-  bottom: 623px;
+  bottom: 632px; s
   /* Lowered to match seum: 170px bottom + 443px height + 10px gap = 623px */
   left: 1985px;
   /* Center aligned with Seum building */
@@ -799,7 +799,7 @@
 
 .seum {
   position: absolute;
-  bottom: 170px;
+  bottom: 179px;
   /* Lowered slightly to touch grass */
   left: 1985px;
   /* Shifted right to make room for questboard */
