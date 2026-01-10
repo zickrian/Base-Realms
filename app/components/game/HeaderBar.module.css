@@ -10,6 +10,7 @@
   overflow: hidden;
   z-index: 900;
   box-sizing: border-box;
+  pointer-events: none;
 }
 
 /* Menu Button (SVG Based) */
@@ -30,6 +31,7 @@
   clip-path: none;
   background-color: transparent;
   box-shadow: none;
+  pointer-events: auto;
 }
 
 .menuButton::before {
@@ -92,6 +94,7 @@
   margin-right: 4px;
   margin-top: 18px;
   /* Offset untuk sejajar dengan progress bar */
+  pointer-events: auto;
 }
 
 .currencyItem {

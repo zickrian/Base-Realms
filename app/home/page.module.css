@@ -649,8 +649,8 @@
 
 .goButtonSeum {
   position: absolute;
-  bottom: 632px;
-  /* 10px above top of Seum (179px bottom + 443px height + 10px gap = 632px) */
+  bottom: 623px;
+  /* Lowered to match seum: 170px bottom + 443px height + 10px gap = 623px */
   left: 1985px;
   /* Center aligned with Seum building */
   transform: translateX(-50%);
@@ -799,8 +799,8 @@
 
 .seum {
   position: absolute;
-  bottom: 179px;
-  /* Positioned at top of grass (same as shop) */
+  bottom: 170px;
+  /* Lowered slightly to touch grass */
   left: 1985px;
   /* Shifted right to make room for questboard */
   transform: translateX(-50%);
@@ -831,4 +831,6 @@
   transition: transform 0.1s linear;
   /* Smooth camera pan */
   will-change: transform;
+  z-index: 105;
+  pointer-events: none;
 }
