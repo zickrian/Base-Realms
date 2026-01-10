@@ -649,7 +649,7 @@
 
 .goButtonSeum {
   position: absolute;
-  bottom: 632px; s
+  bottom: 632px;
   /* Lowered to match seum: 170px bottom + 443px height + 10px gap = 623px */
   left: 1985px;
   /* Center aligned with Seum building */
