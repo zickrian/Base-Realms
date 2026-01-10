@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAccount } from 'wagmi';
@@ -40,7 +40,7 @@ const IDRX_TOKEN: Token = {
 
 const swappableTokens: Token[] = [ETH_TOKEN, IDRX_TOKEN];
 
-export default function SwapPage() {
+function SwapContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isConnected } = useAccount();
@@ -127,5 +127,23 @@ export default function SwapPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SwapPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.container}>
+        <div className={`${styles.paperCard} bit16-container`}>
+          <div className={styles.content}>
+            <div className={styles.notConnectedMessage}>
+              <p>Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <SwapContent />
+    </Suspense>
   );
 }

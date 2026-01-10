@@ -312,13 +312,13 @@ export default function HomePage() {
     // Navigate immediately - route is prefetched
     router.push('/leaderboard');
   };
-  const handleQuestClick = () => setIsQuestMenuOpen(true);
+  const _handleQuestClick = () => setIsQuestMenuOpen(true);
   const _handleSwapClick = () => {
     // Navigate immediately - route is prefetched
     router.push('/swap');
   };
 
-  const handlePackClick = async () => {
+  const _handlePackClick = async () => {
     if (!address || !isConnected) {
       setToast({
         message: "Wallet not connected. Please connect your wallet first.",
