@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import {
@@ -42,6 +42,7 @@ const swappableTokens: Token[] = [ETH_TOKEN, IDRX_TOKEN];
 
 export default function SwapPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isConnected } = useAccount();
 
   // Redirect if not connected
@@ -52,7 +53,12 @@ export default function SwapPage() {
   }, [isConnected, router]);
 
   const handleBack = () => {
-    router.push('/home');
+    const from = searchParams.get('from');
+    if (from === 'shop') {
+      router.push('/shop');
+    } else {
+      router.push('/home');
+    }
   };
 
   return (

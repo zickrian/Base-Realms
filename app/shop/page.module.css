@@ -30,6 +30,8 @@
   transition: transform 0.1s linear;
   /* Smooth camera pan */
   will-change: transform;
+  z-index: 105;
+  pointer-events: none;
 }
 
 .grassContainer {
@@ -131,8 +133,9 @@
   /* 10px above grass (179px bottom + 10px gap = 189px) */
   left: 30px;
   /* Left corner, on top of grass */
-  z-index: 101;
-  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  /* Left corner, on top of grass */
+  z-index: 110;
+  /* Above worldContainer (105) and clickOverlay (100) */
   pointer-events: auto;
   height: 47px;
   width: 47px;

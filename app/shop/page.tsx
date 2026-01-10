@@ -3,18 +3,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
-import { CharacterCanvas, HeaderBar } from '../components/game';
+import { CharacterCanvas, HeaderBar, SettingsMenu, ShopCardsPopup } from '../components/game';
 import { useWalkSound } from '../hooks/useWalkSound';
 
 export default function ShopPage() {
   const router = useRouter();
-  
+
   const VIEWPORT_WIDTH = 430; // Mobile viewport (matches home)
   const WORLD_WIDTH = 720; // 200 units * 3.6 px/unit = 720px (width of grassshop.svg)
   const SHOP_BUTTON_X = 54; // Left corner position (characterHalfWidth = 54px) - button appears when character is near left side
   const ATM_CENTER_X = 289.5; // ATM center position (250px left + 39.5px half width = 289.5px) - button appears when character is near ATM
   const CASHIER_CENTER_X = 605; // Cashier center position (560px left + 45px half width = 605px) - button appears when character is near cashier
-  
+
   // Character Movement State
   // Start character in center
   const [charPos, setCharPos] = useState(() => {
@@ -130,7 +130,7 @@ export default function ShopPage() {
 
     const container = e.currentTarget;
     const rect = container.getBoundingClientRect();
-    
+
     // Get click position (handle both mouse and touch)
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clickScreenX = clientX - rect.left;
@@ -153,96 +153,99 @@ export default function ShopPage() {
   };
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCardsShopOpen, setIsCardsShopOpen] = useState(false);
 
   return (
     <div className={styles.container}>
-      <HeaderBar onSettingsClick={() => setIsSettingsOpen(true)} />
-      
+      <div style={{ position: 'relative', zIndex: 999 }}>
+        <HeaderBar onSettingsClick={() => setIsSettingsOpen(true)} />
+      </div>
+
       {/* World Container (scrolling horizontally) */}
       <div
         className={styles.worldContainer}
         style={{ transform: `translateX(${-cameraX}px)` }}
       >
-          {/* Grass Container */}
-          <div className={styles.grassContainer}>
-            <img
-              src="/building/shop/grassshop.svg"
-              alt="Grass"
-              className={styles.grassImage}
-            />
-          </div>
-
-          {/* Building Shop */}
+        {/* Grass Container */}
+        <div className={styles.grassContainer}>
           <img
-            src="/building/shop/buildingshop.svg"
-            alt="Building Shop"
-            className={styles.buildingShop}
-            style={{
-              width: '720px',
-              height: '216px',
-              position: 'absolute',
-              bottom: '179px',
-              left: '0',
-              imageRendering: 'pixelated',
-              zIndex: 15,
-            } as React.CSSProperties}
+            src="/building/shop/grassshop.svg"
+            alt="Grass"
+            className={styles.grassImage}
           />
-
-          {/* ATM - Left side of pots1 */}
-          <img
-            src="/Assets/atm.svg"
-            alt="ATM"
-            className={styles.atm}
-          />
-
-          {/* ATM Button - Above ATM, only visible when character is near */}
-          {Math.abs(charPos.x - ATM_CENTER_X) < 150 && (
-            <button
-              className={styles.atmButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                // No redirect for now
-              }}
-            >
-              <img src="/building/shop/buttonshop.svg" alt="ATM" />
-            </button>
-          )}
-
-          {/* Pots1 - Left side of cashier */}
-          <img
-            src="/decoration/pots1.svg"
-            alt="Pots"
-            className={styles.pots1}
-          />
-
-          {/* Cashier - Right Corner */}
-          <img
-            src="/building/shop/cashier.svg"
-            alt="Cashier"
-            className={styles.cashier}
-          />
-
-          {/* Cashier Button - Above cashier, only visible when character is near */}
-          {Math.abs(charPos.x - CASHIER_CENTER_X) < 150 && (
-            <button
-              className={styles.cashierButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                // No redirect for now
-              }}
-            >
-              <img src="/building/shop/buttonshop.svg" alt="Cashier" />
-            </button>
-          )}
-
-          {/* Character */}
-          <div
-            className={styles.characterContainer}
-            style={{ left: `${charPos.x}px` }}
-          >
-            <CharacterCanvas direction={direction} isMoving={isMoving} />
-          </div>
         </div>
+
+        {/* Building Shop */}
+        <img
+          src="/building/shop/buildingshop.svg"
+          alt="Building Shop"
+          className={styles.buildingShop}
+          style={{
+            width: '720px',
+            height: '216px',
+            position: 'absolute',
+            bottom: '179px',
+            left: '0',
+            imageRendering: 'pixelated',
+            zIndex: 15,
+          } as React.CSSProperties}
+        />
+
+        {/* ATM - Left side of pots1 */}
+        <img
+          src="/Assets/atm.svg"
+          alt="ATM"
+          className={styles.atm}
+        />
+
+        {/* ATM Button - Above ATM, only visible when character is near */}
+        {Math.abs(charPos.x - ATM_CENTER_X) < 150 && (
+          <button
+            className={styles.atmButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push('/swap?from=shop');
+            }}
+          >
+            <img src="/building/shop/buttonshop.svg" alt="ATM" />
+          </button>
+        )}
+
+        {/* Pots1 - Left side of cashier */}
+        <img
+          src="/decoration/pots1.svg"
+          alt="Pots"
+          className={styles.pots1}
+        />
+
+        {/* Cashier - Right Corner */}
+        <img
+          src="/building/shop/cashier.svg"
+          alt="Cashier"
+          className={styles.cashier}
+        />
+
+        {/* Cashier Button - Above cashier, only visible when character is near */}
+        {Math.abs(charPos.x - CASHIER_CENTER_X) < 150 && (
+          <button
+            className={styles.cashierButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCardsShopOpen(true);
+            }}
+          >
+            <img src="/building/shop/buttonshop.svg" alt="Cashier" />
+          </button>
+        )}
+
+        {/* Character */}
+        <div
+          className={styles.characterContainer}
+          style={{ left: `${charPos.x}px` }}
+        >
+          <CharacterCanvas direction={direction} isMoving={isMoving} />
+        </div>
+      </div>
 
       {/* Shop Button - Only visible when character is near left corner */}
       {Math.abs(charPos.x - SHOP_BUTTON_X) < 150 && (
@@ -264,6 +267,9 @@ export default function ShopPage() {
         onMouseDown={handleScreenClick}
         onTouchStart={handleScreenClick}
       />
+
+      <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <ShopCardsPopup isOpen={isCardsShopOpen} onClose={() => setIsCardsShopOpen(false)} />
     </div>
   );
 }
