@@ -120,7 +120,7 @@ export function CardsMenu() {
         console.warn('Failed to sync NFT from blockchain:', syncError);
       }
 
-      // Refresh inventory and quests after sync
+      // Refresh inventory and quests after syn
       await Promise.all([
         refreshInventory(address!),
         refreshQuests(address!),
