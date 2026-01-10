@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { CharacterCanvas, HeaderBar, SettingsMenu, ShopCardsPopup } from '../components/game';
@@ -63,15 +63,28 @@ export default function ShopPage() {
   // Integrate walk sound
   useWalkSound(isMoving);
 
+  // Use ref to track character position without triggering re-renders
+  const charPosRef = useRef(charPos);
+  const targetXRef = useRef(targetX);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    charPosRef.current = charPos;
+  }, [charPos]);
+  
+  useEffect(() => {
+    targetXRef.current = targetX;
+  }, [targetX]);
+
   // Animation loop for character movement and camera
   useEffect(() => {
     let animationFrameId: number;
 
     const animate = () => {
       // 1. Move Character
-      if (targetX !== null) {
+      if (targetXRef.current !== null) {
         setCharPos(prev => {
-          const dx = targetX - prev.x;
+          const dx = targetXRef.current! - prev.x;
 
           // Stop if close enough
           if (Math.abs(dx) < 2) { // 2px tolerance
@@ -98,28 +111,33 @@ export default function ShopPage() {
         });
       }
 
-      // 2. Move Camera
-      // Simple camera locking centered on character, but clamped to world bounds
+      // 2. Move Camera with smooth interpolation
       // Center of view is Viewport/2 = 215.
       // Desired Camera X = CharX - 215.
       // Clamped between 0 and (WorldWidth - ViewportWidth).
-      setCameraX(_prev => {
-        const desiredCamX = charPos.x - 215;
+      setCameraX(prev => {
+        const desiredCamX = charPosRef.current.x - 215;
         const clampedCamX = Math.max(0, Math.min(desiredCamX, WORLD_WIDTH - VIEWPORT_WIDTH));
-        // Simple clamp (same as home)
-        return clampedCamX;
+        
+        // Smooth lerp for camera movement (0.15 = smooth follow, higher = faster)
+        const lerpFactor = 0.15;
+        const smoothCamX = prev + (clampedCamX - prev) * lerpFactor;
+        
+        return smoothCamX;
       });
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
+    // Always run animation loop for smooth camera movement
     animationFrameId = requestAnimationFrame(animate);
+    
     return () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [targetX, charPos.x, VIEWPORT_WIDTH, WORLD_WIDTH, characterHalfWidth]);
+  }, []); // Empty dependency array - animation runs continuously
 
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     // Ignore clicks on interactive elements

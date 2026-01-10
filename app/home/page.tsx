@@ -126,15 +126,33 @@ export default function HomePage() {
     }
   }, [charPos.x, cameraX, direction]);
 
+  // Use ref to track character position without triggering re-renders
+  const charPosRef = useRef(charPos);
+  const targetXRef = useRef(targetX);
+  const isMovingRef = useRef(isMoving);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    charPosRef.current = charPos;
+  }, [charPos]);
+  
+  useEffect(() => {
+    targetXRef.current = targetX;
+  }, [targetX]);
+  
+  useEffect(() => {
+    isMovingRef.current = isMoving;
+  }, [isMoving]);
+
   // Animation loop for character movement and camera
   useEffect(() => {
     let animationFrameId: number;
 
     const animate = () => {
       // 1. Move Character
-      if (targetX !== null) {
+      if (targetXRef.current !== null) {
         setCharPos(prev => {
-          const dx = targetX - prev.x;
+          const dx = targetXRef.current! - prev.x;
 
           // Stop if close enough
           if (Math.abs(dx) < 2) { // 2px tolerance
@@ -163,36 +181,29 @@ export default function HomePage() {
         });
       }
 
-      // 2. Move Camera
-      // Logic: If character goes past right side of first screen (e.g. > 300px), 
-      // camera starts following to reveal right side.
-      // Offset = CharX - CenterOffset? 
-      // User said: "approaching right... camera shifts"
-
-      // Simple camera locking centered on character, but clamped to world bounds
+      // 2. Move Camera with smooth interpolation
       // Center of view is Viewport/2 = 215.
       // Desired Camera X = CharX - 215.
-      // Clanped between 0 and (WorldWidth - ViewportWidth).
-
-      setCameraX(_prev => {
-        const desiredCamX = charPos.x - 215;
+      // Clamped between 0 and (WorldWidth - ViewportWidth).
+      setCameraX(prev => {
+        const desiredCamX = charPosRef.current.x - 215;
         const clampedCamX = Math.max(0, Math.min(desiredCamX, WORLD_WIDTH - VIEWPORT_WIDTH));
-        // Smooth lerp could be added, but simple clamp is robust
-        return clampedCamX;
+        
+        // Smooth lerp for camera movement (0.15 = smooth follow, higher = faster)
+        const lerpFactor = 0.15;
+        const smoothCamX = prev + (clampedCamX - prev) * lerpFactor;
+        
+        return smoothCamX;
       });
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Always run loop to update camera even if not moving target (though mostly needed when moving)
-    // Optimization: only run if moving or camera needs update? 
-    // To be safe for smooth interactions, run if moving or if camera mismatch.
-    if (isMoving) {
-      animationFrameId = requestAnimationFrame(animate);
-    }
+    // Always run animation loop for smooth camera movement
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isMoving, targetX, charPos.x]);
+  }, []); // Empty dependency array - animation runs continuously
 
   // Handle screen click for movement
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
