@@ -127,7 +127,7 @@ export function CardsMenu() {
       ]);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to record purchase:', errorMessage);
+      console.error('Failed to record purchase', errorMessage);
       // Remove from processed set on error so it can be retried
       processedTxHashes.current.delete(transactionHash);
     } finally {
