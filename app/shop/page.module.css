@@ -206,6 +206,80 @@
   box-sizing: border-box;
 }
 
+.box {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as ATM */
+  left: 350px;
+  /* Left side of ATM (250px - 76px box width - 4px spacing = 170px) */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 76px;
+  /* 21 units * 3.6px/unit = 75.6px ≈ 76px */
+  height: 58px;
+  /* 16 units * 3.6px/unit = 57.6px ≈ 58px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: left bottom;
+  /* Anchor from left bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.boxButton {
+  position: absolute;
+  bottom: 247px;
+  /* 10px above box (179px bottom + 58px box height + 10px gap = 247px) */
+  left: 364.5px;
+  /* Centered above box (350px + (76px - 47px)/2 = 364.5px) */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.boxButton:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.boxButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.boxButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boxButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
 .cashierButton {
   position: absolute;
   bottom: 279px;

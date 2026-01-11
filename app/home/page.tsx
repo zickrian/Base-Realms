@@ -200,7 +200,7 @@ export default function HomePage() {
     };
 
     // Always run animation loop for smooth camera movement
-    animationFrameId = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrameId);
   }, []); // Empty dependency array - animation runs continuously
