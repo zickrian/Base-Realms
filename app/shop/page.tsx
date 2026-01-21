@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import styles from './page.module.css';
-import { CharacterCanvas, HeaderBar, SettingsMenu, ShopCardsPopup } from '../components/game';
+import { CharacterCanvas, HeaderBar, SettingsMenu, ShopCardsPopup, SwapMenu } from '../components/game';
 import { useWalkSound } from '../hooks/useWalkSound';
 
 // ABI for mint function
@@ -187,6 +187,7 @@ export default function ShopPage() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCardsShopOpen, setIsCardsShopOpen] = useState(false);
+  const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
   
   // Wagmi hooks for minting
   const { address, isConnected } = useAccount();
@@ -304,7 +305,7 @@ export default function ShopPage() {
             className={styles.atmButton}
             onClick={(e) => {
               e.stopPropagation();
-              router.push('/swap?from=shop');
+              setIsSwapMenuOpen(true);
             }}
           >
             <img src="/building/shop/buttonshop.svg" alt="ATM" />
@@ -370,6 +371,7 @@ export default function ShopPage() {
 
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <ShopCardsPopup isOpen={isCardsShopOpen} onClose={() => setIsCardsShopOpen(false)} />
+      <SwapMenu isOpen={isSwapMenuOpen} onClose={() => setIsSwapMenuOpen(false)} />
     </div>
   );
 }

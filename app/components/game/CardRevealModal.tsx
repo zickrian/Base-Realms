@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { type Rarity, getBackCardImage, getFrontCardImage } from "../../lib/blockchain/nftService";
+import { type Rarity, getFrontCardImage } from "../../lib/blockchain/nftService";
 import styles from "./CardRevealModal.module.css";
 
 // ABI for mint function - same as in home/page.tsx
@@ -32,7 +32,7 @@ interface CardRevealModalProps {
   onMintError?: (error: string) => void;
 }
 
-type RevealState = "minting" | "card2" | "rotating" | "card1" | "acquired";
+type MintingState = "ready" | "processing" | "success" | "error";
 
 export function CardRevealModal({ 
   isOpen, 
@@ -44,16 +44,83 @@ export function CardRevealModal({
 }: CardRevealModalProps) {
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWriteContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-  const [revealState, setRevealState] = useState<RevealState>("minting");
-  const [isRotating, setIsRotating] = useState(false);
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [mintingState, setMintingState] = useState<MintingState>("ready");
   const [mintError, setMintError] = useState<string | null>(null);
-  const [isAnimatingToInventory, setIsAnimatingToInventory] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      console.log('[CardRevealModal] Modal opened, resetting state to ready');
+      setMintingState("ready");
+      setMintError(null);
+      setShowSuccessPopup(false);
+      // Reset wagmi writeContract state to clear any previous errors
+      resetWriteContract();
+    }
+  }, [isOpen, resetWriteContract]);
+
+  // Handle successful mint transaction - show success popup
+  useEffect(() => {
+    if (isSuccess && hash && mintingState === "processing") {
+      console.log('[CardRevealModal] Minting successful, showing success popup');
+      setMintingState("success");
+      
+      // Call onMintSuccess in background without blocking UI transition
+      setTimeout(() => {
+        try {
+          onMintSuccess?.(hash);
+        } catch (error) {
+          console.error('[CardRevealModal] Error in onMintSuccess callback:', error);
+        }
+      }, 0);
+    }
+  }, [isSuccess, hash, onMintSuccess, mintingState]);
+
+  // Show success popup after minting state is set to success
+  useEffect(() => {
+    if (mintingState === "success" && !showSuccessPopup) {
+      // Show popup after a short delay for smooth transition
+      const timer = setTimeout(() => {
+        setShowSuccessPopup(true);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [mintingState, showSuccessPopup]);
+
+  // Handle write errors - format same as free mint in home/page.tsx
+  useEffect(() => {
+    // Only handle errors if we're in ready or processing state and modal is open
+    if (writeError && (mintingState === "ready" || mintingState === "processing") && isOpen) {
+      let errorMessage = "Minting failed. Please try again.";
+      const errorMsg = writeError.message || "";
+      
+      if (errorMsg.includes("user rejected") || errorMsg.includes("User rejected") || 
+          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled") ||
+          errorMsg.includes("User denied") || errorMsg.includes("user denied") ||
+          errorMsg.includes("rejected") || errorMsg.includes("cancelled")) {
+        errorMessage = "Transaction cancelled by user.";
+        // Set error state immediately when user cancels
+        setMintError(errorMessage);
+        setMintingState("error");
+        onMintError?.(errorMessage);
+      } else if (errorMsg && !errorMsg.includes("continue in Base Account")) {
+        // Ignore "continue in Base Account" errors - these are wallet permission prompts
+        // that don't indicate actual failure
+        errorMessage = `Minting failed: ${errorMsg}`;
+        setMintError(errorMessage);
+        setMintingState("error");
+        onMintError?.(errorMessage);
+      }
+    }
+  }, [writeError, onMintError, mintingState, isOpen]);
 
   const handleMint = useCallback(() => {
     if (!cardData || !walletAddress || isPending || isConfirming) return;
 
     setMintError(null);
+    setMintingState("processing");
 
     try {
       // Use wagmi's writeContract which is already integrated with OnchainKit
@@ -68,119 +135,10 @@ export function CardRevealModal({
       const errorMsg = error instanceof Error ? error.message : "Failed to start minting";
       console.error('Minting error:', error);
       setMintError(errorMsg);
+      setMintingState("error");
       onMintError?.(errorMsg);
     }
   }, [cardData, walletAddress, isPending, isConfirming, writeContract, onMintError]);
-
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      console.log('[CardRevealModal] Modal opened, resetting state to minting');
-      setRevealState("minting");
-      setIsRotating(false);
-      setIsFlipped(false);
-      setMintError(null);
-      setIsAnimatingToInventory(false);
-      // Reset wagmi writeContract state to clear any previous errors
-      resetWriteContract();
-      // Don't auto-start minting - let user click button to start
-    }
-  }, [isOpen, resetWriteContract]); // Only reset when modal opens/closes
-
-  // Handle successful mint transaction - transition to backcard with animation
-  useEffect(() => {
-    if (isSuccess && hash && revealState === "minting") {
-      // Immediately transition to card2 (backcard) when minting succeeds
-      // This will show the backcard with animation
-      console.log('[CardRevealModal] Minting successful, transitioning to card2 (backcard)');
-      setRevealState("card2");
-      
-      // Call onMintSuccess in background without blocking UI transition
-      // Use setTimeout to ensure state update happens first
-      setTimeout(() => {
-        try {
-          onMintSuccess?.(hash);
-        } catch (error) {
-          console.error('[CardRevealModal] Error in onMintSuccess callback:', error);
-          // Don't show error to user - card reveal should continue
-        }
-      }, 0);
-    }
-  }, [isSuccess, hash, onMintSuccess, revealState]);
-
-  // Auto-flip to front card after showing backcard for 1 second (if user doesn't click)
-  useEffect(() => {
-    if (revealState === "card2" && !isRotating && !isFlipped) {
-      const autoFlipTimer = setTimeout(() => {
-        console.log('[CardRevealModal] Auto-flipping to front card after 1 second');
-        setIsRotating(true);
-        setRevealState("rotating");
-        
-        setTimeout(() => {
-          console.log('[CardRevealModal] Auto-flip animation complete, showing front card');
-          setRevealState("card1");
-        }, 400);
-      }, 1000); // Auto-flip after 1 second to show backcard briefly
-      
-      return () => clearTimeout(autoFlipTimer);
-    }
-  }, [revealState, isRotating, isFlipped]);
-
-  // Handle write errors - format same as free mint in home/page.tsx
-  useEffect(() => {
-    // Only handle errors if we're still in minting state and modal is open
-    // If already transitioned to card2, ignore errors (transaction might have succeeded)
-    if (writeError && revealState === "minting" && isOpen) {
-      let errorMessage = "Minting failed. Please try again.";
-      const errorMsg = writeError.message || "";
-      
-      if (errorMsg.includes("user rejected") || errorMsg.includes("User rejected") || 
-          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled") ||
-          errorMsg.includes("User denied") || errorMsg.includes("user denied") ||
-          errorMsg.includes("rejected") || errorMsg.includes("cancelled")) {
-        errorMessage = "Transaction cancelled by user.";
-        // Set error state immediately when user cancels
-        setMintError(errorMessage);
-        onMintError?.(errorMessage);
-        // Reset pending states
-        setRevealState("minting");
-      } else if (errorMsg && !errorMsg.includes("continue in Base Account")) {
-        // Ignore "continue in Base Account" errors - these are wallet permission prompts
-        // that don't indicate actual failure
-        errorMessage = `Minting failed: ${errorMsg}`;
-        setMintError(errorMessage);
-        onMintError?.(errorMessage);
-      }
-    }
-  }, [writeError, onMintError, revealState, isOpen]);
-
-  // Reset rotation class after animation completes
-  useEffect(() => {
-    if (revealState === "card1" && isRotating) {
-      const timer = setTimeout(() => {
-        setIsRotating(false);
-        setIsFlipped(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [revealState, isRotating]);
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent backdrop click from closing modal when clicking on card
-    e.stopPropagation();
-    
-    // Only allow click if showing back card and not already rotating
-    if (revealState === "card2" && !isRotating && !isFlipped) {
-      console.log('[CardRevealModal] Card clicked, starting flip animation from backcard to front');
-      setIsRotating(true);
-      setRevealState("rotating");
-      
-      setTimeout(() => {
-        console.log('[CardRevealModal] Flip animation complete, showing front card');
-        setRevealState("card1");
-      }, 400);
-    }
-  };
 
   const handleCloseClick = () => {
     // Reset error state when closing
@@ -198,14 +156,13 @@ export function CardRevealModal({
       return;
     }
     // Only close when user explicitly clicks close button or backdrop
-    // Don't auto-close after flip
     onClose();
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only allow closing if not in minting state or if transaction is not pending
+    // Only allow closing if not in processing state or if transaction is not pending
     if (e.target === e.currentTarget) {
-      if (revealState === "minting" && (isPending || isConfirming)) {
+      if (mintingState === "processing" && (isPending || isConfirming)) {
         // Don't close during active minting - user should cancel in wallet
         return;
       }
@@ -213,18 +170,21 @@ export function CardRevealModal({
     }
   };
 
-  if (!isOpen) return null;
+  const handleSuccessPopupClose = () => {
+    setShowSuccessPopup(false);
+    // Close the modal after a short delay for smooth transition
+    setTimeout(() => {
+      handleCloseClick();
+    }, 200);
+  };
 
-  // Back card is ALWAYS the same for all rarities
-  const backCardImage = getBackCardImage();
-  // Front card varies by rarity - use common as fallback if no cardData
-  const frontCardImage = cardData ? getFrontCardImage(cardData.rarity) : getFrontCardImage('common');
+  if (!isOpen) return null;
 
   return (
     <div className={styles.container} onClick={handleBackdropClick}>
       <div className={styles.cardContainer}>
-        {/* Minting state - Standard display for processing, success, failed */}
-        {revealState === "minting" && (
+        {/* Minting State Container */}
+        {(mintingState === "ready" || mintingState === "processing" || mintingState === "error") && (
           <div className={`${styles.mintingContainer} bit16-container`}>
             <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose} aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -232,7 +192,8 @@ export function CardRevealModal({
               </svg>
             </button>
             
-            {isPending || isConfirming ? (
+            {/* Processing State */}
+            {(mintingState === "processing" && (isPending || isConfirming)) && (
               <>
                 <div className={styles.spinner}></div>
                 <h3 className={styles.statusTitle}>Processing</h3>
@@ -240,7 +201,10 @@ export function CardRevealModal({
                   Transaction is being processed. Please wait for confirmation...
                 </p>
               </>
-            ) : mintError ? (
+            )}
+
+            {/* Error State */}
+            {mintingState === "error" && mintError && (
               <>
                 <div className={styles.errorIcon}>
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -258,9 +222,16 @@ export function CardRevealModal({
                   </button>
                 </div>
               </>
-            ) : (
+            )}
+
+            {/* Ready State */}
+            {mintingState === "ready" && !mintError && (
               <>
-                <div className={styles.spinner}></div>
+                <div className={styles.readyIcon}>
+                  <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
                 <h3 className={styles.statusTitle}>Ready to Mint</h3>
                 <p className={styles.statusMessage}>Click the button below to start minting your card</p>
                 <div className={styles.actionButtons}>
@@ -277,71 +248,63 @@ export function CardRevealModal({
           </div>
         )}
 
-        {/* Card reveal states - Show backcard (card2) when minting succeeds */}
-        {(revealState === "card2" || revealState === "rotating" || revealState === "card1" || revealState === "acquired") && (
-          <>
-            <div
-              className={`${styles.cardWrapper} ${
-                isRotating ? styles.rotating : ""
-              } ${isFlipped ? styles.flipped : ""} ${
-                isAnimatingToInventory ? styles.animateToInventory : ""
-              }`}
-              onClick={handleCardClick}
-              style={{ cursor: isFlipped ? 'default' : 'pointer' }}
-            >
-              {/* Card2 - shown first (back of card) */}
-              <div
-                className={`${styles.card} ${styles.card2} ${
-                  revealState === "card2" || revealState === "rotating"
-                    ? styles.visible
-                    : styles.hidden
-                }`}
+        {/* Success Popup */}
+        {showSuccessPopup && cardData && (
+          <div className={styles.successPopupOverlay} onClick={handleSuccessPopupClose}>
+            <div className={`${styles.successPopupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
+              <button
+                className={`${styles.popupCloseButton} bit16-button has-red-background`}
+                onClick={handleSuccessPopupClose}
+                aria-label="Close"
               >
-                <Image
-                  src={backCardImage}
-                  alt="Card Back"
-                  className={styles.cardImage}
-                  width={400}
-                  height={600}
-                  priority
-                />
+                ×
+              </button>
+              <div className={styles.successIcon}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-
-              {/* Card1 - shown after rotation (front of card) */}
-              <div
-                className={`${styles.card} ${styles.card1} ${
-                  revealState === "card1" || revealState === "acquired" ? styles.visible : styles.hidden
-                }`}
-              >
-                <Image
-                  src={frontCardImage}
-                  alt={cardData?.name || "Card"}
-                  className={styles.cardImage}
-                  width={400}
-                  height={600}
-                  priority
-                />
+              <h3 className={styles.successTitle}>Minting Successful!</h3>
+              <div className={styles.successCardInfo}>
+                <div className={styles.successCardImage}>
+                  <Image
+                    src={cardData.imageUrl || getFrontCardImage(cardData.rarity)}
+                    alt={cardData.name}
+                    className={styles.cardPreviewImage}
+                    width={100}
+                    height={140}
+                  />
+                </div>
+                <div className={styles.successCardDetails}>
+                  <p className={styles.successCardName}>{cardData.name}</p>
+                  <p className={styles.successCardRarity} style={{ color: getRarityColor(cardData.rarity) }}>
+                    {cardData.rarity?.toUpperCase() || 'COMMON'}
+                  </p>
+                </div>
+              </div>
+              <p className={styles.successMessage}>
+                Card has been added to your inventory!
+              </p>
+              <div className={styles.successActions}>
+                <button className={`${styles.successCloseButton} bit16-button has-green-background`} onClick={handleSuccessPopupClose}>
+                  Close
+                </button>
               </div>
             </div>
-
-            {/* Click hint overlay */}
-            {revealState === "card2" && !isRotating && (
-              <div className={styles.clickHint}>
-                <p>Click to flip</p>
-              </div>
-            )}
-            
-            {/* Success message when card is revealed */}
-            {revealState === "card1" && !isAnimatingToInventory && !isRotating && (
-              <div className={styles.successMessage}>
-                <p>Berhasil!</p>
-              </div>
-            )}
-            
-
-          </>
+          </div>
         )}
       </div>
     </div>
   );
+}
+
+// Helper function to get rarity color
+function getRarityColor(rarity: string): string {
+  const colors: Record<string, string> = {
+    common: '#9ca3af',
+    rare: '#3b82f6',
+    epic: '#a855f7',
+    legendary: '#eab308',
+  };
+  return colors[rarity] || colors.common;
 }

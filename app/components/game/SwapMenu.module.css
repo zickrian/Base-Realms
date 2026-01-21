@@ -35,89 +35,84 @@
 
 /* Header */
 .header {
-  background: transparent;
+  background: linear-gradient(180deg, #d4a574 0%, #c49a6c 100%);
   color: #3e1f08;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 3px solid #8b5a2b;
   flex-shrink: 0;
-  border-bottom: 3px dashed #8b5a2b;
-  margin-bottom: 1rem;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 1.75rem;
   text-transform: uppercase;
   letter-spacing: 2px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
   font-weight: bold;
-  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
-  flex: 1;
-  text-align: center;
 }
 
 .closeButton {
   /* 16-bit button style - inherits from globals.css .bit16-button */
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   padding: 2px;
-  font-size: 16px;
+  font-size: 20px;
   background-color: #f22561;
   color: #ffffff;
 }
 
-
-/* Swap Content */
-.swapContent {
+/* Content */
+.content {
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  padding-right: 5px;
+  padding: 1.25rem;
+  padding-bottom: 2rem;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  background: transparent;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
-.swapContent::-webkit-scrollbar {
-  width: 6px;
+.content::-webkit-scrollbar {
+  width: 8px;
 }
 
-.swapContent::-webkit-scrollbar-track {
-  background: rgba(62, 31, 8, 0.05);
+.content::-webkit-scrollbar-track {
+  background: rgba(139, 90, 43, 0.1);
 }
 
-.swapContent::-webkit-scrollbar-thumb {
-  background: rgba(62, 31, 8, 0.3);
-  border-radius: 3px;
+.content::-webkit-scrollbar-thumb {
+  background: rgba(139, 90, 43, 0.4);
+  border: 2px solid #f5e6c8;
+}
+
+/* Swap Wrapper - Pixelated Style */
+.swapWrapper {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border: 3px solid #3e1f08;
+  border-radius: 0;
+  padding: 1rem;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Swap Container - Pixelated Style */
 .swapContainer {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-}
-
-.swapSection {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border: 2px solid rgba(62, 31, 8, 0.2);
-  border-radius: 0;
-  padding: 0.5rem;
-  background: rgba(139, 69, 19, 0.05);
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-}
-
-.swapLabel {
-  font-size: 1.2rem;
-  color: #3e1f08;
-  font-weight: bold;
-  text-transform: uppercase;
 }
 
 /* Toggle Container */
@@ -125,106 +120,140 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0.5rem 0;
-}
-
-.toggleButton {
-  background: #4bb244;
-  border: 2px solid #3e1f08;
-  border-radius: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #fff;
-  transition: all 0.1s;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-}
-
-.toggleButton:hover {
-  background: #3a9a34;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
-}
-
-.toggleButton:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  margin: 0.25rem 0;
 }
 
 /* Swap Button Container */
 .swapButtonContainer {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 /* Not Connected Message */
 .notConnectedMessage {
   text-align: center;
   padding: 2rem;
-  color: #5d4037;
-  font-size: 1.2rem;
+  color: #3e1f08;
+  font-size: 1.4rem;
+  background: rgba(139, 90, 43, 0.1);
+  border: 2px dashed #8b5a2b;
 }
 
-/* Override OnchainKit styles - Pixelated style for buy/sell grids */
-.swapContent :global(.okui-swap-amount-input),
-.swapContent :global([class*="swap-amount-input"]),
-.swapContent :global([class*="SwapAmountInput"]) {
+/* Info Section - Pixelated Style */
+.infoSection {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(139, 90, 43, 0.08);
+  border: 3px solid #8b5a2b;
+  border-radius: 0;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.infoTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3e1f08;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.infoText {
+  font-size: 1.1rem;
+  color: #5d4037;
+  line-height: 1.4;
+}
+
+/* Robust Overrides using Wrappers */
+.inputWrapper {
+  width: 100%;
+}
+
+/* Target the root of the SwapAmountInput component */
+.inputWrapper>div,
+.inputWrapper>[class*="okui"] {
   background: #ffffff !important;
   background-color: #ffffff !important;
   border: 3px solid #3e1f08 !important;
   border-radius: 0 !important;
   padding: 0.75rem !important;
-  image-rendering: pixelated !important;
-  image-rendering: -moz-crisp-edges !important;
-  image-rendering: crisp-edges !important;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 0 rgba(62, 31, 8, 0.2) !important;
+  margin-bottom: 0 !important;
 }
 
-/* All child elements inside the input grid should be white */
-.swapContent :global(.okui-swap-amount-input *),
-.swapContent :global([class*="swap-amount-input"] *),
-.swapContent :global([class*="SwapAmountInput"] *) {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
+/* Force all text inside inputs to be dark */
+.inputWrapper * {
+  color: #3e1f08 !important;
+  font-family: 'VT323', monospace !important;
 }
 
 /* Input fields */
-.swapContent :global(.okui-swap-amount-input input),
-.swapContent :global(.okui-swap-amount-input input[type="text"]),
-.swapContent :global(.okui-swap-amount-input input[type="number"]),
-.swapContent :global([class*="swap-amount-input"] input) {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
+.inputWrapper input {
+  background: transparent !important;
   color: #3e1f08 !important;
+  font-size: 1.5rem !important;
+  font-weight: bold !important;
 }
 
-/* Container divs */
-.swapContent :global(.okui-swap-amount-input > div),
-.swapContent :global(.okui-swap-amount-input > * > div),
-.swapContent :global([class*="swap-amount-input"] > div) {
+/* Secondary text (balance, etc) */
+.inputWrapper span,
+.inputWrapper p {
+  color: #5d4037 !important;
+}
+
+/* Token Selector Button inside Input */
+.inputWrapper button {
+  background: #f5e6c8 !important;
+  /* Light paper color */
+  border: 2px solid #3e1f08 !important;
+  border-radius: 0 !important;
+  color: #3e1f08 !important;
+  font-weight: bold !important;
+  padding: 4px 8px !important;
+  box-shadow: 0 2px 0 rgba(62, 31, 8, 0.2) !important;
+}
+
+.inputWrapper button:hover {
+  background: #e8be82 !important;
+}
+
+/* Toggle Button */
+.toggleContainer button {
   background: #ffffff !important;
   background-color: #ffffff !important;
+  border: 2px solid #3e1f08 !important;
+  border-radius: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 0 rgba(62, 31, 8, 0.2) !important;
+  transition: transform 0.1s !important;
 }
 
-/* Button/dropdown inside the grid */
-.swapContent :global(.okui-swap-amount-input button),
-.swapContent :global([class*="swap-amount-input"] button) {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
+.toggleContainer button:hover {
+  transform: scale(1.05);
 }
 
-/* Hide settings button/grid if any */
-.swapContent :global(.okui-swap-settings),
-.swapContent :global([class*="settings"]) {
-  display: none !important;
+.toggleContainer button svg {
+  color: #000000 !important;
+  fill: #000000 !important;
+  width: 20px !important;
+  height: 20px !important;
 }
 
-.swapContent :global(.okui-swap-button) {
+.toggleContainer button svg path {
+  fill: #000000 !important;
+  color: #000000 !important;
+}
+
+/* Swap Action Button */
+.swapButtonContainer button {
+  width: 100% !important;
   background: #f22561 !important;
   border-image: url("https://github.com/devMiguelCarrero/cool-jsx-buttons/blob/main/public/img/frame-hd.png?raw=true") !important;
   border-image-repeat: initial !important;
@@ -233,75 +262,31 @@
   border-image-outset: 4px !important;
   color: #fff !important;
   font-family: 'VT323', monospace !important;
-  font-size: 1.25rem !important;
+  font-size: 1.5rem !important;
   text-transform: uppercase !important;
   border-radius: 0 !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
   image-rendering: pixelated !important;
-  image-rendering: -moz-crisp-edges !important;
-  image-rendering: crisp-edges !important;
-  position: relative !important;
-  z-index: 1 !important;
-  padding: 3px 12px !important;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2) !important;
+  min-height: 60px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.swapContent :global(.okui-swap-button::before),
-.swapContent :global(.okui-swap-button::after) {
-  content: '' !important;
-  position: absolute !important;
-  display: block !important;
-  z-index: 0 !important;
-  width: calc(100% + 12px) !important;
-  height: 12px !important;
-  pointer-events: none !important;
+.swapButtonContainer button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
-.swapContent :global(.okui-swap-button::before) {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-  left: -4px !important;
-  top: calc(100% - 4px) !important;
-  clip-path: polygon(
-    0 8px,
-    calc(100% - 8px) 8px,
-    calc(100% - 8px) 4px,
-    calc(100% - 4px) 4px,
-    calc(100% - 4px) 0,
-    100% 0,
-    100% 8px,
-    calc(100% - 4px) 8px,
-    calc(100% - 4px) 100%,
-    0 100%
-  ) !important;
+.swapButtonContainer button:active {
+  transform: translateY(2px);
+  filter: brightness(0.9);
 }
 
-.swapContent :global(.okui-swap-button::after) {
-  background-color: rgba(255, 255, 255, 0.3) !important;
-  right: -4px !important;
-  bottom: calc(100% - 4px) !important;
-  transform: rotate(0.5turn) !important;
-  clip-path: polygon(
-    0 8px,
-    calc(100% - 8px) 8px,
-    calc(100% - 8px) 4px,
-    calc(100% - 4px) 4px,
-    calc(100% - 4px) 0,
-    100% 0,
-    100% 8px,
-    calc(100% - 4px) 8px,
-    calc(100% - 4px) 100%,
-    0 100%
-  ) !important;
-}
-
-.swapContent :global(.okui-swap-button:hover) {
-  background: #d91a4f !important;
-}
-
-.swapContent :global(.okui-swap-button:hover::before) {
-  background-color: rgba(0, 0, 0, 0.3) !important;
-}
-
-.swapContent :global(.okui-swap-button:hover::after) {
-  background-color: rgba(255, 255, 255, 0.4) !important;
+.swapWrapper :global(.okui-swap-settings) {
+  display: none !important;
 }
 
 /* Mobile Responsive */
@@ -314,7 +299,8 @@
     font-size: 1.5rem;
   }
 
-  .swapLabel {
-    font-size: 1rem;
+  .swapWrapper {
+    padding: 0.75rem;
   }
 }
+

@@ -76,36 +76,48 @@ export const LeaderboardMenu = ({ isOpen, onClose }: LeaderboardMenuProps) => {
           </button>
         </div>
 
-        {/* Leaderboard List */}
-        <div className={styles.leaderboardList}>
-          {loading ? (
-            <div className={styles.loadingMessage}>Loading leaderboard...</div>
+        {/* Content */}
+        <div className={styles.content}>
+          {loading && leaderboard.length === 0 ? (
+            <div className={styles.leaderboardList}>
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className={styles.skeletonEntry}>
+                  <div className={styles.skeletonRank} />
+                  <div className={styles.skeletonInfo}>
+                    <div className={styles.skeletonAddress} />
+                    <div className={styles.skeletonStats} />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : leaderboard.length === 0 ? (
             <div className={styles.emptyMessage}>No players found</div>
           ) : (
-            leaderboard.map((entry) => (
-              <div
-                key={entry.walletAddress}
-                className={`${styles.leaderboardEntry} ${isCurrentUser(entry.walletAddress) ? styles.currentUser : ''}`}
-              >
-                <div className={styles.rankSection}>
-                  {getRankIcon(entry.rank)}
-                </div>
-                <div className={styles.playerInfo}>
-                  <div className={styles.playerAddress}>
-                    {formatAddress(entry.walletAddress)}
-                    {isCurrentUser(entry.walletAddress) && (
-                      <span className={styles.youBadge}>YOU</span>
-                    )}
+            <div className={styles.leaderboardList}>
+              {leaderboard.map((entry) => (
+                <div
+                  key={entry.walletAddress}
+                  className={`${styles.leaderboardEntry} ${isCurrentUser(entry.walletAddress) ? styles.currentUser : ''}`}
+                >
+                  <div className={styles.rankSection}>
+                    {getRankIcon(entry.rank)}
                   </div>
-                  <div className={styles.playerStats}>
-                    <span>{entry.wins} Wins</span>
-                    <span>•</span>
-                    <span>{entry.totalBattles} Battles</span>
+                  <div className={styles.playerInfo}>
+                    <div className={styles.playerAddress}>
+                      {formatAddress(entry.walletAddress)}
+                      {isCurrentUser(entry.walletAddress) && (
+                        <span className={styles.youBadge}>YOU</span>
+                      )}
+                    </div>
+                    <div className={styles.playerStats}>
+                      <span>{entry.wins} Wins</span>
+                      <span>•</span>
+                      <span>{entry.totalBattles} Battles</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

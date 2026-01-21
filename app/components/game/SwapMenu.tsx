@@ -3,12 +3,12 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { useAccount } from 'wagmi';
-import { 
-  Swap, 
-  SwapAmountInput, 
-  SwapToggleButton, 
-  SwapButton, 
-  SwapMessage, 
+import {
+  Swap,
+  SwapAmountInput,
+  SwapToggleButton,
+  SwapButton,
+  SwapMessage,
   SwapToast,
 } from '@coinbase/onchainkit/swap';
 import type { Token } from '@coinbase/onchainkit/token';
@@ -52,47 +52,62 @@ export const SwapMenu = ({ isOpen, onClose }: SwapMenuProps) => {
       <div className={`${styles.menuBox} bit16-container`}>
         {/* Header */}
         <div className={styles.header}>
-          <div className={styles.title}>Swap Tokens</div>
+          <div className={styles.title}>Swap</div>
           <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose}>
             <X size={24} />
           </button>
         </div>
 
         {/* Swap Content */}
-        <div className={styles.swapContent}>
+        <div className={styles.content}>
           {!isConnected ? (
             <div className={styles.notConnectedMessage}>
               <p>Please connect your wallet to swap tokens</p>
             </div>
           ) : (
-            <Swap experimental={{ useAggregator: true }}>
-              <div className={styles.swapContainer}>
-                <SwapAmountInput
-                  label="Sell"
-                  swappableTokens={swappableTokens}
-                  token={ETH_TOKEN}
-                  type="from"
-                />
-                
-                <div className={styles.toggleContainer}>
-                  <SwapToggleButton />
-                </div>
+            <>
+              <div className={styles.swapWrapper}>
+                <Swap experimental={{ useAggregator: true }}>
+                  <div className={styles.swapContainer}>
+                    <div className={styles.inputWrapper}>
+                      <SwapAmountInput
+                        label="Sell"
+                        swappableTokens={swappableTokens}
+                        token={ETH_TOKEN}
+                        type="from"
+                      />
+                    </div>
 
-                <SwapAmountInput
-                  label="Buy"
-                  swappableTokens={swappableTokens}
-                  token={IDRX_TOKEN}
-                  type="to"
-                />
+                    <div className={styles.toggleContainer}>
+                      <SwapToggleButton />
+                    </div>
 
-                <div className={styles.swapButtonContainer}>
-                  <SwapButton />
-                </div>
+                    <div className={styles.inputWrapper}>
+                      <SwapAmountInput
+                        label="Buy"
+                        swappableTokens={swappableTokens}
+                        token={IDRX_TOKEN}
+                        type="to"
+                      />
+                    </div>
 
-                <SwapMessage />
+                    <div className={styles.swapButtonContainer}>
+                      <SwapButton />
+                    </div>
+
+                    <SwapMessage />
+                  </div>
+                  <SwapToast />
+                </Swap>
               </div>
-              <SwapToast />
-            </Swap>
+
+              <div className={styles.infoSection}>
+                <div className={styles.infoTitle}>Info</div>
+                <div className={styles.infoText}>
+                  Swap ETH to IDRX or vice versa. Powered by Coinbase.
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

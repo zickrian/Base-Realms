@@ -11,6 +11,8 @@ import {
   SettingsMenu,
   CharacterCanvas,
   HomeDeckMenu,
+  LeaderboardMenu,
+  SwapMenu,
 } from "../components/game";
 import { HomeLoadingScreen } from "../components/HomeLoadingScreen";
 import { LoadingState } from "../components/LoadingState";
@@ -19,7 +21,6 @@ import { useWalkSound } from "../hooks/useWalkSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
-import { prefetchLeaderboard } from "../hooks/useLeaderboard";
 import type { Rarity } from "../lib/blockchain/nftService";
 import styles from "./page.module.css";
 
@@ -46,6 +47,8 @@ export default function HomePage() {
   const [isMintingInProgress, setIsMintingInProgress] = useState(false);
   const [showAlreadyClaimedPopup, setShowAlreadyClaimedPopup] = useState(false);
   const [showBattleConfirmPopup, setShowBattleConfirmPopup] = useState(false);
+  const [isLeaderboardMenuOpen, setIsLeaderboardMenuOpen] = useState(false);
+  const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
   // Check if assets were already loaded in this session
   const [assetsLoaded, setAssetsLoaded] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -269,11 +272,6 @@ export default function HomePage() {
 
       // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
-      router.prefetch('/leaderboard');
-      router.prefetch('/swap');
-
-      // Pre-fetch leaderboard data so it's ready when user clicks
-      prefetchLeaderboard();
 
       // Preload LoadingScreen assets in background
       const loadingAssets = [
@@ -320,13 +318,11 @@ export default function HomePage() {
   // Define handlers BEFORE conditional returns (but after hooks)
   const _handleBattle = () => { };
   const _handleBoardClick = () => {
-    // Navigate immediately - route is prefetched
-    router.push('/leaderboard');
+    setIsLeaderboardMenuOpen(true);
   };
   const _handleQuestClick = () => setIsQuestMenuOpen(true);
   const _handleSwapClick = () => {
-    // Navigate immediately - route is prefetched
-    router.push('/swap');
+    setIsSwapMenuOpen(true);
   };
 
   const _handlePackClick = async () => {
@@ -435,7 +431,7 @@ export default function HomePage() {
             className={styles.goButtonAtm}
             onClick={(e) => {
               e.stopPropagation();
-              router.push('/swap');
+              setIsSwapMenuOpen(true);
             }}
           >
             <img src="/button/buttongo.svg" alt="Go to Swap" />
@@ -456,7 +452,7 @@ export default function HomePage() {
             className={styles.goButtonLeaderboard}
             onClick={(e) => {
               e.stopPropagation();
-              router.push('/leaderboard');
+              setIsLeaderboardMenuOpen(true);
             }}
           >
             <img src="/button/buttongo.svg" alt="Go to Leaderboard" />
@@ -640,6 +636,8 @@ export default function HomePage() {
 
       <QuestMenu isOpen={isQuestMenuOpen} onClose={() => setIsQuestMenuOpen(false)} />
       <HomeDeckMenu isOpen={isHomeDeckMenuOpen} onClose={() => setIsHomeDeckMenuOpen(false)} />
+      <LeaderboardMenu isOpen={isLeaderboardMenuOpen} onClose={() => setIsLeaderboardMenuOpen(false)} />
+      <SwapMenu isOpen={isSwapMenuOpen} onClose={() => setIsSwapMenuOpen(false)} />
       <CardRevealModal
         isOpen={isCardModalOpen}
         onClose={() => {
