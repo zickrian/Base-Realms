@@ -9,8 +9,15 @@
   min-height: 0;
   background: #000;
   overflow: hidden;
-  touch-action: none; /* Prevent default touch behavior */
+  touch-action: none;
   position: relative;
+  
+  /* Performance optimizations */
+  will-change: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
 }
 
 .gameCanvas {
@@ -19,11 +26,67 @@
   height: 100%;
   min-height: 0;
   display: block;
+  
+  /* Pixel-perfect rendering */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+  
+  /* Interactive optimization */
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  
+  /* Performance optimization */
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Ensure proper rendering on mobile */
   object-fit: contain;
+  object-position: center top;
+}
+
+/* Mobile specific optimizations */
+@media (max-width: 480px) {
+  .gameContainer {
+    /* Reduce motion untuk device yang minta reduced-motion */
+    --animation-speed: 150ms;
+  }
+  
+  .gameCanvas {
+    /* Ensure canvas takes full width on mobile */
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .gameContainer {
+    /* Optimize for tablet and smaller screens */
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .gameContainer,
+  .gameCanvas {
+    animation: none !important;
+  }
+}
+
+/* High DPI screens optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .gameCanvas {
+    /* Already handled by JavaScript context scaling */
+  }
+}
+
+/* Touch device optimization */
+@media (hover: none) and (pointer: coarse) {
+  .gameCanvas {
+    /* Mobile-specific optimizations */
+    touch-action: manipulation;
+  }
 }

@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import styles from "./Game2D.module.css";
 
 export function Game2D() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isMovingLeft, setIsMovingLeft] = useState(false);
-  const [isMovingRight, setIsMovingRight] = useState(false);
+  const isMovingLeftRef = useRef(false);
+  const isMovingRightRef = useRef(false);
   
+  // Constants - disesuaikan untuk berbagai ukuran screen
   const WORLD_WIDTH = 600;
-  const VIEWPORT_WIDTH = 100; // Camera hanya 0-100px
+  const VIEWPORT_WIDTH = 100;
   const CANVAS_WIDTH = 430;
+  const PLAYER_SPEED = 150; // pixels per second
+  const ANIMATION_SPEED = 150; // milliseconds per frame
   
   const playerRef = useRef({
     x: 0,
@@ -21,8 +24,9 @@ export function Game2D() {
     facingRight: true,
   });
 
-  const [animationFrame, setAnimationFrame] = useState(0);
-  const animationTimerRef = useRef<number>(0);
+  const animationFrameRef = useRef(0);
+  const gameLoopRef = useRef<number | null>(null);
+  const animationTimeRef = useRef<number>(0);
   const cameraRef = useRef({ x: 0 });
   const canvasHeightRef = useRef(600);
 
@@ -32,149 +36,179 @@ export function Game2D() {
   const avatarRun1Ref = useRef<HTMLImageElement | null>(null);
   const avatarRun2Ref = useRef<HTMLImageElement | null>(null);
   const avatarRun3Ref = useRef<HTMLImageElement | null>(null);
+  
+  // Touch/pointer state tracking untuk multi-device
+  const isActiveTouchRef = useRef(false);
 
-  // Load images
+  // Preload images dengan error handling
   useEffect(() => {
-    const bgImg = new Image();
-    bgImg.src = "/ingame/bg.svg";
-    bgImg.onload = () => bgImageRef.current = bgImg;
+    const images = [
+      { ref: bgImageRef, src: "/ingame/bg.svg" },
+      { ref: grassImageRef, src: "/ingame/grass.svg" },
+      { ref: avatarIdleRef, src: "/char/avatar1.svg" },
+      { ref: avatarRun1Ref, src: "/char/avatar2.svg" },
+      { ref: avatarRun2Ref, src: "/char/avatar3.svg" },
+      { ref: avatarRun3Ref, src: "/char/avatar4.svg" },
+    ];
 
-    const grassImg = new Image();
-    grassImg.src = "/ingame/grass.svg";
-    grassImg.onload = () => grassImageRef.current = grassImg;
-
-    const avatarIdle = new Image();
-    avatarIdle.src = "/char/avatar1.svg";
-    avatarIdle.onload = () => avatarIdleRef.current = avatarIdle;
-
-    const avatarRun1 = new Image();
-    avatarRun1.src = "/char/avatar2.svg";
-    avatarRun1.onload = () => avatarRun1Ref.current = avatarRun1;
-
-    const avatarRun2 = new Image();
-    avatarRun2.src = "/char/avatar3.svg";
-    avatarRun2.onload = () => avatarRun2Ref.current = avatarRun2;
-
-    const avatarRun3 = new Image();
-    avatarRun3.src = "/char/avatar4.svg";
-    avatarRun3.onload = () => avatarRun3Ref.current = avatarRun3;
+    images.forEach(({ ref, src }) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => { ref.current = img; };
+      img.onerror = () => console.warn(`Failed to load image: ${src}`);
+    });
   }, []);
 
-  // Handle click/touch
-  useEffect(() => {
+  // Input handler yang dioptimalkan untuk semua device
+  const handlePointerDown = useCallback((e: PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
+    isActiveTouchRef.current = true;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX;
+    const clickX = clientX - rect.left;
+    const halfWidth = rect.width / 2;
 
-    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clickX = clientX - rect.left;
-      const halfWidth = rect.width / 2;
-
-      if (clickX < halfWidth) {
-        setIsMovingLeft(true);
-        setIsMovingRight(false);
-      } else {
-        setIsMovingRight(true);
-        setIsMovingLeft(false);
-      }
-    };
-
-    const handlePointerUp = () => {
-      setIsMovingLeft(false);
-      setIsMovingRight(false);
-    };
-
-    const handleMouseDown = (e: MouseEvent) => handlePointerDown(e);
-    const handleTouchStart = (e: TouchEvent) => handlePointerDown(e);
-
-    canvas.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handlePointerUp);
-    canvas.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchend", handlePointerUp);
-    window.addEventListener("touchcancel", handlePointerUp);
-
-    return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handlePointerUp);
-      canvas.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handlePointerUp);
-      window.removeEventListener("touchcancel", handlePointerUp);
-    };
-  }, []);
-
-  // Animation loop
-  useEffect(() => {
-    const isMoving = isMovingLeft || isMovingRight;
-
-    const animate = () => {
-      if (isMoving) {
-        setAnimationFrame((prev) => {
-          const next = prev + 1;
-          return next > 3 ? 1 : next;
-        });
-      } else {
-        setAnimationFrame(0);
-      }
-    };
-
-    if (isMoving) {
-      animationTimerRef.current = window.setInterval(animate, 150);
+    if (clickX < halfWidth) {
+      isMovingLeftRef.current = true;
+      isMovingRightRef.current = false;
     } else {
-      clearInterval(animationTimerRef.current);
-      setAnimationFrame(0);
+      isMovingRightRef.current = true;
+      isMovingLeftRef.current = false;
     }
+  }, []);
 
-    return () => {
-      clearInterval(animationTimerRef.current);
-    };
-  }, [isMovingLeft, isMovingRight]);
+  const handlePointerUp = useCallback(() => {
+    isActiveTouchRef.current = false;
+    isMovingLeftRef.current = false;
+    isMovingRightRef.current = false;
+  }, []);
 
-  // Game loop
+  // Pointer move handler untuk continuous input (untuk stylus/mouse)
+  const handlePointerMove = useCallback((e: PointerEvent) => {
+    if (!isActiveTouchRef.current) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX;
+    const clickX = clientX - rect.left;
+    const halfWidth = rect.width / 2;
+
+    if (clickX < halfWidth) {
+      isMovingLeftRef.current = true;
+      isMovingRightRef.current = false;
+    } else {
+      isMovingRightRef.current = true;
+      isMovingLeftRef.current = false;
+    }
+  }, []);
+
+  // Setup input event listeners
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    // Use pointer events untuk unified handling across all device types
+    canvas.addEventListener("pointerdown", handlePointerDown, { passive: false });
+    canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    window.addEventListener("pointercancel", handlePointerUp, { passive: true });
 
-    const updateCanvasHeight = () => {
+    return () => {
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+  }, [handlePointerDown, handlePointerMove, handlePointerUp]);
+
+  // Removed separate animation loop - akan dihandle di game loop
+
+// Main game loop dengan optimasi performa cross-device
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d", {
+      alpha: false, // Disable transparency untuk performa lebih baik
+      desynchronized: true, // Async rendering untuk performa lebih smooth
+      willReadFrequently: false, // Optimize untuk frequent drawing, not reading
+    });
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    // Setup canvas dengan optimization untuk berbagai DPI
+    const updateCanvasSize = () => {
       const container = canvas.parentElement;
-      if (container) {
-        const containerHeight = container.clientHeight;
-        canvas.height = containerHeight;
-        canvasHeightRef.current = containerHeight;
-      }
+      if (!container) return;
+
+      const containerHeight = container.clientHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5); // Cap at 1.5x untuk performa
+      
+      // Set canvas size with DPR consideration
+      canvas.width = CANVAS_WIDTH * dpr;
+      canvas.height = containerHeight * dpr;
+      
+      // Scale canvas untuk tampil normal di screen
+      canvas.style.width = `${CANVAS_WIDTH}px`;
+      canvas.style.height = `${containerHeight}px`;
+      
+      // Reset transform lalu scale untuk match canvas resolution
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      
+      canvasHeightRef.current = containerHeight;
     };
 
-    updateCanvasHeight();
+    updateCanvasSize();
     
     const resizeObserver = new ResizeObserver(() => {
-      updateCanvasHeight();
+      updateCanvasSize();
     });
     
     if (canvas.parentElement) {
       resizeObserver.observe(canvas.parentElement);
     }
-    
-    window.addEventListener('resize', updateCanvasHeight);
 
-    const gameLoop = () => {
+    window.addEventListener('resize', updateCanvasSize);
+
+    let lastFrameTime = performance.now();
+    
+    const gameLoop = (currentTime: number) => {
+      // Frame rate limiting untuk performa konsisten
+      const rawDeltaTime = (currentTime - lastFrameTime) / 1000;
+      const deltaTime = Math.min(rawDeltaTime, 0.05);
+      
+      // Skip frame jika terlalu cepat (untuk consistency)
+      if (deltaTime < 0.001) {
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
+        return;
+      }
+      
+      lastFrameTime = currentTime;
+
       const player = playerRef.current;
       const canvasHeight = canvasHeightRef.current;
 
-      // Movement
+      // Update movement dengan deltaTime yang konsisten
+      const isMoving = isMovingLeftRef.current || isMovingRightRef.current;
       player.velocityX = 0;
-      if (isMovingLeft) {
-        player.velocityX = -3;
+      
+      if (isMovingLeftRef.current) {
+        player.velocityX = -PLAYER_SPEED;
         player.facingRight = false;
-      } else if (isMovingRight) {
-        player.velocityX = 3;
+      } else if (isMovingRightRef.current) {
+        player.velocityX = PLAYER_SPEED;
         player.facingRight = true;
       }
 
-      player.x += player.velocityX;
+      // Apply movement
+      player.x += player.velocityX * deltaTime;
 
       // Boundary checks
       if (player.x < 0) {
@@ -186,75 +220,85 @@ export function Game2D() {
         player.velocityX = 0;
       }
 
-      // Camera follow player (0-100px range)
+      // Update animation frame dengan deltaTime
+      if (isMoving) {
+        animationTimeRef.current += deltaTime * 1000;
+        if (animationTimeRef.current >= ANIMATION_SPEED) {
+          const next = animationFrameRef.current + 1;
+          animationFrameRef.current = next > 3 ? 1 : next;
+          animationTimeRef.current = 0;
+        }
+      } else {
+        animationFrameRef.current = 0;
+        animationTimeRef.current = 0;
+      }
+
+      // Smooth camera follow
       const targetCameraX = Math.max(0, Math.min(player.x, VIEWPORT_WIDTH));
       cameraRef.current.x += (targetCameraX - cameraRef.current.x) * 0.1;
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas once
+      ctx.clearRect(0, 0, CANVAS_WIDTH, canvasHeight);
 
       const cameraX = cameraRef.current.x;
-      const scale = CANVAS_WIDTH / VIEWPORT_WIDTH; // 430 / 100 = 4.3
-
-      // Calculate grass position (stick to bottom)
+      const scale = CANVAS_WIDTH / VIEWPORT_WIDTH;
       const grassDisplayHeight = (100 / WORLD_WIDTH) * CANVAS_WIDTH;
       const grassY = canvasHeight - grassDisplayHeight;
 
-      // Draw background - hanya 0-100px dari world
-      if (bgImageRef.current) {
-        const bgDisplayHeight = CANVAS_WIDTH; // 1:1 ratio
+      // Draw background
+      if (bgImageRef.current?.complete) {
         ctx.drawImage(
           bgImageRef.current,
-          cameraX, // Source X: mulai dari cameraX di world
-          0, // Source Y
-          VIEWPORT_WIDTH, // Source width: 100px
-          600, // Source height: full height
-          0, // Destination X
-          0, // Destination Y
-          CANVAS_WIDTH, // Display width: 430px
-          bgDisplayHeight // Display height
+          cameraX,
+          0,
+          VIEWPORT_WIDTH,
+          600,
+          0,
+          0,
+          CANVAS_WIDTH,
+          CANVAS_WIDTH
         );
       } else {
         ctx.fillStyle = "#49b0f2";
-        ctx.fillRect(0, 0, canvas.width, canvasHeight - grassDisplayHeight);
+        ctx.fillRect(0, 0, CANVAS_WIDTH, grassY);
       }
 
-      // Draw grass - hanya 0-100px dari world, stick to bottom
-      if (grassImageRef.current) {
+      // Draw grass
+      if (grassImageRef.current?.complete) {
         ctx.drawImage(
           grassImageRef.current,
-          cameraX, // Source X: mulai dari cameraX di world
-          0, // Source Y
-          VIEWPORT_WIDTH, // Source width: 100px
-          100, // Source height: full height
-          0, // Destination X
-          grassY, // Destination Y: stick to bottom
-          CANVAS_WIDTH, // Display width: 430px
-          grassDisplayHeight // Display height
+          cameraX,
+          0,
+          VIEWPORT_WIDTH,
+          100,
+          0,
+          grassY,
+          CANVAS_WIDTH,
+          grassDisplayHeight
         );
       } else {
         ctx.fillStyle = "#2eb534";
-        ctx.fillRect(0, grassY, canvas.width, grassDisplayHeight);
+        ctx.fillRect(0, grassY, CANVAS_WIDTH, grassDisplayHeight);
       }
 
-      // Draw player - stick to grass
+      // Draw player with optimized rendering
       const playerScreenX = (player.x - cameraX) * scale;
       const playerDisplayWidth = player.width * scale;
       const playerDisplayHeight = player.height * scale;
-      const playerY = grassY - playerDisplayHeight; // Stick to grass (on top)
+      const playerY = grassY - playerDisplayHeight;
 
       let currentAvatar: HTMLImageElement | null = null;
-      if (animationFrame === 0) {
+      if (animationFrameRef.current === 0) {
         currentAvatar = avatarIdleRef.current;
-      } else if (animationFrame === 1) {
+      } else if (animationFrameRef.current === 1) {
         currentAvatar = avatarRun1Ref.current;
-      } else if (animationFrame === 2) {
+      } else if (animationFrameRef.current === 2) {
         currentAvatar = avatarRun2Ref.current;
-      } else if (animationFrame === 3) {
+      } else if (animationFrameRef.current === 3) {
         currentAvatar = avatarRun3Ref.current;
       }
 
-      if (currentAvatar) {
+      if (currentAvatar?.complete) {
         ctx.save();
         if (!player.facingRight) {
           ctx.translate(playerScreenX + playerDisplayWidth, playerY);
@@ -285,20 +329,24 @@ export function Game2D() {
         }
         ctx.restore();
       } else {
-        ctx.fillStyle = "#FF0000";
+        // Fallback rectangle jika image belum load
+        ctx.fillStyle = "#FF6B6B";
         ctx.fillRect(playerScreenX, playerY, playerDisplayWidth, playerDisplayHeight);
       }
 
-      requestAnimationFrame(gameLoop);
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
     };
 
-    gameLoop();
+    gameLoopRef.current = requestAnimationFrame(gameLoop);
 
     return () => {
-      window.removeEventListener('resize', updateCanvasHeight);
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+      window.removeEventListener('resize', updateCanvasSize);
       resizeObserver.disconnect();
     };
-  }, [isMovingLeft, isMovingRight, animationFrame]);
+  }, []);
 
   return (
     <div className={styles.gameContainer}>

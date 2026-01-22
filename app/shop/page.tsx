@@ -2,21 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { useAccount } from 'wagmi';
 import styles from './page.module.css';
-import { CharacterCanvas, HeaderBar, SettingsMenu, ShopCardsPopup, SwapMenu } from '../components/game';
+import { CharacterCanvas, HeaderBar, SettingsMenu, ShopCardsPopup, SwapMenu, CardRevealModal } from '../components/game';
 import { useWalkSound } from '../hooks/useWalkSound';
-
-// ABI for mint function
-const MINT_ABI = [
-  {
-    name: "mint",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [],
-    outputs: [],
-  },
-] as const;
+import { useGameStore } from '../stores/gameStore';
 
 const MINT_CONTRACT_ADDRESS = "0xabab2d0A3EAF9722E3EE0840D0360c68899cB305" as const;
 
@@ -188,51 +178,72 @@ export default function ShopPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCardsShopOpen, setIsCardsShopOpen] = useState(false);
   const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
+  const [isFreeMintModalOpen, setIsFreeMintModalOpen] = useState(false);
+  const [freeMintCardData, setFreeMintCardData] = useState<{
+    id: string;
+    name: string;
+    rarity: 'common' | 'rare' | 'epic' | 'legendary';
+    imageUrl: string;
+    contractAddress: string;
+  } | null>(null);
   
   // Wagmi hooks for minting
   const { address, isConnected } = useAccount();
-  const { writeContract, data: hash, isPending, error: writeError, reset: resetWriteContract } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { refreshInventory, refreshQuests } = useGameStore();
 
-  // Reset state when user cancels transaction
-  useEffect(() => {
-    if (writeError) {
-      const errorMsg = writeError.message || "";
-      // Check if user rejected/cancelled the transaction
-      if (errorMsg.includes("user rejected") || errorMsg.includes("User rejected") || 
-          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled") ||
-          errorMsg.includes("User denied") || errorMsg.includes("user denied") ||
-          errorMsg.includes("rejected") || errorMsg.includes("cancelled")) {
-        // Reset the write contract state so button can be clicked again
-        resetWriteContract();
-      }
-    }
-  }, [writeError, resetWriteContract]);
+  const handleOpenFreeMint = () => {
+    if (!isConnected || !address) return;
 
-  // Reset state when transaction succeeds
-  useEffect(() => {
-    if (isSuccess) {
-      // Transaction completed successfully, reset after a short delay
-      setTimeout(() => {
-        resetWriteContract();
-      }, 2000);
-    }
-  }, [isSuccess, resetWriteContract]);
+    setFreeMintCardData({
+      id: 'free-mint',
+      name: 'Free Mint Card',
+      rarity: 'common',
+      imageUrl: 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/commoncards.png',
+      contractAddress: MINT_CONTRACT_ADDRESS,
+    });
+    setIsFreeMintModalOpen(true);
+  };
 
-  const handleMint = () => {
-    if (!isConnected || !address || isPending || isConfirming) return;
+  const handleFreeMintSuccess = async (transactionHash: string) => {
+    if (!address) return;
 
     try {
-      writeContract({
-        address: MINT_CONTRACT_ADDRESS,
-        abi: MINT_ABI,
-        functionName: 'mint',
+      // Record mint transaction (non-blocking)
+      fetch('/api/cards/record-mint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': address,
+        },
+        body: JSON.stringify({ transactionHash }),
+      }).catch((recordError) => {
+        console.warn('Failed to record mint:', recordError);
+      });
+
+      // Sync NFT from blockchain (non-blocking)
+      fetch('/api/cards/sync-nft', {
+        method: 'POST',
+        headers: {
+          'x-wallet-address': address,
+        },
+      }).then(() => {
+        Promise.all([
+          refreshInventory(address),
+          refreshQuests(address),
+        ]).catch((refreshError) => {
+          console.warn('Failed to refresh data:', refreshError);
+        });
+      }).catch((syncError) => {
+        console.warn('Failed to sync NFT from blockchain:', syncError);
       });
     } catch (error) {
-      console.error('Minting error:', error);
-      // Reset on error so button can be clicked again
-      resetWriteContract();
+      console.warn('Free mint post-processing failed:', error);
     }
+  };
+
+  const handleFreeMintClose = () => {
+    setIsFreeMintModalOpen(false);
+    setFreeMintCardData(null);
   };
 
   return (
@@ -284,9 +295,9 @@ export default function ShopPage() {
             className={styles.boxButton}
             onClick={(e) => {
               e.stopPropagation();
-              handleMint();
+              handleOpenFreeMint();
             }}
-            disabled={isPending || isConfirming || !isConnected}
+            disabled={!isConnected}
           >
             <img src="/building/shop/buttonshop.svg" alt="Mint" />
           </button>
@@ -372,6 +383,16 @@ export default function ShopPage() {
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <ShopCardsPopup isOpen={isCardsShopOpen} onClose={() => setIsCardsShopOpen(false)} />
       <SwapMenu isOpen={isSwapMenuOpen} onClose={() => setIsSwapMenuOpen(false)} />
+      <CardRevealModal
+        isOpen={isFreeMintModalOpen}
+        onClose={handleFreeMintClose}
+        cardData={freeMintCardData || undefined}
+        walletAddress={address}
+        onMintSuccess={handleFreeMintSuccess}
+        onMintError={() => {
+          // CardRevealModal already shows error state
+        }}
+      />
     </div>
   );
 }
