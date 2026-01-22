@@ -15,26 +15,65 @@ const CRITICAL_ASSETS = [
   getGameIconUrl('level-badge.png'),
   getGameIconUrl('ethereum.png'),
   getGameIconUrl('IDRX.png'),
-  // Daily packs
+
+  // Daily packs & quests
   getGameIconUrl('packs.png'),
   getGameIconUrl('quest-button.png'),
+
   // Stage display
   getGameIconUrl('awan.png'),
+
   // Battle section
   getGameIconUrl('stage-button.png'),
   getGameIconUrl('swords.png'),
+
   // Bottom nav
   getGameIconUrl('cards-icon.png'),
   getGameIconUrl('market.png'),
-  // Background
+
+  // Home scene background + tiles
   getStorageUrl('background.png'),
+  '/Assets/grass.svg',
+
+  // Home buildings & decorations
+  '/Assets/atm.svg',
+  '/Assets/leaderboard.svg',
+  '/Assets/trees.svg',
+  '/Assets/home.svg',
+  '/Assets/questboard.svg',
+  '/Assets/shop.svg',
+  '/Assets/seum.svg',
+  '/decoration/smallgrass.svg',
+  '/decoration/mediumrock.svg',
+  '/decoration/barrel.svg',
+  '/decoration/blueberry.svg',
+  '/decoration/strawberry.svg',
+
+  // Home action buttons
+  '/button/buttongo.svg',
+
+  // Character sprites (home)
+  '/avatar/avatar1.svg',
+  '/avatar/avatar2.svg',
+  '/avatar/avatar3.svg',
+  '/avatar/avatar4.svg',
 ];
 
 // Optional assets to preload in background (don't block loading)
 const OPTIONAL_ASSETS = [
+  // Battle assets
   getStorageUrl('battle/gladiator.png'),
   getStorageUrl('battle/output-onlinegiftools.gif'),
   getStorageUrl('battle/human.png'),
+
+  // Shop scene assets (smooth transition to shop)
+  '/building/shop/grassshop.svg',
+  '/building/shop/buildingshop.svg',
+  '/building/shop/box.svg',
+  '/building/shop/buttonshop.svg',
+  '/building/shop/cashier.svg',
+  '/decoration/pots1.svg',
+  '/Assets/atm.svg',
 ];
 
 export function HomeLoadingScreen({ onLoadComplete, minLoadTime = 800 }: HomeLoadingScreenProps) {
