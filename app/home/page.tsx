@@ -22,7 +22,7 @@ import { useDailyPacks } from "../hooks/useDailyPacks";
 import { prefetchLeaderboard } from "../hooks/useLeaderboard";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
-import type { Rarity } from "../lib/blockchain/nftService";
+import { type Rarity, FREE_PACK_CONTRACT_ADDRESS } from "../lib/blockchain/nftService";
 import styles from "./page.module.css";
 
 export default function HomePage() {
@@ -382,7 +382,7 @@ export default function HomePage() {
       name: 'Common Card',
       rarity: 'common',
       imageUrl: 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/commoncards.png',
-      contractAddress: '0x2ffb8aa5176c1da165eab569c3e4089e84ec5816',
+      contractAddress: FREE_PACK_CONTRACT_ADDRESS,
     });
     setIsCardModalOpen(true);
   };

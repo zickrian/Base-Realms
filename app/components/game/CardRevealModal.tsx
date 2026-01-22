@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { type Rarity, getFrontCardImage } from "../../lib/blockchain/nftService";
+import { type Rarity } from "../../lib/blockchain/nftService";
 import styles from "./CardRevealModal.module.css";
 
 // ABI for mint function - same as in home/page.tsx
@@ -249,7 +248,7 @@ export function CardRevealModal({
         )}
 
         {/* Success Popup */}
-        {showSuccessPopup && cardData && (
+        {showSuccessPopup && (
           <div className={styles.successPopupOverlay} onClick={handleSuccessPopupClose}>
             <div className={`${styles.successPopupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
               <button
@@ -265,25 +264,8 @@ export function CardRevealModal({
                 </svg>
               </div>
               <h3 className={styles.successTitle}>Minting Successful!</h3>
-              <div className={styles.successCardInfo}>
-                <div className={styles.successCardImage}>
-                  <Image
-                    src={cardData.imageUrl || getFrontCardImage(cardData.rarity)}
-                    alt={cardData.name}
-                    className={styles.cardPreviewImage}
-                    width={100}
-                    height={140}
-                  />
-                </div>
-                <div className={styles.successCardDetails}>
-                  <p className={styles.successCardName}>{cardData.name}</p>
-                  <p className={styles.successCardRarity} style={{ color: getRarityColor(cardData.rarity) }}>
-                    {cardData.rarity?.toUpperCase() || 'COMMON'}
-                  </p>
-                </div>
-              </div>
               <p className={styles.successMessage}>
-                Card has been added to your inventory!
+                Minting berhasil.
               </p>
               <div className={styles.successActions}>
                 <button className={`${styles.successCloseButton} bit16-button has-green-background`} onClick={handleSuccessPopupClose}>
@@ -296,15 +278,4 @@ export function CardRevealModal({
       </div>
     </div>
   );
-}
-
-// Helper function to get rarity color
-function getRarityColor(rarity: string): string {
-  const colors: Record<string, string> = {
-    common: '#9ca3af',
-    rare: '#3b82f6',
-    epic: '#a855f7',
-    legendary: '#eab308',
-  };
-  return colors[rarity] || colors.common;
 }
