@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { X, Trophy, Medal, Award } from 'lucide-react';
 import { useAccount } from 'wagmi';
+import { useLeaderboard } from '../../hooks/useLeaderboard';
 import styles from './LeaderboardMenu.module.css';
 
 interface LeaderboardMenuProps {
@@ -21,33 +22,14 @@ interface LeaderboardEntry {
 
 export const LeaderboardMenu = ({ isOpen, onClose }: LeaderboardMenuProps) => {
   const { address } = useAccount();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { leaderboard, loading, refetch } = useLeaderboard();
 
   useEffect(() => {
     if (isOpen) {
-      fetchLeaderboard();
+      // Refetch when opening to get latest data
+      refetch();
     }
-  }, [isOpen]);
-
-  const fetchLeaderboard = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/leaderboard?sortBy=wins');
-      if (response.ok) {
-        const data = await response.json();
-        setLeaderboard(data.leaderboard || []);
-      } else {
-        console.error('Failed to fetch leaderboard');
-        setLeaderboard([]);
-      }
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      setLeaderboard([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen, refetch]);
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy size={20} className={styles.goldIcon} />;

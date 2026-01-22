@@ -19,6 +19,7 @@ import { LoadingState } from "../components/LoadingState";
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useWalkSound } from "../hooks/useWalkSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
+import { prefetchLeaderboard } from "../hooks/useLeaderboard";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
 import type { Rarity } from "../lib/blockchain/nftService";
@@ -272,6 +273,9 @@ export default function HomePage() {
 
       // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
+
+      // Prefetch leaderboard data so it's ready when the player opens the leaderboard
+      prefetchLeaderboard();
 
       // Preload LoadingScreen assets in background
       const loadingAssets = [

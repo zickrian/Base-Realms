@@ -55,9 +55,16 @@ export function useLeaderboard() {
     // Create new fetch promise
     fetchPromise = (async () => {
       try {
-        const response = await fetch('/api/leaderboard?sortBy=wins');
+        const response = await fetch('/api/leaderboard?sortBy=wins', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store',
+        });
         if (!response.ok) {
-          throw new Error('Failed to fetch leaderboard');
+          const errorText = await response.text().catch(() => 'Unknown error');
+          console.error('Leaderboard fetch failed:', response.status, errorText);
+          throw new Error(`Failed to fetch leaderboard: ${response.status}`);
         }
         const data = await response.json();
         const leaderboardData = data.leaderboard || [];
@@ -67,6 +74,9 @@ export function useLeaderboard() {
         globalCacheTimestamp = Date.now();
         
         return leaderboardData;
+      } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+        throw err;
       } finally {
         fetchPromise = null;
       }
@@ -121,7 +131,12 @@ export function prefetchLeaderboard() {
     if (!fetchPromise) {
       fetchPromise = (async () => {
         try {
-          const response = await fetch('/api/leaderboard?sortBy=wins');
+          const response = await fetch('/api/leaderboard?sortBy=wins', {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          });
           if (response.ok) {
             const data = await response.json();
             const leaderboardData: LeaderboardEntry[] = data.leaderboard || [];
@@ -129,8 +144,10 @@ export function prefetchLeaderboard() {
             globalCacheTimestamp = Date.now();
             return leaderboardData;
           }
+          console.error('Prefetch leaderboard failed:', response.status);
           return [];
-        } catch {
+        } catch (err) {
+          console.error('Error prefetching leaderboard:', err);
           return [];
         } finally {
           fetchPromise = null;
