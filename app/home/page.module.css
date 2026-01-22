@@ -336,6 +336,29 @@
   vertical-align: bottom;
 }
 
+.mediumrock {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same baseline as buildings */
+  left: 750px;
+  /* Left side of barrel (825px - 47px barrel half width - 18px mediumrock width - 10px spacing = 750px) */
+  transform: translateX(-50%);
+  z-index: 18;
+  /* In front of home (15) but below UI buttons (25) */
+  pointer-events: none;
+  width: auto;
+  height: 14px;
+  /* 4 units * 3.6px/unit = 14.4px ≈ 14px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
 .barrel {
   position: absolute;
   bottom: 179px;

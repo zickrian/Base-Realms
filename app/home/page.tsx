@@ -481,6 +481,13 @@ export default function HomePage() {
           className={styles.homeBuilding}
         />
 
+        {/* Mediumrock Decoration - to the left of barrel */}
+        <img
+          src="/decoration/mediumrock.svg"
+          alt="Medium Rock"
+          className={styles.mediumrock}
+        />
+
         {/* Barrel Decoration - to the right/front of Home */}
         <img
           src="/decoration/barrel.svg"
