@@ -3,15 +3,11 @@
  * Handles NFT contract interactions and balance checking
  */
 
-// Contract addresses for each rarity
-export const NFT_CONTRACTS = {
-  common: "0x2ffb8aa5176c1da165eab569c3e4089e84ec5816" as const,
-  rare: "0x38826ec522f130354652bc16284645b0c832c341" as const,
-  epic: "0xcA36Cf2e444C209209F0c62127fAA37ae1bE62C9" as const,
-  legendary: "0xe199DeC5DdE8007a17BED43f1723bea41Ba5dADd" as const,
-} as const;
+// Free pack (box.svg) mint contract address
+export const FREE_PACK_CONTRACT_ADDRESS = "0xabab2d0A3EAF9722E3EE0840D0360c68899cB305" as const;
 
-export const NFT_CONTRACT_ADDRESS = NFT_CONTRACTS.common;
+// Default contract address used for ownership checks
+export const NFT_CONTRACT_ADDRESS = FREE_PACK_CONTRACT_ADDRESS;
 
 // Back card image - SAME for all rarities (shown before flip)
 export const BACK_CARD_IMAGE = "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/backcards.png" as const;
@@ -93,13 +89,6 @@ export interface MintResult {
 }
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
-
-/**
- * Get contract address for specific rarity
- */
-export function getContractAddress(rarity: Rarity): string {
-  return NFT_CONTRACTS[rarity];
-}
 
 /**
  * Get back card image - ALWAYS the same regardless of rarity
