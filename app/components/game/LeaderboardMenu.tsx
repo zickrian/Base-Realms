@@ -11,15 +11,6 @@ interface LeaderboardMenuProps {
   onClose: () => void;
 }
 
-interface LeaderboardEntry {
-  rank: number;
-  walletAddress: string;
-  level: number;
-  wins: number;
-  totalBattles: number;
-  winRate: number;
-}
-
 export const LeaderboardMenu = ({ isOpen, onClose }: LeaderboardMenuProps) => {
   const { address } = useAccount();
   const { leaderboard, loading, refetch } = useLeaderboard();

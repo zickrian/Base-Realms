@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useUserSettings } from './useUserSettings';
 
 /**
@@ -13,6 +13,13 @@ export function useAmbientSound(enabled: boolean = true) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { settings } = useUserSettings();
   const [userInteracted, setUserInteracted] = useState(false);
+
+  // Helper function to safely update volume
+  const updateAudioVolume = (volume: number) => {
+    if (audioRef.current) {
+      audioRef.current.volume = Math.min(1, Math.max(0, volume / 100));
+    }
+  };
 
   // Track user interaction untuk handle autoplay restrictions
   useEffect(() => {
@@ -41,9 +48,8 @@ export function useAmbientSound(enabled: boolean = true) {
     };
   }, [enabled]);
 
-  // Create and manage audio element
+  // Create audio element ONCE - with stable dependencies
   useEffect(() => {
-    // Only create audio if enabled
     if (!enabled) {
       // Cleanup existing audio if disabled
       if (audioRef.current) {
@@ -54,27 +60,26 @@ export function useAmbientSound(enabled: boolean = true) {
       return;
     }
 
-    // Create audio element
+    // Don't create if already exists
+    if (audioRef.current) {
+      return;
+    }
+
     const audio = new Audio();
-    // Sound file path: music.mp3 in public/sound folder
-    // File is in public/sound/music.mp3
     audio.src = '/sound/music.mp3';
     audio.loop = true;
     audio.preload = 'auto';
 
-    // Set initial volume from settings
-    const initialVolume = settings ? settings.soundVolume / 100 : 0.5;
+    // Set initial volume from settings (with default 50 if not loaded yet)
+    const initialVolume = (settings?.soundVolume ?? 50) / 100;
     audio.volume = initialVolume;
 
     // Handle audio load
     const handleCanPlay = async () => {
-      // Only try to play if user has interacted (to avoid autoplay restrictions)
       if (userInteracted) {
         try {
           await audio.play();
         } catch (error) {
-          // Autoplay might still be blocked, but that's okay
-          // It will play on next user interaction
           console.warn('Autoplay prevented, will play on user interaction:', error);
         }
       }
@@ -82,13 +87,11 @@ export function useAmbientSound(enabled: boolean = true) {
 
     audio.addEventListener('canplaythrough', handleCanPlay);
     
-    // Handle audio errors
     const handleError = (error: Event) => {
       console.error('Failed to load ambient sound:', error);
     };
     audio.addEventListener('error', handleError);
 
-    // Try to load audio (load() is synchronous, doesn't return a Promise)
     try {
       audio.load();
     } catch (error) {
@@ -97,7 +100,6 @@ export function useAmbientSound(enabled: boolean = true) {
 
     audioRef.current = audio;
 
-    // Cleanup function
     return () => {
       audio.removeEventListener('canplaythrough', handleCanPlay);
       audio.removeEventListener('error', handleError);
@@ -105,24 +107,24 @@ export function useAmbientSound(enabled: boolean = true) {
       audio.src = '';
       audioRef.current = null;
     };
-  }, [enabled, userInteracted, settings]);
+  }, [enabled, userInteracted]);
 
-  // Update volume when settings change (real-time)
+  // Memoize sound volume to provide stable dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const soundVolume = useMemo(() => settings?.soundVolume ?? 50, [settings?.soundVolume]);
+
+  // Update volume when settings.soundVolume specifically changes
+  // This is a separate effect so volume updates don't trigger audio recreation
   useEffect(() => {
-    if (audioRef.current && settings) {
-      const newVolume = settings.soundVolume / 100;
-      audioRef.current.volume = newVolume;
-    }
-  }, [settings]);
+    updateAudioVolume(soundVolume);
+  }, [soundVolume]);
 
   // Listen for real-time volume changes from settings menu (before database save)
+  // Uses custom event dispatched by SettingsMenu component
   useEffect(() => {
     const handleVolumeChange = (event: Event) => {
       const customEvent = event as CustomEvent<number>;
-      if (audioRef.current) {
-        const newVolume = customEvent.detail / 100;
-        audioRef.current.volume = newVolume;
-      }
+      updateAudioVolume(customEvent.detail);
     };
 
     window.addEventListener('volume-change', handleVolumeChange);
