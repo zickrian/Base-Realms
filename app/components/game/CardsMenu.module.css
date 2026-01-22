@@ -390,7 +390,7 @@
 }
 
 .cardSlot {
-  aspect-ratio: 2/3;
+  aspect-ratio: 1/1;
   background: #0f172a;
   border-radius: 0;
   border: 3px solid #334155;
@@ -443,7 +443,7 @@
 .cardImage {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
   /* Ensure image doesn't change size when card is selected */

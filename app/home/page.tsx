@@ -28,6 +28,7 @@ import styles from "./page.module.css";
 export default function HomePage() {
   const router = useRouter();
   const { isConnected, isConnecting, address } = useAccount();
+  const [mounted, setMounted] = useState(false);
 
   const {
     isInitialized,
@@ -76,6 +77,10 @@ export default function HomePage() {
     type: "info",
     isVisible: false,
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // World Constants
   const VIEWPORT_WIDTH = 430; // Mobile viewport
@@ -619,6 +624,10 @@ export default function HomePage() {
   );
 
   // NOW conditional returns are safe - all hooks have been called
+  // Render a stable tree until client-side hydration completes
+  if (!mounted) {
+    return <LoadingState />;
+  }
   // Show loading while connecting, loading store, or not yet initialized
   // BUT if user has ever been ready, don't show loading (prevents flash on state flickers)
   const shouldShowLoading = !hasEverBeenReady.current &&
