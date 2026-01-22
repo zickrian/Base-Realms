@@ -8,7 +8,16 @@ interface UserSettings {
 
 export function useUserSettings() {
   const { address, isConnected } = useAccount();
-  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [settings, setSettings] = useState<UserSettings | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const cachedVolume = sessionStorage.getItem('userSoundVolume');
+    const cachedNotifications = sessionStorage.getItem('userNotificationsEnabled');
+    if (cachedVolume === null && cachedNotifications === null) return null;
+    return {
+      soundVolume: cachedVolume ? Number(cachedVolume) : 0,
+      notificationsEnabled: cachedNotifications ? cachedNotifications === 'true' : true,
+    };
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,10 +42,15 @@ export function useUserSettings() {
         }
 
         const data = await response.json();
-        setSettings({
+        const nextSettings = {
           soundVolume: data.settings.sound_volume,
           notificationsEnabled: data.settings.notifications_enabled,
-        });
+        };
+        setSettings(nextSettings);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('userSoundVolume', String(nextSettings.soundVolume));
+          sessionStorage.setItem('userNotificationsEnabled', String(nextSettings.notificationsEnabled));
+        }
         setError(null);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -76,10 +90,15 @@ export function useUserSettings() {
       }
 
       const data = await response.json();
-      setSettings({
+      const nextSettings = {
         soundVolume: data.settings.sound_volume,
         notificationsEnabled: data.settings.notifications_enabled,
-      });
+      };
+      setSettings(nextSettings);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('userSoundVolume', String(nextSettings.soundVolume));
+        sessionStorage.setItem('userNotificationsEnabled', String(nextSettings.notificationsEnabled));
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);

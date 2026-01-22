@@ -87,6 +87,9 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
     window.dispatchEvent(new CustomEvent('volume-change', { detail: newVolume }));
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('userSoundVolume', String(newVolume));
+    }
     
     // Debounce save
     const windowWithTimeout = window as Window & { volumeSaveTimeout?: ReturnType<typeof setTimeout> };
@@ -104,6 +107,9 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
   const handleNotificationsToggle = () => {
     const newNotifications = !notifications;
     setNotifications(newNotifications);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('userNotificationsEnabled', String(newNotifications));
+    }
     if (address) {
       setSaving(true);
       updateSettings(address, { notificationsEnabled: newNotifications }).finally(() => {

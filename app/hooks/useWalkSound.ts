@@ -22,7 +22,7 @@ export function useWalkSound(isMoving: boolean) {
       audio.preload = 'auto';
       
       // Set initial volume from settings
-      const initialVolume = settings ? settings.soundVolume / 100 : 0.5;
+      const initialVolume = settings ? settings.soundVolume / 100 : 0;
       audio.volume = initialVolume;
       
       // Handle errors

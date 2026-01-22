@@ -71,7 +71,7 @@ export function useAmbientSound(enabled: boolean = true) {
     audio.preload = 'auto';
 
     // Set initial volume from settings (with default 50 if not loaded yet)
-    const initialVolume = (settings?.soundVolume ?? 50) / 100;
+    const initialVolume = (settings?.soundVolume ?? 0) / 100;
     audio.volume = initialVolume;
 
     // Handle audio load
@@ -111,7 +111,7 @@ export function useAmbientSound(enabled: boolean = true) {
 
   // Memoize sound volume to provide stable dependency
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const soundVolume = useMemo(() => settings?.soundVolume ?? 50, [settings?.soundVolume]);
+  const soundVolume = useMemo(() => settings?.soundVolume ?? 0, [settings?.soundVolume]);
 
   // Update volume when settings.soundVolume specifically changes
   // This is a separate effect so volume updates don't trigger audio recreation

@@ -14,7 +14,7 @@ export function useSoundEffect() {
 
   // Update volume for all audio elements when settings change
   useEffect(() => {
-    const volume = settings ? settings.soundVolume / 100 : 0.5;
+    const volume = settings ? settings.soundVolume / 100 : 0;
     audioRefs.current.forEach((audio) => {
       audio.volume = volume;
     });
@@ -47,7 +47,7 @@ export function useSoundEffect() {
         const soundUrl = getStorageUrl(`sound/${soundName}`);
         console.log(`Loading sound effect: ${soundName} from ${soundUrl}`); // Debug
         audio.src = soundUrl;
-        const volume = settings ? settings.soundVolume / 100 : 0.5;
+        const volume = settings ? settings.soundVolume / 100 : 0;
         audio.volume = volume;
         audioRefs.current.set(soundName, audio);
         
@@ -65,7 +65,7 @@ export function useSoundEffect() {
         });
       } else {
         // Update volume if settings changed
-        const volume = settings ? settings.soundVolume / 100 : 0.5;
+        const volume = settings ? settings.soundVolume / 100 : 0;
         audio.volume = volume;
         // Reset to start if already playing
         audio.currentTime = 0;

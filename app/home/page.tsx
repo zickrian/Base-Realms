@@ -37,7 +37,9 @@ export default function HomePage() {
   } = useGameStore();
 
   // Refs to prevent race conditions and multiple redirects
-  const hasEverBeenReady = useRef(false);
+  const hasEverBeenReady = useRef(
+    typeof window !== 'undefined' && sessionStorage.getItem('homeWasReady') === 'true'
+  );
   const redirectAttempted = useRef(false);
 
   const [_activeNav, _setActiveNav] = useState<"cards" | "arena" | "market">("arena");
@@ -270,6 +272,9 @@ export default function HomePage() {
     if (isConnected && isInitialized && !storeLoading) {
       // Track ready state
       hasEverBeenReady.current = true;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('homeWasReady', 'true');
+      }
 
       // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
