@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: 'htdiytcpgyawxzpitlll.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'gateway.lighthouse.storage',
+        pathname: '/ipfs/**',
+      },
     ],
   },
   webpack: (config, { isServer, webpack }) => {
