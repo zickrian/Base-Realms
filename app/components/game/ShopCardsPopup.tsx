@@ -18,6 +18,8 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
     const { address } = useAccount();
     const { cardPacks, packsLoading, refreshInventory, refreshQuests } = useGameStore();
 
+    const isComingSoon = true;
+
     const [selectedPack, setSelectedPack] = useState<CardPack | null>(null);
     const [purchasing, setPurchasing] = useState(false);
     const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
@@ -37,6 +39,7 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
     if (!isOpen) return null;
 
     const handleInfoClick = (pack: CardPack) => {
+        if (isComingSoon) return;
         setSelectedPack(pack);
     };
 
@@ -172,6 +175,14 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
                 {/* Content */}
                 <div className={styles.shopContent}>
                     <div className={styles.shopContainer}>
+                        {isComingSoon && (
+                            <div className={`${styles.comingSoonBanner} bit16-container`}>
+                                <div className={styles.comingSoonTitle}>COMING SOON</div>
+                                <div className={styles.comingSoonText}>
+                                    The Cards Shop will open soon. Stay tuned for updates!
+                                </div>
+                            </div>
+                        )}
                         <div className={styles.packsRow}>
                             {packsLoading ? (
                                 <div>Loading packs...</div>
@@ -183,10 +194,15 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
                                     .map((pack) => (
                                         <div
                                             key={pack.id}
-                                            className={`${styles.packCard} ${styles[pack.rarity || 'common']}`}
+                                            className={`${styles.packCard} ${styles[pack.rarity || 'common']} ${isComingSoon ? styles.packCardDisabled : ''}`}
                                         >
                                             <div className={styles.cardIllustration}>
                                                 <div className={styles.glowEffect} />
+                                                {isComingSoon && (
+                                                    <div className={styles.disabledOverlay}>
+                                                        <span>COMING SOON</span>
+                                                    </div>
+                                                )}
                                                 {pack.imageUrl ? (
                                                     <Image
                                                         src={pack.imageUrl}
@@ -213,10 +229,11 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
                                             </div>
                                             <div className={styles.cardFooter}>
                                                 <button
-                                                    className={styles.priceButton}
+                                                    className={`${styles.priceButton} ${isComingSoon ? styles.priceButtonDisabled : ''}`}
                                                     onClick={() => handleInfoClick(pack)}
+                                                    disabled={isComingSoon}
                                                 >
-                                                    {pack.priceEth.toFixed(3)} ETH
+                                                    {isComingSoon ? 'COMING SOON' : `${pack.priceEth.toFixed(3)} ETH`}
                                                 </button>
                                             </div>
                                         </div>

@@ -63,6 +63,31 @@
   z-index: 1;
 }
 
+.comingSoonBanner {
+  margin: 8px 0 16px 0;
+  padding: 10px 12px;
+  border: 2px dashed rgba(226, 232, 240, 0.6);
+  background: rgba(15, 23, 42, 0.65);
+  color: #e2e8f0;
+  text-align: center;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25);
+}
+
+.comingSoonTitle {
+  font-family: var(--font-pixelify);
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.comingSoonText {
+  margin-top: 4px;
+  font-family: var(--font-pixelify);
+  font-size: 12px;
+  opacity: 0.9;
+}
+
 /* Base Card Grid */
 .packsRow {
   display: grid;
@@ -125,6 +150,17 @@
   image-rendering: crisp-edges;
 }
 
+.packCardDisabled {
+  filter: grayscale(0.35) brightness(0.9);
+  transform: none !important;
+  cursor: not-allowed;
+}
+
+.packCardDisabled:hover {
+  transform: none;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+}
+
 .packCard:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.6);
@@ -159,6 +195,21 @@
   position: relative;
   padding: 8px;
   min-height: 100px;
+}
+
+.disabledOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  color: #e2e8f0;
+  font-family: var(--font-pixelify);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 /* Glow behind items - Enhanced & Dynamic */
@@ -277,6 +328,18 @@
 
 .priceButton:active {
   background: rgba(0, 0, 0, 0.9);
+}
+
+.priceButtonDisabled {
+  background: rgba(0, 0, 0, 0.75);
+  cursor: not-allowed;
+  color: #e2e8f0;
+}
+
+.priceButtonDisabled:hover,
+.priceButtonDisabled:active {
+  background: rgba(0, 0, 0, 0.75);
+  color: #e2e8f0;
 }
 
 @media (max-width: 480px) {
