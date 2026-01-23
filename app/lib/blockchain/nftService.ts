@@ -40,6 +40,13 @@ export const NFT_CONTRACT_ABI = [
     outputs: [{ name: "", type: "uint256" }],
   },
   {
+    name: "supportsInterface",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "interfaceId", type: "bytes4" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
     name: "mint",
     type: "function",
     stateMutability: "nonpayable",
@@ -64,6 +71,13 @@ export const NFT_CONTRACT_ABI_VIEM = [
     ],
     name: "tokenOfOwnerByIndex",
     outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "interfaceId", type: "bytes4" }],
+    name: "supportsInterface",
+    outputs: [{ name: "", type: "bool" }],
     stateMutability: "view",
     type: "function",
   },

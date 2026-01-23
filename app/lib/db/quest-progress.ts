@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '../supabase/server';
 import { awardXp } from './xp-award';
 
-export type QuestType = 'play_games' | 'win_games' | 'open_packs' | 'daily_login';
+export type QuestType = 'play_games' | 'win_games' | 'open_packs' | 'daily_login' | 'mint_nft';
 
 // Types for database responses
 interface QuestTemplate {

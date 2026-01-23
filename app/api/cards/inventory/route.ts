@@ -5,11 +5,6 @@ import { FREE_PACK_CONTRACT_ADDRESS } from '@/app/lib/blockchain/nftService';
 const CONTRACT_ADDRESS = FREE_PACK_CONTRACT_ADDRESS.toLowerCase();
 
 export async function GET(request: NextRequest) {
-  const apiStartTime = Date.now();
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory/route.ts:5',message:'GET inventory API start',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
-  
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
@@ -21,21 +16,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user
-    const userQueryStart = Date.now();
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory/route.ts:18',message:'user query start',data:{walletAddress},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
-    
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('wallet_address', walletAddress.toLowerCase())
       .single();
-
-    const userQueryEnd = Date.now();
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory/route.ts:26',message:'user query end',data:{duration:userQueryEnd-userQueryStart,found:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
 
     if (userError || !user) {
       return NextResponse.json(
@@ -44,13 +29,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // OPTIMIZATION: Select only needed fields instead of card_templates(*)
-    // This reduces data transfer and query time
-    const inventoryQueryStart = Date.now();
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory/route.ts:44',message:'inventory query start (optimized)',data:{userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
-    
+    // Select only needed fields instead of card_templates(*)
     const { data: inventory, error: inventoryError } = await supabaseAdmin
       .from('user_inventory')
       .select(`
@@ -69,23 +48,26 @@ export async function GET(request: NextRequest) {
       `)
       .eq('user_id', user.id)
       .eq('card_templates.contract_address', CONTRACT_ADDRESS)
+      .not('card_templates.token_id', 'is', null)
       .order('acquired_at', { ascending: false });
 
-    const inventoryQueryEnd = Date.now();
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory/route.ts:45',message:'inventory query end',data:{duration:inventoryQueryEnd-inventoryQueryStart,count:inventory?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
-
     if (inventoryError) {
+      console.error('[Inventory API] ❌ Failed to fetch inventory:', inventoryError);
       throw inventoryError;
     }
 
-    const apiEndTime = Date.now();
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cf028a41-fb49-422b-b881-48501a438ad6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'inventory/route.ts:52',message:'GET inventory API end',data:{totalDuration:apiEndTime-apiStartTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
+    console.log(`[Inventory API] ✓ Returning ${inventory?.length || 0} inventory items for wallet ${walletAddress}`);
+    if (inventory && inventory.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tokenIds = inventory.map((item: any) => item.card_templates?.token_id).filter(Boolean);
+      console.log(`[Inventory API] Token IDs in inventory:`, tokenIds);
+    }
 
-    return NextResponse.json({ inventory: inventory || [] });
+    return NextResponse.json({ 
+      inventory: inventory || [],
+      count: inventory?.length || 0,
+      fetchedAt: new Date().toISOString()
+    });
   } catch (error: unknown) {
     console.error('Get inventory error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to get inventory';

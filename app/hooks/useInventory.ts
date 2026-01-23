@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
-import { getStorageUrl } from '../utils/supabaseStorage';
 
 interface InventoryCard {
   id: string;
@@ -77,7 +76,7 @@ export function useInventory() {
           id: item.card_templates?.id || '',
           name: item.card_templates?.name || '',
           rarity: item.card_templates?.rarity || 'common',
-          imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+          imageUrl: item.card_templates?.image_url || '',
           description: item.card_templates?.description || null,
         },
         quantity: item.quantity || 1,
@@ -94,11 +93,12 @@ export function useInventory() {
           return;
         }
 
-        // Skip sync if already synced untuk address ini dalam 10 detik terakhir
+        // CRITICAL FIX: Reduce cooldown from 10s to 3s to allow faster syncs after minting
+        // This prevents blocking legitimate sync requests while still preventing spam
         const now = Date.now();
         const timeSinceLastSync = now - lastSyncTimeRef.current;
-        if (lastSyncedAddressRef.current === address && timeSinceLastSync < 10000) {
-          console.log('[useInventory] Sync cooldown active, skipping...');
+        if (lastSyncedAddressRef.current === address && timeSinceLastSync < 3000) {
+          console.log('[useInventory] Sync cooldown active (3s), skipping...');
           return;
         }
 
@@ -106,14 +106,18 @@ export function useInventory() {
         lastSyncedAddressRef.current = address;
         setIsSyncing(true);
         
+        console.log('[useInventory] Starting NFT sync...');
         fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
             'x-wallet-address': address,
           },
         })
-          .then((syncResponse) => {
+          .then(async (syncResponse) => {
             if (syncResponse.ok) {
+              // Add delay to ensure blockchain state is settled
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
               return fetch('/api/cards/inventory', {
                 headers: {
                   'x-wallet-address': address,
@@ -136,16 +140,17 @@ export function useInventory() {
                   id: item.card_templates?.id || '',
                   name: item.card_templates?.name || '',
                   rarity: item.card_templates?.rarity || 'common',
-                  imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+                  imageUrl: item.card_templates?.image_url || '',
                   description: item.card_templates?.description || null,
                 },
                 quantity: item.quantity || 1,
               }));
               setInventory(refreshed);
+              console.log('[useInventory] Inventory synced and refreshed successfully:', refreshed.length, 'cards');
             }
           })
           .catch((syncError) => {
-            console.warn('NFT sync error:', syncError);
+            console.warn('[useInventory] NFT sync error:', syncError);
           })
           .finally(() => {
             setIsSyncing(false);

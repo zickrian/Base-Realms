@@ -173,6 +173,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
 
     try {
+      // CRITICAL FIX: Sync NFT from blockchain FIRST before fetching inventory
+      // This ensures inventory matches blockchain state on login
+      console.log('[GameStore] Starting login initialization...');
+      console.log('[GameStore] Step 1: Syncing NFTs from blockchain...');
+      
+      try {
+        await fetch('/api/cards/sync-nft', {
+          method: 'POST',
+          headers: { 'x-wallet-address': walletAddress },
+        });
+        console.log('[GameStore] ✓ NFT sync completed');
+      } catch (syncError) {
+        console.warn('[GameStore] ⚠️ NFT sync failed on login, will continue with existing data:', syncError);
+      }
+      
+      console.log('[GameStore] Step 2: Fetching all game data...');
+      
       // Fetch all data in parallel for fastest load
       const [profileRes, questsRes, settingsRes, packsRes, inventoryRes] = await Promise.all([
         fetch('/api/player/profile', {
@@ -273,11 +290,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         isInitialized: true, // Set to true LAST, after all data is ready
       });
 
-      // Background sync NFT (non-blocking, happens after initialization)
-      fetch('/api/cards/sync-nft', {
-        method: 'POST',
-        headers: { 'x-wallet-address': walletAddress },
-      }).catch(() => {});
+      console.log('[GameStore] ✅ Initialization complete!');
+      console.log(`[GameStore] - Profile: Level ${profileData?.profile?.level || 1}`);
+      console.log(`[GameStore] - Quests: ${questsData?.quests?.length || 0} active`);
+      console.log(`[GameStore] - Inventory: ${formattedInventory.length} NFTs`);
+      
+      // REMOVED: Background sync NFT - already done at start of initialization
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize game data';
@@ -343,16 +361,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  // Refresh inventory with optional NFT sync
+  // Refresh inventory with NFT sync
   refreshInventory: async (walletAddress: string) => {
     set({ inventoryLoading: true, isSyncing: true });
     try {
-      // Sync NFT first
+      // CRITICAL FIX: Await sync completion before fetching inventory
+      console.log('[GameStore] Starting NFT sync...');
       await fetch('/api/cards/sync-nft', {
         method: 'POST',
         headers: { 'x-wallet-address': walletAddress },
-      }).catch(() => {});
+      });
 
+      // Add delay to ensure blockchain state is settled and database is updated
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('[GameStore] NFT sync completed, fetching inventory...');
       // Then fetch inventory
       const response = await fetch('/api/cards/inventory', {
         headers: { 'x-wallet-address': walletAddress },
@@ -372,10 +395,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           quantity: item.quantity || 1,
         }));
         set({ inventory: formatted, inventoryLoading: false, isSyncing: false });
+        console.log('[GameStore] Inventory refreshed successfully:', formatted.length, 'cards');
       } else {
+        console.error('[GameStore] Failed to fetch inventory, status:', response.status);
         set({ inventoryLoading: false, isSyncing: false });
       }
-    } catch {
+    } catch (error) {
+      console.error('[GameStore] Error refreshing inventory:', error);
       set({ inventoryLoading: false, isSyncing: false });
     }
   },

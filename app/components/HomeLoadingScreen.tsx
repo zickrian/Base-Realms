@@ -61,11 +61,6 @@ const CRITICAL_ASSETS = [
 
 // Optional assets to preload in background (don't block loading)
 const OPTIONAL_ASSETS = [
-  // Battle assets
-  getStorageUrl('battle/gladiator.png'),
-  getStorageUrl('battle/output-onlinegiftools.gif'),
-  getStorageUrl('battle/human.png'),
-
   // Shop scene assets (smooth transition to shop)
   '/building/shop/grassshop.svg',
   '/building/shop/buildingshop.svg',
@@ -73,7 +68,6 @@ const OPTIONAL_ASSETS = [
   '/building/shop/buttonshop.svg',
   '/building/shop/cashier.svg',
   '/decoration/pots1.svg',
-  '/Assets/atm.svg',
 ];
 
 export function HomeLoadingScreen({ onLoadComplete, minLoadTime = 800 }: HomeLoadingScreenProps) {

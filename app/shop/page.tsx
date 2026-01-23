@@ -220,22 +220,52 @@ export default function ShopPage() {
         console.warn('Failed to record mint:', recordError);
       });
 
-      // Sync NFT from blockchain (non-blocking)
-      fetch('/api/cards/sync-nft', {
+      // Update quest progress for minting NFT (non-blocking)
+      fetch('/api/quests/update-progress', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'x-wallet-address': address,
         },
-      }).then(() => {
-        Promise.all([
+        body: JSON.stringify({ 
+          questType: 'mint_nft',
+          autoClaim: false // User must manually claim quest rewards
+        }),
+      }).catch((questError) => {
+        console.warn('Failed to update quest progress:', questError);
+      });
+
+      // CRITICAL FIX: Await sync completion before refreshing inventory
+      // This ensures the blockchain state is fully synced to database
+      try {
+        console.log('[Shop] Starting NFT sync after mint...');
+        await fetch('/api/cards/sync-nft', {
+          method: 'POST',
+          headers: {
+            'x-wallet-address': address,
+          },
+        });
+        
+        // Add delay to ensure blockchain state is settled and database is updated
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        console.log('[Shop] NFT sync completed, refreshing inventory...');
+        // Now refresh inventory and quests
+        await Promise.all([
+          refreshInventory(address),
+          refreshQuests(address),
+        ]);
+        console.log('[Shop] Inventory and quests refreshed successfully');
+      } catch (syncError) {
+        console.error('[Shop] Failed to sync NFT from blockchain:', syncError);
+        // Even on error, try to refresh inventory
+        await Promise.all([
           refreshInventory(address),
           refreshQuests(address),
         ]).catch((refreshError) => {
-          console.warn('Failed to refresh data:', refreshError);
+          console.warn('[Shop] Failed to refresh data:', refreshError);
         });
-      }).catch((syncError) => {
-        console.warn('Failed to sync NFT from blockchain:', syncError);
-      });
+      }
     } catch (error) {
       console.warn('Free mint post-processing failed:', error);
     }

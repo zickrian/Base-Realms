@@ -110,23 +110,51 @@ export function CardsMenu() {
         throw new Error(error.error || 'Failed to record purchase');
       }
 
-      // Sync NFT from blockchain to ensure inventory is up to date
+      // Update quest progress for minting NFT (non-blocking)
+      fetch('/api/quests/update-progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': address!,
+        },
+        body: JSON.stringify({ 
+          questType: 'mint_nft',
+          autoClaim: false // User must manually claim quest rewards
+        }),
+      }).catch((questError) => {
+        console.warn('Failed to update mint_nft quest progress:', questError);
+      });
+
+      // CRITICAL FIX: Await sync completion before refreshing inventory
       try {
+        console.log('[CardsMenu] Starting NFT sync after mint...');
         await fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
             'x-wallet-address': address!,
           },
         });
+        
+        // Add delay to ensure blockchain state is settled and database is updated
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        console.log('[CardsMenu] NFT sync completed, refreshing inventory...');
+        // Refresh inventory and quests after sync
+        await Promise.all([
+          refreshInventory(address!),
+          refreshQuests(address!),
+        ]);
+        console.log('[CardsMenu] Inventory and quests refreshed successfully');
       } catch (syncError) {
-        console.warn('Failed to sync NFT from blockchain:', syncError);
+        console.error('[CardsMenu] Failed to sync NFT from blockchain:', syncError);
+        // Even on error, try to refresh inventory
+        await Promise.all([
+          refreshInventory(address!),
+          refreshQuests(address!),
+        ]).catch((refreshError) => {
+          console.warn('[CardsMenu] Failed to refresh data:', refreshError);
+        });
       }
-
-      // Refresh inventory and quests after syn
-      await Promise.all([
-        refreshInventory(address!),
-        refreshQuests(address!),
-      ]);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Failed to record purchase', errorMessage);

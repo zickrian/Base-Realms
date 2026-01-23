@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import {
@@ -14,7 +14,6 @@ import {
   LeaderboardMenu,
   SwapMenu,
 } from "../components/game";
-import { HomeLoadingScreen } from "../components/HomeLoadingScreen";
 import { LoadingState } from "../components/LoadingState";
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useWalkSound } from "../hooks/useWalkSound";
@@ -53,13 +52,8 @@ export default function HomePage() {
   const [showBattleConfirmPopup, setShowBattleConfirmPopup] = useState(false);
   const [isLeaderboardMenuOpen, setIsLeaderboardMenuOpen] = useState(false);
   const [isSwapMenuOpen, setIsSwapMenuOpen] = useState(false);
-  // Check if assets were already loaded in this session
-  const [assetsLoaded, setAssetsLoaded] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('homeAssetsLoaded') === 'true';
-    }
-    return false;
-  });
+  // Skip asset loading screen - preload in background instead
+  const [_assetsLoaded] = useState(true);
   const [revealCardData, setRevealCardData] = useState<{
     id: string;
     name: string;
@@ -263,14 +257,27 @@ export default function HomePage() {
   useAmbientSound(isConnected);
   useWalkSound(isMoving); // Play walk sound only when character is moving
 
-  // Callback for when assets are loaded
-  const handleAssetsLoaded = useCallback(() => {
-    setAssetsLoaded(true);
-    // Persist to session storage so we don't reload on navigation back
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('homeAssetsLoaded', 'true');
+  // Preload home assets in background (non-blocking)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isConnected) {
+      const homeAssets = [
+        '/Assets/grass.svg',
+        '/Assets/atm.svg',
+        '/Assets/leaderboard.svg',
+        '/Assets/home.svg',
+        '/Assets/questboard.svg',
+        '/Assets/shop.svg',
+        '/Assets/seum.svg',
+        '/button/buttongo.svg',
+      ];
+      
+      // Preload in background without blocking
+      homeAssets.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+      });
     }
-  }, []);
+  }, [isConnected]);
 
   // Combined effect: Prefetch routes, preload assets, and track ready state
   useEffect(() => {
@@ -305,8 +312,12 @@ export default function HomePage() {
     // Don't redirect while connecting or loading - wait for state to settle
     if (isConnecting || storeLoading) return;
 
-    // If user was ever ready on this page, don't redirect on temporary state flickers
-    if (hasEverBeenReady.current && isConnected) return;
+    // CRITICAL FIX: If user was ever ready on this page, don't redirect or show loading
+    // This prevents state reset when navigating back from shop
+    if (hasEverBeenReady.current) {
+      // User has been ready before, keep them on the page
+      return;
+    }
 
     // If already initialized and connected, user is good to go
     if (isInitialized && isConnected) return;
@@ -628,31 +639,33 @@ export default function HomePage() {
   if (!mounted) {
     return <LoadingState />;
   }
-  // Show loading while connecting, loading store, or not yet initialized
-  // BUT if user has ever been ready, don't show loading (prevents flash on state flickers)
-  const shouldShowLoading = !hasEverBeenReady.current &&
-    (isConnecting || storeLoading || !isInitialized || !isConnected);
-
-  if (shouldShowLoading) {
+  
+  // IMPROVED LOGIC: Show loading when actually needed, but not during navigation back
+  // Case 1: First time loading (not ready yet)
+  if (!hasEverBeenReady.current && (isConnecting || storeLoading || !isInitialized || !isConnected)) {
     return <LoadingState />;
   }
-
-  // Skip HomeLoadingScreen if user just came from landing page (after "Ready! Entering game...")
-  // If user is initialized and connected, they just completed initialization on landing page
-  // Skip the asset loading screen to avoid double loading and go straight to home content
-  if (!assetsLoaded) {
-    // If user is already initialized and connected, they just came from landing page
-    // Skip the loading screen and mark assets as loaded immediately
-    if (isInitialized && !storeLoading && isConnected) {
-      // Mark assets as loaded immediately without showing loading screen
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('homeAssetsLoaded', 'true');
-      }
-      setAssetsLoaded(true);
-    } else {
-      // Show asset loading screen for other cases (e.g., refresh, direct navigation)
-      return <HomeLoadingScreen onLoadComplete={handleAssetsLoaded} />;
-    }
+  
+  // Case 2: User has been ready, but now reconnecting (wallet disconnect/reconnect)
+  // Only show loading if BOTH connected and not initialized (actual data reload needed)
+  if (hasEverBeenReady.current && isConnected && !isInitialized && storeLoading) {
+    // Data is being reloaded, show loading
+    console.log('[Home] Data reloading, showing loading screen');
+    return <LoadingState />;
+  }
+  
+  // Case 3: User was ready, navigating back from shop - DON'T show loading
+  // Just render immediately with existing state
+  if (hasEverBeenReady.current && isConnected && isInitialized) {
+    // User is ready, render home immediately
+    // This prevents flash/reset when coming back from shop
+  }
+  
+  // Case 4: Temporarily disconnected but was ready before - wait silently
+  if (hasEverBeenReady.current && !isConnected && !isConnecting) {
+    // Waiting for reconnection, show loading
+    console.log('[Home] Waiting for reconnection');
+    return <LoadingState />;
   }
 
   return (
@@ -704,29 +717,56 @@ export default function HomePage() {
                 }).catch((recordError) => {
                   console.warn('Failed to record mint:', recordError);
                 });
-              }
 
-              // Sync NFT from blockchain (non-blocking)
-              if (address) {
-                fetch('/api/cards/sync-nft', {
+                // Update quest progress for minting NFT (non-blocking)
+                fetch('/api/quests/update-progress', {
                   method: 'POST',
                   headers: {
+                    'Content-Type': 'application/json',
                     'x-wallet-address': address,
                   },
-                }).then(() => {
-                  // Refresh inventory and quests after sync
-                  if (address) {
-                    Promise.all([
-                      refreshInventory(address),
-                      refreshQuests(address),
-                      refetchDailyPacks(), // Refresh pack count to show 0
-                    ]).catch((refreshError) => {
-                      console.warn('Failed to refresh data:', refreshError);
-                    });
-                  }
-                }).catch((syncError) => {
-                  console.warn('Failed to sync NFT from blockchain:', syncError);
+                  body: JSON.stringify({ 
+                    questType: 'mint_nft',
+                    autoClaim: false // User must manually claim quest rewards
+                  }),
+                }).catch((questError) => {
+                  console.warn('Failed to update mint_nft quest progress:', questError);
                 });
+              }
+
+              // CRITICAL FIX: Await sync completion before refreshing inventory
+              if (address) {
+                try {
+                  console.log('[Home] Starting NFT sync after mint...');
+                  await fetch('/api/cards/sync-nft', {
+                    method: 'POST',
+                    headers: {
+                      'x-wallet-address': address,
+                    },
+                  });
+                  
+                  // Add delay to ensure blockchain state is settled and database is updated
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  
+                  console.log('[Home] NFT sync completed, refreshing inventory...');
+                  // Now refresh inventory, quests, and pack count
+                  await Promise.all([
+                    refreshInventory(address),
+                    refreshQuests(address),
+                    refetchDailyPacks(), // Refresh pack count to show 0
+                  ]);
+                  console.log('[Home] Inventory, quests, and packs refreshed successfully');
+                } catch (syncError) {
+                  console.error('[Home] Failed to sync NFT from blockchain:', syncError);
+                  // Even on error, try to refresh inventory
+                  await Promise.all([
+                    refreshInventory(address),
+                    refreshQuests(address),
+                    refetchDailyPacks(),
+                  ]).catch((refreshError) => {
+                    console.warn('Failed to refresh data:', refreshError);
+                  });
+                }
               }
             } catch (error) {
               console.error('Failed to claim pack:', error);

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // For open_packs quest, user must manually claim to get XP
     const result = await updateQuestProgress(
       user.id, 
-      questType as 'play_games' | 'win_games' | 'open_packs' | 'daily_login', 
+      questType as 'play_games' | 'win_games' | 'open_packs' | 'daily_login' | 'mint_nft', 
       1,
       autoClaim // Only auto-claim if explicitly requested
     );

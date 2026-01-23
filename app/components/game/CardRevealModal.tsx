@@ -183,7 +183,7 @@ export function CardRevealModal({
     <div className={styles.container} onClick={handleBackdropClick}>
       <div className={styles.cardContainer}>
         {/* Minting State Container */}
-        {(mintingState === "ready" || mintingState === "processing" || mintingState === "error") && (
+        {(mintingState === "ready" || mintingState === "processing" || mintingState === "error") && !showSuccessPopup && (
           <div className={`${styles.mintingContainer} bit16-container`}>
             <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose} aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -247,31 +247,29 @@ export function CardRevealModal({
           </div>
         )}
 
-        {/* Success Popup */}
+        {/* Success Popup - Now shown inline within same container */}
         {showSuccessPopup && (
-          <div className={styles.successPopupOverlay} onClick={handleSuccessPopupClose}>
-            <div className={`${styles.successPopupContent} bit16-container`} onClick={(e) => e.stopPropagation()}>
-              <button
-                className={`${styles.popupCloseButton} bit16-button has-red-background`}
-                onClick={handleSuccessPopupClose}
-                aria-label="Close"
-              >
-                ×
+          <div className={`${styles.mintingContainer} bit16-container`}>
+            <button
+              className={`${styles.closeButton} bit16-button has-red-background`}
+              onClick={handleSuccessPopupClose}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <div className={styles.successIcon}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className={styles.statusTitle}>Minting Successful!</h3>
+            <p className={styles.statusMessage}>
+              NFT berhasil dimint! Card telah ditambahkan ke inventory Anda.
+            </p>
+            <div className={styles.actionButtons}>
+              <button className={`${styles.successCloseButton} bit16-button has-green-background`} onClick={handleSuccessPopupClose}>
+                Close
               </button>
-              <div className={styles.successIcon}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <h3 className={styles.successTitle}>Minting Successful!</h3>
-              <p className={styles.successMessage}>
-                Minting berhasil.
-              </p>
-              <div className={styles.successActions}>
-                <button className={`${styles.successCloseButton} bit16-button has-green-background`} onClick={handleSuccessPopupClose}>
-                  Close
-                </button>
-              </div>
             </div>
           </div>
         )}
