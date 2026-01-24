@@ -32,9 +32,22 @@ export default function HomePage() {
   const {
     isInitialized,
     isLoading: storeLoading,
+    profile,
+    quests,
+    cardPacks,
     refreshQuests,
     refreshInventory,
   } = useGameStore();
+
+  // CRITICAL: Comprehensive ready check
+  // Ensure ALL critical data is loaded before rendering home
+  const isFullyReady = 
+    isConnected && 
+    isInitialized && 
+    !storeLoading &&
+    profile !== null &&
+    Array.isArray(quests) &&
+    Array.isArray(cardPacks);
 
   // Refs to prevent race conditions and multiple redirects
   const hasEverBeenReady = useRef(
@@ -279,19 +292,13 @@ export default function HomePage() {
     }
   }, [isConnected]);
 
-  // Combined effect: Prefetch routes, preload assets, and track ready state
+  // Combined effect: Prefetch routes, preload assets when ready
   useEffect(() => {
-    if (isConnected && isInitialized && !storeLoading) {
-      // Track ready state
-      hasEverBeenReady.current = true;
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('homeWasReady', 'true');
-      }
-
+    if (isFullyReady && isConnected) {
       // Prefetch routes to avoid delay on first click
       router.prefetch('/battle');
 
-      // Prefetch leaderboard data so it's ready when the player opens the leaderboard
+      // Prefetch leaderboard data
       prefetchLeaderboard();
 
       // Preload LoadingScreen assets in background
@@ -305,7 +312,7 @@ export default function HomePage() {
         img.src = url;
       });
     }
-  }, [isConnected, isInitialized, storeLoading, router]);
+  }, [isFullyReady, isConnected, router]);
 
   // AUTO-SYNC: Check for pending inventory sync after mint
   // This ensures newly minted NFTs appear in My Deck immediately when returning from shop
@@ -370,30 +377,26 @@ export default function HomePage() {
 
     // Run check on mount and when address changes
     checkPendingSync();
-  }, [isConnected, address, isInitialized, refreshInventory, refreshQuests]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, address, isFullyReady, refreshInventory, refreshQuests]);
 
-  // Redirect if not connected - with better protection against race conditions
+  // Redirect if not connected - IMPROVED with isFullyReady check
   useEffect(() => {
-    // Don't redirect while connecting or loading - wait for state to settle
+    // Don't redirect while connecting or loading
     if (isConnecting || storeLoading) return;
 
-    // CRITICAL FIX: If user was ever ready on this page, don't redirect or show loading
-    // This prevents state reset when navigating back from shop
-    if (hasEverBeenReady.current) {
-      // User has been ready before, keep them on the page
-      return;
-    }
+    // If user was ever ready, don't redirect (prevents flash on navigation)
+    if (hasEverBeenReady.current) return;
 
-    // If already initialized and connected, user is good to go
-    if (isInitialized && isConnected) return;
+    // If fully ready and connected, user is good
+    if (isFullyReady && isConnected) return;
 
-    // Prevent multiple redirect attempts
+    // Prevent multiple redirects
     if (redirectAttempted.current) return;
 
-    // Longer delay to let wagmi state fully settle before deciding to redirect
+    // Wait for state to settle before redirecting
     const timer = setTimeout(() => {
-      // Triple check after delay - only redirect if truly not ready
-      if (!isConnected || !isInitialized) {
+      if (!isConnected || !isFullyReady) {
         // Only redirect if we haven't been ready before (prevents logout flash)
         if (!hasEverBeenReady.current) {
           redirectAttempted.current = true;
@@ -403,7 +406,7 @@ export default function HomePage() {
     }, 500); // Increased delay for better stability
 
     return () => clearTimeout(timer);
-  }, [isConnected, isConnecting, isInitialized, storeLoading, router]);
+  }, [isConnected, isConnecting, isFullyReady, storeLoading, router]);
 
   // Define handlers BEFORE conditional returns (but after hooks)
   const _handleBattle = () => { };
@@ -705,28 +708,34 @@ export default function HomePage() {
     return <LoadingState />;
   }
   
-  // IMPROVED LOGIC: Show loading when actually needed, but not during navigation back
-  // Case 1: First time loading (not ready yet)
-  if (!hasEverBeenReady.current && (isConnecting || storeLoading || !isInitialized || !isConnected)) {
+  // CRITICAL FIX: Strict loading check to prevent incomplete renders
+  // User should NOT see home page until ALL data is ready
+  
+  // Case 1: Initial load - not ready yet
+  if (!hasEverBeenReady.current && (isConnecting || storeLoading || !isFullyReady)) {
+    console.log('[Home] Initial load, showing loading screen');
     return <LoadingState />;
   }
   
-  // Case 2: User has been ready, but now reconnecting (wallet disconnect/reconnect)
-  // Only show loading if BOTH connected and not initialized (actual data reload needed)
+  // Case 2: Data reload - connected but not initialized
   if (hasEverBeenReady.current && isConnected && !isInitialized && storeLoading) {
-    // Data is being reloaded, show loading
     console.log('[Home] Data reloading, showing loading screen');
     return <LoadingState />;
   }
   
-  // Case 3: User was ready, navigating back from shop - DON'T show loading
-  // Just render immediately with existing state
-  if (hasEverBeenReady.current && isConnected && isInitialized) {
-    // User is ready, render home immediately
-    // This prevents flash/reset when coming back from shop
+  // Case 3: Not ready yet - missing critical data
+  if (!isFullyReady && !hasEverBeenReady.current) {
+    console.log('[Home] Critical data missing, showing loading screen');
+    return <LoadingState />;
   }
   
-  // Case 4: Temporarily disconnected but was ready before - wait silently
+  // Case 4: Ready - all data loaded, can render home
+  if (hasEverBeenReady.current && isConnected && isFullyReady) {
+    // User is fully ready, render home immediately
+    // This prevents flash when coming back from battle/shop
+  }
+  
+  // Case 5: Temporarily disconnected but was ready before
   if (hasEverBeenReady.current && !isConnected && !isConnecting) {
     // Waiting for reconnection, show loading
     console.log('[Home] Waiting for reconnection');

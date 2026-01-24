@@ -19,9 +19,10 @@ type BattlePhase = 'loading' | 'battle' | 'error';
 export default function BattlePage() {
   const router = useRouter();
   const { address } = useAccount();
-  const { profile, refreshProfile, selectCard } = useGameStore();
+  const { profile, refreshProfile } = useGameStore();
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [isExiting, setIsExiting] = useState(false); // Prevent flash during exit
   const { initBattle, resetBattle } = useBattleStore();
 
   // Load profile if not available
@@ -95,31 +96,40 @@ export default function BattlePage() {
   /**
    * Handle battle end - navigate back to home
    * 
-   * Critical: Navigate IMMEDIATELY to prevent battle arena flash
-   * Strategy:
-   * 1. Reset battle state (synchronous)
-   * 2. Navigate to home (immediate, no blocking)
-   * 3. Clear selected card in background (async, non-blocking)
+   * CRITICAL FIX: Prevent battle arena flash during navigation
    * 
-   * This prevents the race condition where async operations delay navigation,
-   * causing the battle page to briefly re-render before transitioning to home.
+   * Strategy:
+   * 1. Set isExiting flag FIRST (synchronous, immediate)
+   * 2. This triggers early return, preventing any battle renders
+   * 3. Then navigate and cleanup
+   * 
+   * Why This Works:
+   * - isExiting=true happens BEFORE React re-renders
+   * - Early return prevents BattleArena from rendering again
+   * - User sees blank screen instead of battle flash
+   * - Navigation completes smoothly
+   * 
+   * PERSISTENCE FIX: Selected card is NOT cleared after battle
+   * - User's card selection persists in database
+   * - Works across logout/login sessions
+   * - To change card, user selects different one in My Deck
    */
   const handleBattleEnd = useCallback(() => {
-    // Step 1: Reset battle state immediately (synchronous operation)
+    // Step 1: Set exiting flag IMMEDIATELY (synchronous)
+    // This prevents any further battle renders
+    setIsExiting(true);
+    
+    // Step 2: Reset battle state (only local state, not database)
     resetBattle();
     
-    // Step 2: Navigate to home immediately (no await, no blocking)
+    // Step 3: Navigate to home (will happen in next tick)
+    // By this time, component already returned null (no render)
     router.replace('/home');
     
-    // Step 3: Clear selected card in background (non-blocking)
-    // This runs after navigation starts, preventing any delay
-    if (address) {
-      selectCard(address, null).catch((error) => {
-        console.error('[Battle] Failed to clear selected card:', error);
-        // Non-critical error - user already navigated away
-      });
-    }
-  }, [resetBattle, router, address, selectCard]);
+    // ✅ REMOVED: No longer clear selected card from database
+    // Selected card persists across battles and logout/login sessions
+    // This provides better UX - user keeps their chosen card
+  }, [resetBattle, router]);
 
   // Handle retry on error
   const handleRetry = useCallback(() => {
@@ -131,8 +141,15 @@ export default function BattlePage() {
   useEffect(() => {
     return () => {
       resetBattle();
+      setIsExiting(false); // Reset flag on unmount
     };
   }, [resetBattle]);
+
+  // CRITICAL: Prevent battle render during exit
+  // This stops the flash/glitch when navigating back to home
+  if (isExiting) {
+    return <div className={styles.battlePageContainer} />; // Empty container
+  }
 
   // Render based on phase
   const renderContent = () => {
