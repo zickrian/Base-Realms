@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { useGameStore, CardPack } from '../../stores/gameStore';
 import { CardRevealModal } from './CardRevealModal';
+import { Toast, type ToastType } from '../ui/Toast';
 import type { Rarity } from '../../lib/blockchain/nftService';
 import styles from "./CardsMenu.module.css";
 
@@ -25,6 +26,18 @@ export function CardsMenu() {
   const processedTxHashes = useRef<Set<string>>(new Set());
   const isProcessingPurchase = useRef(false);
   const [selectingCard, setSelectingCard] = useState<string | null>(null);
+  
+  // NEW: Sync progress and toast state
+  const [syncingNFT, setSyncingNFT] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'success',
+    isVisible: false,
+  });
 
   const handleInfoClick = (pack: CardPack) => {
     if (isComingSoon) return;
@@ -89,8 +102,13 @@ export function CardsMenu() {
 
     isProcessingPurchase.current = true;
     processedTxHashes.current.add(transactionHash);
+    
+    // Show syncing indicator
+    setSyncingNFT(true);
 
     try {
+      console.log('[CardsMenu] ✅ Mint successful! Recording purchase...');
+      
       // After successful mint, record purchase in backend
       const response = await fetch('/api/cards/purchase', {
         method: 'POST',
@@ -125,9 +143,10 @@ export function CardsMenu() {
         console.warn('Failed to update mint_nft quest progress:', questError);
       });
 
-      // CRITICAL FIX: Await sync completion before refreshing inventory
+      // IMPROVED: Sync NFT with clear progress feedback
       try {
-        console.log('[CardsMenu] Starting NFT sync after mint...');
+        console.log('[CardsMenu] 🔄 Syncing NFT from blockchain...');
+        
         await fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
@@ -135,18 +154,35 @@ export function CardsMenu() {
           },
         });
         
-        // Add delay to ensure blockchain state is settled and database is updated
+        // Add small delay to ensure blockchain state is settled
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        console.log('[CardsMenu] NFT sync completed, refreshing inventory...');
+        console.log('[CardsMenu] ✅ NFT synced! Refreshing inventory...');
+        
         // Refresh inventory and quests after sync
         await Promise.all([
           refreshInventory(address!),
           refreshQuests(address!),
         ]);
-        console.log('[CardsMenu] Inventory and quests refreshed successfully');
+        
+        console.log('[CardsMenu] ✅ All done! NFT now in My Deck');
+        
+        // Show success toast
+        setToast({
+          message: "NFT minted successfully! Check your deck.",
+          type: "success",
+          isVisible: true,
+        });
       } catch (syncError) {
-        console.error('[CardsMenu] Failed to sync NFT from blockchain:', syncError);
+        console.error('[CardsMenu] ❌ Failed to sync NFT from blockchain:', syncError);
+        
+        // Show error toast but still try to refresh
+        setToast({
+          message: "Mint succeeded but sync failed. Try refreshing.",
+          type: "error",
+          isVisible: true,
+        });
+        
         // Even on error, try to refresh inventory
         await Promise.all([
           refreshInventory(address!),
@@ -157,18 +193,35 @@ export function CardsMenu() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to record purchase', errorMessage);
+      console.error('[CardsMenu] ❌ Failed to record purchase:', errorMessage);
+      
+      // Show error toast
+      setToast({
+        message: "Failed to process mint. Please contact support.",
+        type: "error",
+        isVisible: true,
+      });
+      
       // Remove from processed set on error so it can be retried
       processedTxHashes.current.delete(transactionHash);
     } finally {
       setPurchasing(false);
+      setSyncingNFT(false);
       isProcessingPurchase.current = false;
     }
   };
 
   const handleMintError = (error: string) => {
-    console.error('Minting error:', error);
+    console.error('[CardsMenu] ❌ Minting error:', error);
     setPurchasing(false);
+    setSyncingNFT(false);
+    
+    // Show error toast
+    setToast({
+      message: error || "Minting failed. Please try again.",
+      type: "error",
+      isVisible: true,
+    });
   };
 
   const handleModalClose = () => {
@@ -200,6 +253,24 @@ export function CardsMenu() {
 
   return (
     <div className={styles.container} data-allow-scroll="true">
+      {/* Toast Notification */}
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
+      
+      {/* Sync Progress Overlay */}
+      {syncingNFT && (
+        <div className={styles.syncingOverlay}>
+          <div className={styles.syncingContent}>
+            <div className={styles.spinner} />
+            <p className={styles.syncingText}>Syncing your NFT from blockchain...</p>
+            <p className={styles.syncingSubtext}>This may take a few seconds</p>
+          </div>
+        </div>
+      )}
       {/* Cards Shop */}
       <section className={`${styles.shopContainer} bit16-container`}>
         <h2 className={styles.sectionTitle}>CARDS SHOP</h2>

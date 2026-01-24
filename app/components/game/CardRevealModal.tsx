@@ -35,6 +35,84 @@ interface CardRevealModalProps {
 
 type MintingState = "ready" | "processing" | "verifying" | "success" | "error";
 
+/**
+ * Error messages mapping for better user experience
+ * Maps error types to user-friendly messages with actionable steps
+ */
+interface ErrorInfo {
+  title: string;
+  message: string;
+  action: string;
+  canRetry: boolean;
+}
+
+const ERROR_MESSAGES: Record<string, ErrorInfo> = {
+  'user rejected': {
+    title: "Transaction Cancelled",
+    message: "You cancelled the transaction in your wallet.",
+    action: "You can try again when ready.",
+    canRetry: true,
+  },
+  'user denied': {
+    title: "Transaction Cancelled",
+    message: "You cancelled the transaction in your wallet.",
+    action: "You can try again when ready.",
+    canRetry: true,
+  },
+  'insufficient funds': {
+    title: "Insufficient Balance",
+    message: "You don't have enough ETH to cover gas fees.",
+    action: "Add more ETH to your wallet and try again.",
+    canRetry: false,
+  },
+  'gas required exceeds allowance': {
+    title: "Insufficient Gas",
+    message: "Transaction requires more gas than available.",
+    action: "Add more ETH to your wallet and try again.",
+    canRetry: false,
+  },
+  'reverted': {
+    title: "Transaction Failed",
+    message: "The smart contract rejected your transaction.",
+    action: "Please contact support if this issue persists.",
+    canRetry: true,
+  },
+  'network': {
+    title: "Network Error",
+    message: "Unable to connect to the blockchain network.",
+    action: "Check your internet connection and try again.",
+    canRetry: true,
+  },
+  'timeout': {
+    title: "Transaction Timeout",
+    message: "Transaction took too long to confirm.",
+    action: "Check blockchain explorer for transaction status.",
+    canRetry: false,
+  },
+};
+
+/**
+ * Get error information from error message
+ */
+function getErrorInfo(error: Error | string): ErrorInfo {
+  const errorMsg = (typeof error === 'string' ? error : error.message).toLowerCase();
+  
+  // Check each known error pattern
+  for (const [key, info] of Object.entries(ERROR_MESSAGES)) {
+    if (errorMsg.includes(key)) {
+      return info;
+    }
+  }
+  
+  // Default error for unknown cases
+  return {
+    title: "Minting Failed",
+    message: typeof error === 'string' ? error : error.message || "An unknown error occurred.",
+    action: "Please try again or contact support.",
+    canRetry: true,
+  };
+}
+
 // Configuration constants for maintainability
 const TRANSACTION_CONFIG = {
   TIMEOUT_MS: 45000, // 45 seconds before manual verification
@@ -51,7 +129,11 @@ export function CardRevealModal({
   onMintError 
 }: CardRevealModalProps) {
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWriteContract } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { 
+    isLoading: isConfirming, 
+    isSuccess,
+    data: receipt // ← CRITICAL: Get receipt to check status
+  } = useWaitForTransactionReceipt({ hash });
   
   // State management
   const [mintingState, setMintingState] = useState<MintingState>("ready");
@@ -259,22 +341,43 @@ export function CardRevealModal({
 
   /**
    * Handle successful mint transaction from wagmi hook
+   * 
+   * CRITICAL FIX: Check receipt.status to detect transaction reverts
+   * - receipt.status === 'success' → Transaction succeeded
+   * - receipt.status === 'reverted' → Transaction failed on blockchain
+   * - This prevents false "success" states
    */
   useEffect(() => {
-    if (isSuccess && hash && (mintingState === "processing" || mintingState === "verifying") && isMountedRef.current) {
-      console.log('[CardRevealModal] Wagmi detected minting success, showing success popup');
-      clearAllTimers();
-      setMintingState("success");
-      
-      // Call onMintSuccess callback only once
-      if (!hasCalledSuccessCallback.current && isMountedRef.current) {
-        hasCalledSuccessCallback.current = true;
-        if (onMintSuccess) {
-          onMintSuccess(hash);
+    if (isSuccess && hash && receipt && (mintingState === "processing" || mintingState === "verifying") && isMountedRef.current) {
+      // Check transaction status from receipt
+      if (receipt.status === 'success') {
+        // ✅ Transaction truly succeeded
+        console.log('[CardRevealModal] ✅ Transaction confirmed as SUCCESS on blockchain');
+        clearAllTimers();
+        setMintingState("success");
+        
+        // Call onMintSuccess callback only once
+        if (!hasCalledSuccessCallback.current && isMountedRef.current) {
+          hasCalledSuccessCallback.current = true;
+          if (onMintSuccess) {
+            onMintSuccess(hash);
+          }
+        }
+      } else if (receipt.status === 'reverted') {
+        // ❌ Transaction reverted on blockchain
+        console.error('[CardRevealModal] ❌ Transaction REVERTED on blockchain');
+        clearAllTimers();
+        const errorMessage = "Transaction failed on blockchain. The smart contract rejected your transaction.";
+        setMintError(errorMessage);
+        setMintingState("error");
+        
+        if (onMintError && !hasCalledSuccessCallback.current) {
+          hasCalledSuccessCallback.current = true;
+          onMintError(errorMessage);
         }
       }
     }
-  }, [isSuccess, hash, onMintSuccess, mintingState, clearAllTimers]);
+  }, [isSuccess, hash, receipt, onMintSuccess, onMintError, mintingState, clearAllTimers]);
 
   /**
    * Show success popup after minting state changes to success
@@ -292,30 +395,22 @@ export function CardRevealModal({
 
   /**
    * Handle write errors with proper error messages
+   * 
+   * IMPROVED: Use error message mapping for better UX
    */
   useEffect(() => {
     // Only handle errors if we're in ready or processing state and modal is open
     if (writeError && (mintingState === "ready" || mintingState === "processing") && isOpen && isMountedRef.current) {
-      let errorMessage = "Minting failed. Please try again.";
-      const errorMsg = writeError.message || "";
+      console.error('[CardRevealModal] Write error detected:', writeError);
       
-      if (errorMsg.includes("user rejected") || errorMsg.includes("User rejected") || 
-          errorMsg.includes("User cancelled") || errorMsg.includes("user cancelled") ||
-          errorMsg.includes("User denied") || errorMsg.includes("user denied") ||
-          errorMsg.includes("rejected") || errorMsg.includes("cancelled")) {
-        errorMessage = "Transaction cancelled by user.";
-        setMintError(errorMessage);
-        setMintingState("error");
-        if (onMintError) {
-          onMintError(errorMessage);
-        }
-      } else if (errorMsg && !errorMsg.includes("continue in Base Account")) {
-        errorMessage = `Minting failed: ${errorMsg}`;
-        setMintError(errorMessage);
-        setMintingState("error");
-        if (onMintError) {
-          onMintError(errorMessage);
-        }
+      const errorInfo = getErrorInfo(writeError);
+      const errorMessage = `${errorInfo.message} ${errorInfo.action}`;
+      
+      setMintError(errorMessage);
+      setMintingState("error");
+      
+      if (onMintError) {
+        onMintError(errorMessage);
       }
     }
   }, [writeError, onMintError, mintingState, isOpen]);

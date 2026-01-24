@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useGameStore, CardPack } from '../../stores/gameStore';
 import { CardRevealModal } from './CardRevealModal';
+import { Toast, type ToastType } from '../ui/Toast';
 import type { Rarity } from '../../lib/blockchain/nftService';
 import styles from './ShopCardsPopup.module.css';
 
@@ -33,6 +34,18 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
 
     const processedTxHashes = useRef<Set<string>>(new Set());
     const isProcessingPurchase = useRef(false);
+    
+    // NEW: Sync progress and toast state
+    const [syncingNFT, setSyncingNFT] = useState(false);
+    const [toast, setToast] = useState<{
+        message: string;
+        type: ToastType;
+        isVisible: boolean;
+    }>({
+        message: '',
+        type: 'success',
+        isVisible: false,
+    });
 
     // If closed, don't render content (or return null)
     // However, we might want to keep it mounted for state preservation, but CSS usually handles display:none
@@ -179,8 +192,16 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
     };
 
     const handleMintError = (error: string) => {
-        console.error('Minting error:', error);
+        console.error('[ShopCardsPopup] ❌ Minting error:', error);
         setPurchasing(false);
+        setSyncingNFT(false);
+        
+        // Show error toast
+        setToast({
+            message: error || "Minting failed. Please try again.",
+            type: "error",
+            isVisible: true,
+        });
     };
 
     const handleRevealModalClose = () => {
@@ -191,6 +212,25 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
 
     return (
         <div className={styles.container}>
+            {/* Toast Notification */}
+            <Toast 
+                message={toast.message}
+                type={toast.type}
+                isVisible={toast.isVisible}
+                onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+            />
+            
+            {/* Sync Progress Overlay */}
+            {syncingNFT && (
+                <div className={styles.syncingOverlay}>
+                    <div className={styles.syncingContent}>
+                        <div className={styles.spinner} />
+                        <p className={styles.syncingText}>Syncing your NFT from blockchain...</p>
+                        <p className={styles.syncingSubtext}>This may take a few seconds</p>
+                    </div>
+                </div>
+            )}
+            
             <div className={`${styles.menuBox} bit16-container`}>
                 {/* Header */}
                 <div className={styles.header}>
