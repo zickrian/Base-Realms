@@ -307,6 +307,71 @@ export default function HomePage() {
     }
   }, [isConnected, isInitialized, storeLoading, router]);
 
+  // AUTO-SYNC: Check for pending inventory sync after mint
+  // This ensures newly minted NFTs appear in My Deck immediately when returning from shop
+  useEffect(() => {
+    if (!isConnected || !address || !isInitialized) return;
+
+    const checkPendingSync = async () => {
+      try {
+        const pendingSyncData = localStorage.getItem('pendingInventorySync');
+        if (!pendingSyncData) return;
+
+        const syncInfo = JSON.parse(pendingSyncData);
+        
+        // Verify this sync is for current wallet
+        if (syncInfo.address?.toLowerCase() !== address.toLowerCase()) {
+          console.log('[Home] Pending sync is for different wallet, clearing flag');
+          localStorage.removeItem('pendingInventorySync');
+          return;
+        }
+
+        // Check if sync is recent (within last 5 minutes)
+        const age = Date.now() - syncInfo.timestamp;
+        const MAX_AGE = 5 * 60 * 1000; // 5 minutes
+        
+        if (age > MAX_AGE) {
+          console.log('[Home] Pending sync is too old, clearing flag');
+          localStorage.removeItem('pendingInventorySync');
+          return;
+        }
+
+        console.log('[Home] Found pending inventory sync, refreshing now...');
+        console.log('[Home] Transaction:', syncInfo.transactionHash);
+
+        // Clear flag BEFORE refreshing to prevent duplicate refreshes
+        localStorage.removeItem('pendingInventorySync');
+
+        // Refresh inventory to show new NFT
+        await refreshInventory(address);
+        
+        // Also refresh quests in case mint completed a quest
+        await refreshQuests(address);
+        
+        console.log('[Home] ✅ Inventory refreshed after mint - new NFT should be visible in My Deck');
+        
+        // Optional: Show toast notification
+        setToast({
+          message: "New NFT added to your deck!",
+          type: "success",
+          isVisible: true,
+        });
+        
+        // Auto-hide toast after 3 seconds
+        setTimeout(() => {
+          setToast(prev => ({ ...prev, isVisible: false }));
+        }, 3000);
+      } catch (error) {
+        console.error('[Home] Error processing pending sync:', error);
+        // Clear flag even on error to prevent infinite loop
+        localStorage.removeItem('pendingInventorySync');
+      }
+    };
+
+    // Run check on mount and when address changes
+    checkPendingSync();
+  }, [isConnected, address, isInitialized, refreshInventory, refreshQuests]);
+
   // Redirect if not connected - with better protection against race conditions
   useEffect(() => {
     // Don't redirect while connecting or loading - wait for state to settle

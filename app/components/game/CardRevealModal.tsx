@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { createPublicClient, http } from "viem";
+import { base } from "viem/chains";
 import { type Rarity } from "../../lib/blockchain/nftService";
 import styles from "./CardRevealModal.module.css";
 
@@ -31,7 +33,14 @@ interface CardRevealModalProps {
   onMintError?: (error: string) => void;
 }
 
-type MintingState = "ready" | "processing" | "success" | "error";
+type MintingState = "ready" | "processing" | "verifying" | "success" | "error";
+
+// Configuration constants for maintainability
+const TRANSACTION_CONFIG = {
+  TIMEOUT_MS: 45000, // 45 seconds before manual verification
+  POLLING_INTERVAL_MS: 3000, // Check every 3 seconds after timeout
+  MAX_MANUAL_RETRIES: 3, // Maximum manual verification attempts
+} as const;
 
 export function CardRevealModal({ 
   isOpen, 
@@ -43,40 +52,233 @@ export function CardRevealModal({
 }: CardRevealModalProps) {
   const { writeContract, data: hash, isPending, error: writeError, reset: resetWriteContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  
+  // State management
   const [mintingState, setMintingState] = useState<MintingState>("ready");
   const [mintError, setMintError] = useState<string | null>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isManuallyVerifying, setIsManuallyVerifying] = useState(false);
+  
+  // Refs for cleanup and tracking - track if component is mounted
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasCalledSuccessCallback = useRef(false);
+  const manualRetryCount = useRef(0);
+  const isMountedRef = useRef(true);
 
-  // Reset state when modal opens
+  /**
+   * Cleanup function to clear all timers and intervals
+   */
+  const clearAllTimers = useCallback(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (pollingIntervalRef.current !== null) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (elapsedTimeIntervalRef.current !== null) {
+      clearInterval(elapsedTimeIntervalRef.current);
+      elapsedTimeIntervalRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Manual transaction verification using viem publicClient
+   * Fallback when wagmi's useWaitForTransactionReceipt doesn't detect success
+   */
+  const verifyTransactionManually = useCallback(async (txHash: string) => {
+    // Check if component is still mounted before proceeding
+    if (!isMountedRef.current) {
+      console.log('[CardRevealModal] Component unmounted, skipping verification');
+      return;
+    }
+
+    try {
+      console.log('[CardRevealModal] Starting manual verification for tx:', txHash);
+      
+      if (isMountedRef.current) {
+        setIsManuallyVerifying(true);
+        setMintingState("verifying");
+      }
+
+      const publicClient = createPublicClient({
+        chain: base,
+        transport: http(),
+      });
+
+      const receipt = await publicClient.getTransactionReceipt({
+        hash: txHash as `0x${string}`,
+      });
+
+      // Check again after async operation
+      if (!isMountedRef.current) {
+        console.log('[CardRevealModal] Component unmounted after verification, skipping state updates');
+        return;
+      }
+
+      console.log('[CardRevealModal] Transaction receipt:', receipt);
+
+      if (receipt && receipt.status === 'success') {
+        console.log('[CardRevealModal] Manual verification: Transaction successful');
+        clearAllTimers();
+        setMintingState("success");
+        setIsManuallyVerifying(false);
+        
+        // Call success callback only once
+        if (!hasCalledSuccessCallback.current && isMountedRef.current) {
+          hasCalledSuccessCallback.current = true;
+          if (onMintSuccess) {
+            onMintSuccess(txHash);
+          }
+        }
+      } else if (receipt && receipt.status === 'reverted') {
+        console.log('[CardRevealModal] Manual verification: Transaction reverted');
+        clearAllTimers();
+        if (isMountedRef.current) {
+          setMintingState("error");
+          setMintError("Transaction failed on blockchain. Please try again.");
+          setIsManuallyVerifying(false);
+          if (onMintError) {
+            onMintError("Transaction reverted");
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[CardRevealModal] Manual verification error:', error);
+      
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      // Increment retry count
+      manualRetryCount.current += 1;
+      
+      // If we haven't exceeded max retries, try again
+      if (manualRetryCount.current < TRANSACTION_CONFIG.MAX_MANUAL_RETRIES) {
+        console.log(`[CardRevealModal] Retry ${manualRetryCount.current}/${TRANSACTION_CONFIG.MAX_MANUAL_RETRIES}`);
+        setIsManuallyVerifying(false);
+        // Continue polling
+      } else {
+        // Max retries exceeded
+        console.error('[CardRestealModal] Max manual verification retries exceeded');
+        clearAllTimers();
+        if (isMountedRef.current) {
+          setMintingState("error");
+          setMintError("Unable to verify transaction. Please check your wallet or blockchain explorer.");
+          setIsManuallyVerifying(false);
+        }
+      }
+    }
+  }, [onMintSuccess, onMintError, clearAllTimers]);
+
+  /**
+   * Start manual verification polling after timeout
+   */
+  const startManualVerification = useCallback((txHash: string) => {
+    console.log('[CardRevealModal] Starting manual verification polling');
+    manualRetryCount.current = 0;
+    
+    // Immediate first check
+    verifyTransactionManually(txHash);
+    
+    // Then poll every 3 seconds
+    pollingIntervalRef.current = setInterval(() => {
+      verifyTransactionManually(txHash);
+    }, TRANSACTION_CONFIG.POLLING_INTERVAL_MS);
+  }, [verifyTransactionManually]);
+
+  /**
+   * Reset all state when modal opens/closes
+   */
   useEffect(() => {
     if (isOpen) {
       console.log('[CardRevealModal] Modal opened, resetting state to ready');
+      isMountedRef.current = true;
       setMintingState("ready");
       setMintError(null);
       setShowSuccessPopup(false);
-      // Reset wagmi writeContract state to clear any previous errors
+      setElapsedTime(0);
+      setIsManuallyVerifying(false);
+      hasCalledSuccessCallback.current = false;
+      manualRetryCount.current = 0;
+      clearAllTimers();
       resetWriteContract();
     }
-  }, [isOpen, resetWriteContract]);
+    
+    return () => {
+      if (!isOpen) {
+        isMountedRef.current = false;
+        clearAllTimers();
+      }
+    };
+  }, [isOpen, resetWriteContract, clearAllTimers]);
 
-  // Handle successful mint transaction - show success popup
+  /**
+   * Track elapsed time during processing
+   */
   useEffect(() => {
-    if (isSuccess && hash && mintingState === "processing") {
-      console.log('[CardRevealModal] Minting successful, showing success popup');
+    if ((mintingState === "processing" || mintingState === "verifying") && hash) {
+      setElapsedTime(0);
+      elapsedTimeIntervalRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+
+      return () => {
+        if (elapsedTimeIntervalRef.current) {
+          clearInterval(elapsedTimeIntervalRef.current);
+          elapsedTimeIntervalRef.current = null;
+        }
+      };
+    }
+  }, [mintingState, hash]);
+
+  /**
+   * Setup timeout for manual verification fallback
+   */
+  useEffect(() => {
+    if (mintingState === "processing" && hash && !isSuccess) {
+      console.log('[CardRevealModal] Setting up timeout for manual verification');
+      
+      timeoutRef.current = setTimeout(() => {
+        console.log('[CardRevealModal] Timeout reached, starting manual verification');
+        startManualVerification(hash);
+      }, TRANSACTION_CONFIG.TIMEOUT_MS);
+
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+      };
+    }
+  }, [mintingState, hash, isSuccess, startManualVerification]);
+
+  /**
+   * Handle successful mint transaction from wagmi hook
+   */
+  useEffect(() => {
+    if (isSuccess && hash && (mintingState === "processing" || mintingState === "verifying") && isMountedRef.current) {
+      console.log('[CardRevealModal] Wagmi detected minting success, showing success popup');
+      clearAllTimers();
       setMintingState("success");
       
-      // Call onMintSuccess in background without blocking UI transition
-      setTimeout(() => {
-        try {
-          onMintSuccess?.(hash);
-        } catch (error) {
-          console.error('[CardRevealModal] Error in onMintSuccess callback:', error);
+      // Call onMintSuccess callback only once
+      if (!hasCalledSuccessCallback.current && isMountedRef.current) {
+        hasCalledSuccessCallback.current = true;
+        if (onMintSuccess) {
+          onMintSuccess(hash);
         }
-      }, 0);
+      }
     }
-  }, [isSuccess, hash, onMintSuccess, mintingState]);
+  }, [isSuccess, hash, onMintSuccess, mintingState, clearAllTimers]);
 
-  // Show success popup after minting state is set to success
+  /**
+   * Show success popup after minting state changes to success
+   */
   useEffect(() => {
     if (mintingState === "success" && !showSuccessPopup) {
       // Show popup after a short delay for smooth transition
@@ -88,10 +290,12 @@ export function CardRevealModal({
     }
   }, [mintingState, showSuccessPopup]);
 
-  // Handle write errors - format same as free mint in home/page.tsx
+  /**
+   * Handle write errors with proper error messages
+   */
   useEffect(() => {
     // Only handle errors if we're in ready or processing state and modal is open
-    if (writeError && (mintingState === "ready" || mintingState === "processing") && isOpen) {
+    if (writeError && (mintingState === "ready" || mintingState === "processing") && isOpen && isMountedRef.current) {
       let errorMessage = "Minting failed. Please try again.";
       const errorMsg = writeError.message || "";
       
@@ -100,17 +304,18 @@ export function CardRevealModal({
           errorMsg.includes("User denied") || errorMsg.includes("user denied") ||
           errorMsg.includes("rejected") || errorMsg.includes("cancelled")) {
         errorMessage = "Transaction cancelled by user.";
-        // Set error state immediately when user cancels
         setMintError(errorMessage);
         setMintingState("error");
-        onMintError?.(errorMessage);
+        if (onMintError) {
+          onMintError(errorMessage);
+        }
       } else if (errorMsg && !errorMsg.includes("continue in Base Account")) {
-        // Ignore "continue in Base Account" errors - these are wallet permission prompts
-        // that don't indicate actual failure
         errorMessage = `Minting failed: ${errorMsg}`;
         setMintError(errorMessage);
         setMintingState("error");
-        onMintError?.(errorMessage);
+        if (onMintError) {
+          onMintError(errorMessage);
+        }
       }
     }
   }, [writeError, onMintError, mintingState, isOpen]);
@@ -140,34 +345,34 @@ export function CardRevealModal({
   }, [cardData, walletAddress, isPending, isConfirming, writeContract, onMintError]);
 
   const handleCloseClick = () => {
-    // Reset error state when closing
+    clearAllTimers();
+    isMountedRef.current = false;
     setMintError(null);
-    // Reset wagmi writeContract state to clear any errors for next time
     resetWriteContract();
     
-    // If minting is in progress, just close - wallet will handle cancellation
-    // Don't try to cancel writeContract as it's already initiated
-    if (isPending || isConfirming) {
-      // User is closing while transaction is pending
-      // The transaction will either succeed or fail, but we'll close the modal
-      // Error handling will catch user rejection
-      onClose();
-      return;
+    if (isPending || isConfirming || mintingState === "processing" || mintingState === "verifying") {
+      console.log('[CardRevealModal] Closing modal while transaction in progress');
     }
-    // Only close when user explicitly clicks close button or backdrop
+    
     onClose();
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only allow closing if not in processing state or if transaction is not pending
     if (e.target === e.currentTarget) {
-      if (mintingState === "processing" && (isPending || isConfirming)) {
-        // Don't close during active minting - user should cancel in wallet
+      if ((mintingState === "processing" || mintingState === "verifying") && (isPending || isConfirming)) {
         return;
       }
       handleCloseClick();
     }
   };
+
+  const handleManualCheck = useCallback(() => {
+    if (hash && isMountedRef.current) {
+      console.log('[CardRevealModal] User initiated manual check');
+      manualRetryCount.current = 0;
+      verifyTransactionManually(hash);
+    }
+  }, [hash, verifyTransactionManually]);
 
   const handleSuccessPopupClose = () => {
     setShowSuccessPopup(false);
@@ -183,22 +388,54 @@ export function CardRevealModal({
     <div className={styles.container} onClick={handleBackdropClick}>
       <div className={styles.cardContainer}>
         {/* Minting State Container */}
-        {(mintingState === "ready" || mintingState === "processing" || mintingState === "error") && !showSuccessPopup && (
+        {(mintingState === "ready" || mintingState === "processing" || mintingState === "verifying" || mintingState === "error") && !showSuccessPopup && (
           <div className={`${styles.mintingContainer} bit16-container`}>
-            <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={onClose} aria-label="Close">
+            <button className={`${styles.closeButton} bit16-button has-red-background`} onClick={handleCloseClick} aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </button>
             
             {/* Processing State */}
-            {(mintingState === "processing" && (isPending || isConfirming)) && (
+            {mintingState === "processing" && (isPending || isConfirming) && (
               <>
                 <div className={styles.spinner}></div>
                 <h3 className={styles.statusTitle}>Processing</h3>
                 <p className={styles.statusMessage}>
                   Transaction is being processed. Please wait for confirmation...
                 </p>
+                {elapsedTime > 10 && (
+                  <p className={styles.elapsedTime}>
+                    Elapsed: {elapsedTime}s
+                  </p>
+                )}
+                {elapsedTime > 30 && hash && (
+                  <div className={styles.actionButtons} style={{ marginTop: '16px' }}>
+                    <button 
+                      className={`${styles.checkButton} bit16-button has-blue-background`}
+                      onClick={handleManualCheck}
+                      disabled={isManuallyVerifying}
+                    >
+                      {isManuallyVerifying ? 'Checking...' : 'Check Status'}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Verifying State - Manual verification in progress */}
+            {mintingState === "verifying" && (
+              <>
+                <div className={styles.spinner}></div>
+                <h3 className={styles.statusTitle}>Verifying Transaction</h3>
+                <p className={styles.statusMessage}>
+                  Checking transaction status on blockchain...
+                </p>
+                {elapsedTime > 0 && (
+                  <p className={styles.elapsedTime}>
+                    Elapsed: {elapsedTime}s
+                  </p>
+                )}
               </>
             )}
 
@@ -213,10 +450,18 @@ export function CardRevealModal({
                 <h3 className={styles.statusTitle}>Error</h3>
                 <p className={styles.statusMessage}>{mintError}</p>
                 <div className={styles.actionButtons}>
-                  <button className={`${styles.retryButton} bit16-button has-green-background`} onClick={handleMint} disabled={isPending || isConfirming}>
+                  <button 
+                    className={`${styles.retryButton} bit16-button has-green-background`} 
+                    onClick={handleMint} 
+                    disabled={isPending || isConfirming}
+                  >
                     Retry Mint
                   </button>
-                  <button className={`${styles.cancelButton} bit16-button has-red-background`} onClick={onClose} style={{ marginTop: '10px' }}>
+                  <button 
+                    className={`${styles.cancelButton} bit16-button has-red-background`} 
+                    onClick={handleCloseClick} 
+                    style={{ marginTop: '10px' }}
+                  >
                     Close
                   </button>
                 </div>

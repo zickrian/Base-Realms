@@ -239,12 +239,16 @@ export default function ShopPage() {
       // This ensures the blockchain state is fully synced to database
       try {
         console.log('[Shop] Starting NFT sync after mint...');
-        await fetch('/api/cards/sync-nft', {
+        const syncResponse = await fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
             'x-wallet-address': address,
           },
         });
+        
+        if (!syncResponse.ok) {
+          console.error('[Shop] Sync NFT API returned error:', syncResponse.status);
+        }
         
         // Add delay to ensure blockchain state is settled and database is updated
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -256,15 +260,36 @@ export default function ShopPage() {
           refreshQuests(address),
         ]);
         console.log('[Shop] Inventory and quests refreshed successfully');
+        
+        // CRITICAL: Set flag for home page to detect new NFT
+        // This ensures My Deck shows new NFT immediately when user navigates to home
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pendingInventorySync', JSON.stringify({
+            address: address.toLowerCase(),
+            timestamp: Date.now(),
+            transactionHash,
+          }));
+          console.log('[Shop] Set pendingInventorySync flag for home page');
+        }
       } catch (syncError) {
         console.error('[Shop] Failed to sync NFT from blockchain:', syncError);
-        // Even on error, try to refresh inventory
+        // Even on error, try to refresh inventory and set flag
         await Promise.all([
           refreshInventory(address),
           refreshQuests(address),
         ]).catch((refreshError) => {
           console.warn('[Shop] Failed to refresh data:', refreshError);
         });
+        
+        // Still set flag for home to try sync again
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pendingInventorySync', JSON.stringify({
+            address: address.toLowerCase(),
+            timestamp: Date.now(),
+            transactionHash,
+            error: true,
+          }));
+        }
       }
     } catch (error) {
       console.warn('Free mint post-processing failed:', error);
