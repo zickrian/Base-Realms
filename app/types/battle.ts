@@ -44,20 +44,21 @@ export interface SelectedCardForBattle {
   image_url?: string | null; // Optional IPFS URL (not used in battle)
 }
 
-// Initial player stats (ATK: 100, HP: 500)
+// Initial player stats - Default fallback (uses selected card stats from database)
+// These values are only used if no card is selected
 export const INITIAL_PLAYER_STATS: CharacterStats = {
   name: 'Player',
-  currentHp: 500,
-  maxHp: 500,
-  atk: 100,
+  currentHp: 150,
+  maxHp: 150,
+  atk: 15,
 };
 
-// Initial enemy stats (ATK: 80, HP: 500)
+// Initial enemy stats (ATK: 25, HP: 100)
 export const INITIAL_ENEMY_STATS: CharacterStats = {
   name: 'Enemy',
-  currentHp: 500,
-  maxHp: 500,
-  atk: 80,
+  currentHp: 100,
+  maxHp: 100,
+  atk: 25,
 };
 
 // Battle store actions interface
