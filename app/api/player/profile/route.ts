@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     if (profile.selected_card_id) {
       const { data: cardData } = await supabaseAdmin
         .from('card_templates')
-        .select('id, name, rarity, image_url, atk, health')
+        .select('id, name, rarity, image_url, atk, health, token_id')
         .eq('id', profile.selected_card_id)
         .single();
       
@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
         selectedCard = {
           ...cardData,
           image_url: cardData.image_url ? getStorageUrl(cardData.image_url) : null,
+          token_id: cardData.token_id, // Include token_id for CharForBattle mapping
         };
       }
     }

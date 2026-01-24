@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './LoadingScreen.module.css';
-import { getStorageUrl, getCharacterImageUrl } from '../../utils/supabaseStorage';
+import { getStorageUrl } from '../../utils/supabaseStorage';
+import { useBattleStore } from '../../stores/battleStore';
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
-  playerRarity?: string | null;
+  playerRarity?: string | null; // Deprecated: kept for backward compatibility
 }
 
 // Default assets to preload
@@ -18,7 +19,7 @@ const DEFAULT_ASSETS_TO_PRELOAD = [
 // Loading tips
 const LOADING_TIPS = [
   'Prepare for battle!',
-  'Your dragon awaits...',
+  'Entering the colosseum...',
   'The arena is ready!',
   'Victory is near!',
 ];
@@ -27,22 +28,22 @@ const LOADING_TIPS = [
  * LoadingScreen Component
  * Pixel-style loading screen with asset preloading
  */
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, playerRarity }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, playerRarity: _playerRarity }) => {
   const [progress, setProgress] = useState(0);
   const [tip] = useState(() => LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]);
+  const { playerImageUrl } = useBattleStore();
 
   // Preload assets
   const preloadAssets = useCallback(async () => {
-    // Get character image URL based on rarity
-    const playerCharacterImageUrl = playerRarity 
-      ? getCharacterImageUrl(playerRarity)
-      : getCharacterImageUrl('common'); // Default to common
-
-    // Build assets list with player character image
+    // Build assets list with player character image from battle store
     const assetsToLoad = [
       ...DEFAULT_ASSETS_TO_PRELOAD,
-      playerCharacterImageUrl,
     ];
+
+    // Add player image if available (CharForBattle image)
+    if (playerImageUrl) {
+      assetsToLoad.push(playerImageUrl);
+    }
 
     const totalAssets = assetsToLoad.length;
     let loadedAssets = 0;
@@ -66,7 +67,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, pl
     });
 
     await Promise.all(loadPromises);
-  }, [playerRarity]);
+  }, [playerImageUrl]);
 
   useEffect(() => {
     let isMounted = true;

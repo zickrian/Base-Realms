@@ -9,7 +9,7 @@ import {
   VALID_TRANSITIONS,
   SelectedCardForBattle,
 } from '../types/battle';
-import { getCharacterImageUrl } from '../utils/supabaseStorage';
+import { getBattleImageUrl } from '../utils/battleImage';
 
 /**
  * Calculate damage result
@@ -32,6 +32,7 @@ const initialBattleState = {
   isHitEffectActive: false,
   hitTarget: null,
   playerImageUrl: null,
+  playerTokenId: null,
 };
 
 /**
@@ -44,7 +45,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   /**
    * Initialize battle with selected card stats
    * Sets player as first attacker
-   * Uses character image based on card rarity instead of card image
+   * Uses CharForBattle image based on NFT token_id
    */
   initBattle: (selectedCard?: SelectedCardForBattle) => {
     const playerStats = selectedCard 
@@ -56,10 +57,9 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         }
       : { ...INITIAL_PLAYER_STATS };
 
-    // Get character image URL based on rarity (not card image)
-    const characterImageUrl = selectedCard?.rarity 
-      ? getCharacterImageUrl(selectedCard.rarity)
-      : getCharacterImageUrl('common'); // Default to common if no rarity
+    // Get battle character image URL based on token_id
+    const tokenId = selectedCard?.token_id || null;
+    const characterImageUrl = tokenId ? getBattleImageUrl(tokenId) : null;
 
     set({
       status: 'ready',
@@ -71,6 +71,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       isHitEffectActive: false,
       hitTarget: null,
       playerImageUrl: characterImageUrl,
+      playerTokenId: tokenId,
     });
   },
 
@@ -165,6 +166,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     set({
       ...initialBattleState,
       playerImageUrl: null,
+      playerTokenId: null,
     });
   },
 

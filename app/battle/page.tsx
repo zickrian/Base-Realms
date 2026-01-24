@@ -76,13 +76,14 @@ export default function BattlePage() {
         return;
       }
 
-      // Initialize battle with selected card stats (including rarity for character image)
+      // Initialize battle with selected card stats (including token_id for character image)
       initBattle({
         atk: profile.selectedCard.atk,
         health: profile.selectedCard.health,
         name: profile.selectedCard.name,
         rarity: profile.selectedCard.rarity,
-        image_url: profile.selectedCard.image_url, // Optional, not used in battle
+        token_id: profile.selectedCard.token_id, // Token ID for CharForBattle image
+        image_url: profile.selectedCard.image_url, // Optional IPFS URL (not used in battle)
       });
       setPhase('battle');
     } catch {
@@ -91,18 +92,33 @@ export default function BattlePage() {
     }
   }, [initBattle, address, profile, router]);
 
-  // Handle battle end - navigate back to home (use replace to avoid back button issues)
-  const handleBattleEnd = useCallback(async () => {
+  /**
+   * Handle battle end - navigate back to home
+   * 
+   * Critical: Navigate IMMEDIATELY to prevent battle arena flash
+   * Strategy:
+   * 1. Reset battle state (synchronous)
+   * 2. Navigate to home (immediate, no blocking)
+   * 3. Clear selected card in background (async, non-blocking)
+   * 
+   * This prevents the race condition where async operations delay navigation,
+   * causing the battle page to briefly re-render before transitioning to home.
+   */
+  const handleBattleEnd = useCallback(() => {
+    // Step 1: Reset battle state immediately (synchronous operation)
     resetBattle();
-    // Clear selected card before returning to home to prevent auto-trigger
-    if (address) {
-      try {
-        await selectCard(address, null);
-      } catch (error) {
-        console.error('Failed to clear selected card:', error);
-      }
-    }
+    
+    // Step 2: Navigate to home immediately (no await, no blocking)
     router.replace('/home');
+    
+    // Step 3: Clear selected card in background (non-blocking)
+    // This runs after navigation starts, preventing any delay
+    if (address) {
+      selectCard(address, null).catch((error) => {
+        console.error('[Battle] Failed to clear selected card:', error);
+        // Non-critical error - user already navigated away
+      });
+    }
   }, [resetBattle, router, address, selectCard]);
 
   // Handle retry on error

@@ -31,6 +31,7 @@ export interface BattleState {
   isHitEffectActive: boolean;
   hitTarget: 'player' | 'enemy' | null;
   playerImageUrl: string | null;
+  playerTokenId: number | null; // NFT token ID for player character
 }
 
 // Selected card interface for battle initialization
@@ -39,7 +40,8 @@ export interface SelectedCardForBattle {
   health: number;
   name: string;
   rarity: string;
-  image_url?: string | null; // Optional, not used in battle (we use character image based on rarity)
+  token_id?: number | null; // NFT token ID for CharForBattle image mapping
+  image_url?: string | null; // Optional IPFS URL (not used in battle)
 }
 
 // Initial player stats (ATK: 100, HP: 500)
@@ -57,15 +59,6 @@ export const INITIAL_ENEMY_STATS: CharacterStats = {
   maxHp: 500,
   atk: 80,
 };
-
-// Selected card interface for battle initialization
-export interface SelectedCardForBattle {
-  atk: number;
-  health: number;
-  name: string;
-  rarity: string;
-  image_url?: string | null; // Optional, not used in battle (we use character image based on rarity)
-}
 
 // Battle store actions interface
 export interface BattleActions {

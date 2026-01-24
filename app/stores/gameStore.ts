@@ -36,6 +36,7 @@ export interface PlayerProfile {
     image_url: string | null;
     atk: number;
     health: number;
+    token_id: number | null; // NFT token ID for CharForBattle image mapping
   } | null;
 }
 

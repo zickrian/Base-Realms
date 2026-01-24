@@ -63,19 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update player profile with selected card
-    const { data: _profile, error: profileError } = await supabaseAdmin
-      .from('player_profiles')
-      .update({ selected_card_id: cardTemplateId })
-      .eq('user_id', user.id)
-      .select()
-      .single();
-
-    if (profileError) {
-      throw profileError;
-    }
-
-    // Get card template details
+    // Get card template details with token_id validation
     const { data: cardTemplate, error: cardError } = await supabaseAdmin
       .from('card_templates')
       .select('*')
@@ -89,10 +77,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate token_id exists for NFT cards (required for battle)
+    if (cardTemplate.source_type === 'nft' && !cardTemplate.token_id) {
+      return NextResponse.json(
+        { error: 'This card cannot be used in battle (missing token_id)' },
+        { status: 400 }
+      );
+    }
+
+    // Validate token_id exists for NFT cards (required for battle)
+    if (cardTemplate.source_type === 'nft' && !cardTemplate.token_id) {
+      return NextResponse.json(
+        { error: 'This card cannot be used in battle (missing token_id)' },
+        { status: 400 }
+      );
+    }
+
+    // Update player profile with selected card
+    const { data: _profile, error: profileError } = await supabaseAdmin
+      .from('player_profiles')
+      .update({ selected_card_id: cardTemplateId })
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (profileError) {
+      throw profileError;
+    }
+
     // Format image_url using getStorageUrl
     const formattedCard = {
       ...cardTemplate,
       image_url: cardTemplate.image_url ? getStorageUrl(cardTemplate.image_url) : null,
+      token_id: cardTemplate.token_id, // Include token_id for CharForBattle mapping
     };
 
     return NextResponse.json({

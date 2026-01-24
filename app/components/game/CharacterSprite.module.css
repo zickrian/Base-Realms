@@ -18,8 +18,8 @@
 
 /* Character sprite image */
 .sprite {
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
@@ -185,13 +185,13 @@
 /* Responsive styles - simplified for mobile-first container */
 @media (max-width: 480px) {
   .sprite {
-    width: 200px;
-    height: 200px;
+    width: 160px;
+    height: 160px;
   }
 
   .shadow {
-    width: 130px;
-    height: 35px;
+    width: 110px;
+    height: 30px;
   }
 
   .damageNumber {
@@ -200,18 +200,15 @@
   }
 }
 
-/* Treat everything else like mobile/tablet mixed (since max width is 430px) */
-/* Actually, since we force max-width 430px, we should just use the small sizes or let them be slightly larger if space permits */
-/* But the container is max 430px. So effectively we are always in "mobile" territory regarding available space. */
-
+/* Default sizes for container (max-width 430px) */
 .sprite {
-  width: 250px;
-  height: 250px;
+  width: 180px;
+  height: 180px;
 }
 
 .shadow {
-  width: 160px;
-  height: 40px;
+  width: 140px;
+  height: 35px;
 }
 
 .damageNumber {
