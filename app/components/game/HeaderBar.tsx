@@ -82,11 +82,11 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
         />
 
         {/* Burger Overlay (Light & Thin to match SVG style) */}
-        <div className={styles.burgerOverlay}>
-          <div className={styles.burgerLine}></div>
-          <div className={styles.burgerLine}></div>
-          <div className={styles.burgerLine}></div>
-        </div>
+        <span className={styles.burgerOverlay}>
+          <span className={styles.burgerLine}></span>
+          <span className={styles.burgerLine}></span>
+          <span className={styles.burgerLine}></span>
+        </span>
       </button>
 
       <div className={styles.currencySection}>
@@ -98,6 +98,19 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
           <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
           <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
+        <button 
+          className={styles.topupButton} 
+          onClick={() => console.log("Topup QRIS clicked")}
+          aria-label="Topup QRIS"
+        >
+          <Image 
+            src="/button/image.png" 
+            alt="QRIS Topup" 
+            width={48} 
+            height={48} 
+            className={styles.topupImage}
+          />
+        </button>
       </div>
     </div>
   );
