@@ -85,7 +85,7 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                                                             alt={item.cardTemplate.name}
                                                             className={styles.cardImage}
                                                             width={150}
-                                                            height={200}
+                                                            height={150}
                                                             loading="lazy"
                                                         />
                                                     )}
