@@ -140,10 +140,7 @@ export const WalletPopup = ({
                 height={24}
                 priority
               />
-              <div className={styles.balanceInfo}>
-                <div className={styles.balanceLabel}>ETH</div>
-                <div className={styles.balanceValue}>{formatBalance(ethBalance)}</div>
-              </div>
+              <div className={styles.balanceValue}>{formatBalance(ethBalance)}</div>
             </div>
 
             <div className={styles.balanceItem}>
@@ -154,20 +151,28 @@ export const WalletPopup = ({
                 height={24}
                 priority
               />
-              <div className={styles.balanceInfo}>
-                <div className={styles.balanceLabel}>IDRX</div>
-                <div className={styles.balanceValue}>{formatBalance(idrxBalance)}</div>
-              </div>
+              <div className={styles.balanceValue}>{formatBalance(idrxBalance)}</div>
             </div>
           </div>
 
-          {/* Base Name (if available) */}
-          {!isLoadingName && baseName && (
-            <div className={styles.baseNameSection}>
-              <div className={styles.sectionLabel}>Base Name</div>
+          {/* Base Name Section */}
+          <div className={styles.baseNameSection}>
+            <div className={styles.sectionLabel}>Base Name</div>
+            {isLoadingName ? (
+              <div className={styles.baseName}>Loading...</div>
+            ) : baseName ? (
               <div className={styles.baseName}>{baseName}</div>
-            </div>
-          )}
+            ) : (
+              <a 
+                href="https://www.base.org/names" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={styles.getBaseNameLink}
+              >
+                Didn&apos;t have Base Name Yet? Get One
+              </a>
+            )}
+          </div>
 
           {/* Wallet Address */}
           <div className={styles.addressSection}>
@@ -190,7 +195,7 @@ export const WalletPopup = ({
               className={styles.qrisIcon}
               priority
             />
-            <span className={styles.topupText}>Topup IDX via QRIS</span>
+            <span className={styles.topupText}>IDRX QRIS Topup</span>
           </button>
 
           {/* Action Buttons */}

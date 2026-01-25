@@ -143,6 +143,19 @@
   word-break: break-all;
 }
 
+.getBaseNameLink {
+  font-size: 1.1rem;
+  color: #4a90e2;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: 'VT323', monospace;
+}
+
+.getBaseNameLink:hover {
+  color: #2c5a8e;
+}
+
 /* Address Section */
 .addressSection {
   width: 100%;
