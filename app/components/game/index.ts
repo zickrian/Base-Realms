@@ -9,6 +9,7 @@ export { SwapMenu } from "./SwapMenu";
 export { LeaderboardMenu } from "./LeaderboardMenu";
 export { CardRevealModal } from "./CardRevealModal";
 export { SettingsMenu } from "./SettingsMenu";
+export { WalletPopup } from "./WalletPopup";
 
 // Battle Arena Components
 export { HealthBar } from "./HealthBar";

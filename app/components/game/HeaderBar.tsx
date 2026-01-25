@@ -5,6 +5,7 @@ import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
+import { WalletPopup } from "./WalletPopup";
 
 import styles from "./HeaderBar.module.css";
 
@@ -17,6 +18,7 @@ const BASE_CHAIN_ID = 8453;
 
 export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
+  const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
 
   const { data: ethBalanceData } = useBalance({
     address: address,
@@ -90,28 +92,34 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
       </button>
 
       <div className={styles.currencySection}>
-        <div className={styles.currencyItem}>
+        <div 
+          className={styles.currencyItem}
+          onClick={() => setIsWalletPopupOpen(true)}
+          style={{ cursor: 'pointer' }}
+        >
           <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
           <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
         </div>
-        <div className={styles.currencyItem}>
+        <div 
+          className={styles.currencyItem}
+          onClick={() => setIsWalletPopupOpen(true)}
+          style={{ cursor: 'pointer' }}
+        >
           <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
           <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
-        <button
-          className={styles.topupButton}
-          onClick={() => console.log("Topup QRIS clicked")}
-          aria-label="Topup QRIS"
-        >
-          <Image
-            src="/button/image.png"
-            alt="QRIS Topup"
-            width={48}
-            height={48}
-            className={styles.topupImage}
-          />
-        </button>
       </div>
+
+      {/* Wallet Popup */}
+      {isConnected && address && (
+        <WalletPopup
+          isOpen={isWalletPopupOpen}
+          onClose={() => setIsWalletPopupOpen(false)}
+          ethBalance={ethBalance}
+          idrxBalance={idrxBalance}
+          walletAddress={address}
+        />
+      )}
     </div>
   );
 });
