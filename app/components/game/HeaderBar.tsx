@@ -30,9 +30,9 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
   });
 
   const formatIDRX = (value: number) => {
-    if (value === 0) return "0.00";
-    if (value < 0.01) return value.toFixed(6);
-    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (value === 0) return "0.000000";
+    if (value < 0.000001) return value.toExponential(2);
+    return value.toFixed(6);
   };
 
   const idrxBalance = useMemo(() => {
@@ -46,9 +46,9 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
   }, [ethBalanceData, isConnected]);
 
   const formatETH = (value: number) => {
-    if (value === 0) return "0.000";
-    if (value < 0.001) return value.toFixed(6);
-    return value.toFixed(3);
+    if (value === 0) return "0.000000";
+    if (value < 0.000001) return value.toExponential(2);
+    return value.toFixed(6);
   };
 
   const [mounted, setMounted] = useState(false);
@@ -98,16 +98,16 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
           <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
           <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
         </div>
-        <button 
-          className={styles.topupButton} 
+        <button
+          className={styles.topupButton}
           onClick={() => console.log("Topup QRIS clicked")}
           aria-label="Topup QRIS"
         >
-          <Image 
-            src="/button/image.png" 
-            alt="QRIS Topup" 
-            width={48} 
-            height={48} 
+          <Image
+            src="/button/image.png"
+            alt="QRIS Topup"
+            width={48}
+            height={48}
             className={styles.topupImage}
           />
         </button>
