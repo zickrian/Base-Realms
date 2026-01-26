@@ -13,14 +13,19 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { type Address } from 'viem';
 import { 
   prepareBattle, 
-  approveIDRX, 
   executeBattle,
   type BattlePreparation,
 } from '@/app/lib/blockchain/battleService';
+import {
+  IDRX_CONTRACT_ADDRESS,
+  IDRX_CONTRACT_ABI,
+  BATTLE_CONTRACT_ADDRESS,
+  BATTLE_FEE_AMOUNT,
+} from '@/app/lib/blockchain/contracts';
 
 export interface BattleState {
   // Loading states
@@ -75,6 +80,18 @@ export interface UseBattleReturn {
  */
 export function useBattle(): UseBattleReturn {
   const { address } = useAccount();
+  
+  // Wagmi hooks for contract writes (properly handles chain via OnchainKit)
+  const { 
+    writeContract, 
+    data: approvalHash, 
+    isPending: isWritePending,
+    reset: resetWriteContract,
+  } = useWriteContract();
+  
+  const { isLoading: isWaitingForReceipt, isSuccess: approvalSuccess } = useWaitForTransactionReceipt({
+    hash: approvalHash,
+  });
   
   const [state, setState] = useState<BattleState>({
     isPreparing: false,
@@ -135,6 +152,7 @@ export function useBattle(): UseBattleReturn {
 
   /**
    * Approve IDRX tokens for Battle Contract
+   * Uses wagmi's writeContract which properly handles chain switching via OnchainKit
    */
   const approve = useCallback(async () => {
     if (!address) {
@@ -145,24 +163,21 @@ export function useBattle(): UseBattleReturn {
     setState(prev => ({ ...prev, isApproving: true, error: null }));
 
     try {
-      console.log('[useBattle] Approving IDRX...');
-      const result = await approveIDRX(address as Address);
+      console.log('[useBattle] Approving IDRX via wagmi...');
+      
+      // Use wagmi writeContract with explicit chainId for Base
+      writeContract({
+        address: IDRX_CONTRACT_ADDRESS as Address,
+        abi: IDRX_CONTRACT_ABI,
+        functionName: 'approve',
+        args: [BATTLE_CONTRACT_ADDRESS as Address, BigInt(BATTLE_FEE_AMOUNT)],
+        chainId: 8453, // Base chain ID - forces transaction on Base
+      });
 
-      if (!result.success) {
-        throw new Error(result.error || 'Approval failed');
-      }
-
-      console.log('[useBattle] IDRX approved:', result.txHash);
-
-      // Update preparation state (approval no longer needed)
-      setState(prev => ({
-        ...prev,
-        isApproving: false,
-        preparation: prev.preparation ? {
-          ...prev.preparation,
-          needsApproval: false,
-        } : null,
-      }));
+      // Wait for the transaction to be submitted
+      // The actual waiting is handled by useWaitForTransactionReceipt
+      console.log('[useBattle] Approval transaction submitted');
+      
     } catch (error) {
       console.error('[useBattle] Approval error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Approval failed';
@@ -171,9 +186,31 @@ export function useBattle(): UseBattleReturn {
         isApproving: false,
         error: errorMessage,
       }));
+      resetWriteContract();
       throw error;
     }
-  }, [address]);
+  }, [address, writeContract, resetWriteContract]);
+  
+  // Handle approval success
+  const handleApprovalSuccess = useCallback(() => {
+    if (approvalSuccess && state.isApproving) {
+      console.log('[useBattle] IDRX approval confirmed:', approvalHash);
+      setState(prev => ({
+        ...prev,
+        isApproving: false,
+        preparation: prev.preparation ? {
+          ...prev.preparation,
+          needsApproval: false,
+        } : null,
+      }));
+      resetWriteContract();
+    }
+  }, [approvalSuccess, approvalHash, state.isApproving, resetWriteContract]);
+  
+  // Call handleApprovalSuccess when approval succeeds
+  if (approvalSuccess && state.isApproving) {
+    handleApprovalSuccess();
+  }
 
   /**
    * Execute battle on-chain

@@ -25,7 +25,7 @@ export const IDRX_CONTRACT_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22
 export const MERKLE_ROOT = "0xf92321255d63a7a9d08684e50479f5d9ca625dfd8c902319e28d10bd029406c8" as const;
 
 /** Battle fee amount (5 IDRX) */
-export const BATTLE_FEE_AMOUNT = "5000000000000000000" as const; // 5 IDRX in wei (18 decimals)
+export const BATTLE_FEE_AMOUNT = "500" as const; // 5 IDRX (2 decimals - IDRX uses 2 decimals, not 18)
 
 // ============================================================================
 // CONTRACT ABIs

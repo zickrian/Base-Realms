@@ -14,7 +14,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSwitchChain, useChainId } from 'wagmi';
+import { base } from 'viem/chains';
 import { useGameStore } from '@/app/stores/gameStore';
 import { useBattle } from '@/app/hooks/useBattle';
 import styles from './BattlePreparation.module.css';
@@ -33,10 +34,14 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   onError,
 }) => {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { profile } = useGameStore();
   const { state, prepare, approve } = useBattle();
   const [currentStep, setCurrentStep] = useState<string>('Initializing...');
+  const [isReadyForBattle, setIsReadyForBattle] = useState(false);
 
+  // Step 1: Check chain and switch if needed, then initialize battle
   useEffect(() => {
     const initializeBattle = async () => {
       if (!address) {
@@ -44,6 +49,21 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         return;
       }
 
+      // Check if we need to switch chain
+      if (chainId !== base.id) {
+        setCurrentStep('Switching to Base network...');
+        try {
+          switchChain({ chainId: base.id });
+          // Don't continue here - wait for chainId to update
+          return;
+        } catch (error) {
+          console.error('[BattlePreparation] Chain switch error:', error);
+          onError('Please switch to Base network to battle.');
+          return;
+        }
+      }
+
+      // Already on Base, proceed with battle preparation
       if (!profile?.selectedCard) {
         onError('No card selected. Please select a card from your deck.');
         return;
@@ -56,13 +76,10 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
       }
 
       try {
-        // Step 1: Prepare battle (get proof, check balance/allowance)
+        // Prepare battle (get proof, check balance/allowance)
         setCurrentStep('Checking IDRX balance...');
         await prepare(tokenId);
-
-        // Wait for state to update
-        await new Promise(resolve => setTimeout(resolve, 100));
-
+        setIsReadyForBattle(true);
       } catch (error) {
         console.error('[BattlePreparation] Initialization error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to prepare battle';
@@ -72,12 +89,12 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
     initializeBattle();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, [address, chainId]); // Re-run when chainId changes (after switch)
 
   // Handle state changes after preparation
   useEffect(() => {
     const handlePreparationState = async () => {
-      if (!state.preparation) return;
+      if (!state.preparation || !isReadyForBattle) return;
 
       // Check for insufficient balance FIRST
       if (!state.preparation.hasEnoughIDRX) {
@@ -112,7 +129,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
     handlePreparationState();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.preparation]); // Run when preparation data is ready
+  }, [state.preparation, isReadyForBattle]); // Run when preparation data is ready
 
   // Show loading screen with current step
   return (
@@ -124,6 +141,12 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         
         {state.isPreparing && (
           <p className={styles.detail}>Generating Merkle proof...</p>
+        )}
+        
+        {isSwitchingChain && (
+          <p className={styles.detail}>
+            Please confirm the network switch in your wallet.
+          </p>
         )}
         
         {state.isApproving && (
