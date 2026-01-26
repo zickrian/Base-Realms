@@ -244,6 +244,15 @@
     line-height: 1;
 }
 
+/* Heart SVG icon specific styling */
+.heartIcon {
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8));
+    image-rendering: pixelated;
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain;
+}
+
 .statValue {
     font-size: 18px;
     font-weight: bold;

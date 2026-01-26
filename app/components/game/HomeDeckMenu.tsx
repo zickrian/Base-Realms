@@ -106,7 +106,13 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                                                             <span className={styles.statValue}>{item.cardTemplate.atk || 0}</span>
                                                         </div>
                                                         <div className={styles.statItem}>
-                                                            <span className={styles.statIcon}>❤️</span>
+                                                            <Image
+                                                                src="/Assets/vecteezy_heart-pixel-art_12013908.svg"
+                                                                alt="HP"
+                                                                width={18}
+                                                                height={18}
+                                                                className={styles.heartIcon}
+                                                            />
                                                             <span className={styles.statValue}>{item.cardTemplate.health || 0}</span>
                                                         </div>
                                                     </div>
