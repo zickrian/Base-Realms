@@ -80,6 +80,43 @@
   transform: translateY(-2px);
 }
 
+.retryButton:active {
+  transform: translateY(2px);
+}
+
+/* Processing Screen */
+.processingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #ffffff;
+}
+
+.processingSpinner {
+  font-size: 4rem;
+  animation: spin 2s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.processingText {
+  font-family: 'VT323', monospace;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .errorTitle {

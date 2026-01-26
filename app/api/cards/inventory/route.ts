@@ -29,13 +29,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Select only needed fields instead of card_templates(*)
+    // Select only needed fields including used and token_id for battle tracking
     const { data: inventory, error: inventoryError } = await supabaseAdmin
       .from('user_inventory')
       .select(`
         id,
         quantity,
         acquired_at,
+        used,
+        token_id,
         card_templates!inner(
           id,
           name,
@@ -43,7 +45,9 @@ export async function GET(request: NextRequest) {
           image_url,
           description,
           token_id,
-          contract_address
+          contract_address,
+          atk,
+          health
         )
       `)
       .eq('user_id', user.id)

@@ -37,6 +37,7 @@ export interface PlayerProfile {
     atk: number;
     health: number;
     token_id: number | null; // NFT token ID for CharForBattle image mapping
+    used?: boolean; // Battle usage status (one-time use)
   } | null;
 }
 
@@ -64,8 +65,13 @@ export interface InventoryCard {
     rarity: string;
     imageUrl: string;
     description: string | null;
+    atk?: number;
+    health?: number;
+    token_id?: number | null;
   };
   quantity: number;
+  used?: boolean; // Battle usage status
+  token_id?: number | null; // NFT token ID
 }
 
 interface GameState {
@@ -124,11 +130,16 @@ interface CardTemplateApiResponse {
   rarity: string;
   image_url: string | null;
   description: string | null;
+  atk?: number;
+  health?: number;
+  token_id?: number | null;
 }
 
 interface InventoryItemApiResponse {
   id: string;
   quantity: number;
+  used?: boolean;
+  token_id?: number | null;
   card_templates: CardTemplateApiResponse | null;
 }
 
@@ -258,7 +269,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
       });
 
-      // Format inventory
+      // Format inventory with battle tracking fields
       const formattedInventory: InventoryCard[] = (inventoryData?.inventory || []).map((item: InventoryItemApiResponse) => ({
         id: item.id,
         cardTemplate: {
@@ -267,8 +278,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           rarity: item.card_templates?.rarity || 'common',
           imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
           description: item.card_templates?.description || null,
+          atk: item.card_templates?.atk,
+          health: item.card_templates?.health,
+          token_id: item.card_templates?.token_id,
         },
         quantity: item.quantity || 1,
+        used: item.used || false,
+        token_id: item.token_id || item.card_templates?.token_id || null,
       }));
 
       // CRITICAL: Only set isInitialized to true AFTER all data is processed and set
@@ -392,8 +408,13 @@ export const useGameStore = create<GameState>((set, get) => ({
             rarity: item.card_templates?.rarity || 'common',
             imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
             description: item.card_templates?.description || null,
+            atk: item.card_templates?.atk,
+            health: item.card_templates?.health,
+            token_id: item.card_templates?.token_id,
           },
           quantity: item.quantity || 1,
+          used: item.used || false,
+          token_id: item.token_id || item.card_templates?.token_id || null,
         }));
         set({ inventory: formatted, inventoryLoading: false, isSyncing: false });
         console.log('[GameStore] Inventory refreshed successfully:', formatted.length, 'cards');

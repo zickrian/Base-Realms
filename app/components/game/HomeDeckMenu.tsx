@@ -75,9 +75,12 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                             <>
                                 {inventory.map((item) => {
                                     const isSelected = profile?.selectedCardId === item.cardTemplate.id;
+                                    const isUsed = item.used === true;
+                                    const isLocked = isUsed; // NFT is locked if it has been used in battle
+                                    
                                     return (
                                         <div key={item.id} className={styles.cardSlotWrapper}>
-                                            <div className={`${styles.cardSlot} ${isSelected ? styles.cardSlotSelected : ''}`}>
+                                            <div className={`${styles.cardSlot} ${isSelected ? styles.cardSlotSelected : ''} ${isLocked ? styles.cardSlotLocked : ''}`}>
                                                 <div className={styles.cardInner}>
                                                     {item.cardTemplate.imageUrl && (
                                                         <Image
@@ -89,17 +92,24 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                                                             loading="lazy"
                                                         />
                                                     )}
+                                                    {isLocked && (
+                                                        <div className={styles.lockOverlay}>
+                                                            <span className={styles.lockIcon}>🔒</span>
+                                                            <span className={styles.lockText}>Used</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <button
-                                                className={`${styles.useButton} bit16-button ${isSelected ? styles.useButtonSelected : ''}`}
+                                                className={`${styles.useButton} bit16-button ${isSelected ? styles.useButtonSelected : ''} ${isLocked ? styles.useButtonLocked : ''}`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUseCard(item.cardTemplate.id);
                                                 }}
-                                                disabled={selectingCard === item.cardTemplate.id}
+                                                disabled={selectingCard === item.cardTemplate.id || isLocked}
+                                                title={isLocked ? 'This NFT has been used in battle and is permanently locked' : ''}
                                             >
-                                                {selectingCard === item.cardTemplate.id ? '...' : isSelected ? 'SELECTED' : 'USE'}
+                                                {selectingCard === item.cardTemplate.id ? '...' : isSelected ? 'SELECTED' : isLocked ? 'LOCKED' : 'USE'}
                                             </button>
                                         </div>
                                     );
