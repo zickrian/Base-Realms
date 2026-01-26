@@ -18,6 +18,7 @@ import { type Address } from 'viem';
 import { 
   prepareBattle, 
   executeBattle,
+  mintWinToken,
   type BattlePreparation,
 } from '@/app/lib/blockchain/battleService';
 import {
@@ -31,6 +32,7 @@ export interface BattleState {
   // Loading states
   isPreparing: boolean;
   isApproving: boolean;
+  isMinting: boolean;
   isBattling: boolean;
   isProcessing: boolean;
 
@@ -54,6 +56,7 @@ export interface UseBattleReturn {
   // Actions
   prepare: (tokenId: number) => Promise<void>;
   approve: () => Promise<void>;
+  mintWin: () => Promise<void>;
   battle: () => Promise<void>;
   markAsUsed: (tokenId: number) => Promise<void>;
   reset: () => void;
@@ -65,7 +68,7 @@ export interface UseBattleReturn {
  * @returns Battle state and action functions
  * 
  * @example
- * const { state, prepare, approve, battle } = useBattle();
+ * const { state, prepare, approve, mintWin, battle } = useBattle();
  * 
  * // 1. Prepare battle
  * await prepare(tokenId);
@@ -75,7 +78,12 @@ export interface UseBattleReturn {
  *   await approve();
  * }
  * 
- * // 3. Execute battle
+ * // 3. Mint WIN token if not already minted
+ * if (!state.preparation?.hasWinTokenMinted) {
+ *   await mintWin();
+ * }
+ * 
+ * // 4. Execute battle
  * await battle();
  */
 export function useBattle(): UseBattleReturn {
@@ -83,19 +91,19 @@ export function useBattle(): UseBattleReturn {
   
   // Wagmi hooks for contract writes (properly handles chain via OnchainKit)
   const { 
-    writeContract, 
+    writeContract,
     data: approvalHash, 
-    isPending: isWritePending,
     reset: resetWriteContract,
   } = useWriteContract();
   
-  const { isLoading: isWaitingForReceipt, isSuccess: approvalSuccess } = useWaitForTransactionReceipt({
+  const { isSuccess: approvalSuccess } = useWaitForTransactionReceipt({
     hash: approvalHash,
   });
   
   const [state, setState] = useState<BattleState>({
     isPreparing: false,
     isApproving: false,
+    isMinting: false,
     isBattling: false,
     isProcessing: false,
     preparation: null,
@@ -107,6 +115,7 @@ export function useBattle(): UseBattleReturn {
    * Prepare for battle
    * - Gets Merkle proof
    * - Checks IDRX balance and allowance
+   * - Checks WIN token minting status
    */
   const prepare = useCallback(async (tokenId: number) => {
     if (!address) {
@@ -211,6 +220,50 @@ export function useBattle(): UseBattleReturn {
   if (approvalSuccess && state.isApproving) {
     handleApprovalSuccess();
   }
+
+  /**
+   * Mint WIN token for battle
+   * User must mint this BEFORE battle
+   * Contract holds it and distributes only on win
+   */
+  const mintWin = useCallback(async () => {
+    if (!address) {
+      setState(prev => ({ ...prev, error: 'Wallet not connected' }));
+      return;
+    }
+
+    setState(prev => ({ ...prev, isMinting: true, error: null }));
+
+    try {
+      console.log('[useBattle] Minting WIN token...');
+      
+      const result = await mintWinToken(address as Address);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'WIN token minting failed');
+      }
+
+      console.log('[useBattle] WIN token minted successfully:', result.txHash);
+
+      setState(prev => ({
+        ...prev,
+        isMinting: false,
+        preparation: prev.preparation ? {
+          ...prev.preparation,
+          hasWinTokenMinted: true,
+        } : null,
+      }));
+    } catch (error) {
+      console.error('[useBattle] WIN token minting error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed';
+      setState(prev => ({
+        ...prev,
+        isMinting: false,
+        error: errorMessage,
+      }));
+      throw error;
+    }
+  }, [address]);
 
   /**
    * Execute battle on-chain
@@ -320,6 +373,7 @@ export function useBattle(): UseBattleReturn {
     setState({
       isPreparing: false,
       isApproving: false,
+      isMinting: false,
       isBattling: false,
       isProcessing: false,
       preparation: null,
@@ -332,6 +386,7 @@ export function useBattle(): UseBattleReturn {
     state,
     prepare,
     approve,
+    mintWin,
     battle,
     markAsUsed,
     reset,

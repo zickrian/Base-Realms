@@ -7,9 +7,11 @@ import styles from './page.module.css';
 import { LoadingScreen } from '../components/game/LoadingScreen';
 import { BattlePreparation } from '../components/game/BattlePreparation';
 import { BattleArena } from '../components/game/BattleArena';
+import { QRISTopupPopup } from '../components/game/QRISTopupPopup';
 import { useBattleStore } from '../stores/battleStore';
 import { useGameStore } from '../stores/gameStore';
 import { useBattle } from '../hooks/useBattle';
+import { BATTLE_FEE_AMOUNT } from '../lib/blockchain/contracts';
 
 type BattlePhase = 'loading' | 'preparation' | 'battle' | 'processing' | 'error';
 
@@ -31,8 +33,9 @@ export default function BattlePage() {
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
   const [isExiting, setIsExiting] = useState(false);
+  const [showQRISPopup, setShowQRISPopup] = useState(false);
   const { initBattle, resetBattle } = useBattleStore();
-  const { state: battleState, battle: executeBattle, markAsUsed, reset: resetBattleHook } = useBattle();
+  const { state: battleState, battle: executeBattle, markAsUsed, reset: resetBattleHook, prepare } = useBattle();
 
   // Load profile if not available
   useEffect(() => {
@@ -127,14 +130,53 @@ export default function BattlePage() {
 
   /**
    * Handle preparation error
+   * Check for insufficient IDRX and show QRIS popup
    */
   const handlePreparationError = useCallback((errorMessage: string) => {
-    setError(errorMessage);
-    setPhase('error');
-    setTimeout(() => {
-      router.replace('/home');
-    }, 3000);
+    // Check if error is insufficient IDRX balance
+    if (errorMessage.toLowerCase().includes('insufficient') && errorMessage.toLowerCase().includes('idrx')) {
+      // Show QRIS top-up popup instead of error
+      setShowQRISPopup(true);
+    } else {
+      // Show error and redirect to home for other errors
+      setError(errorMessage);
+      setPhase('error');
+      setTimeout(() => {
+        router.replace('/home');
+      }, 3000);
+    }
   }, [router]);
+
+  /**
+   * Handle QRIS popup close - redirect to home
+   */
+  const handleQRISClose = useCallback(() => {
+    setShowQRISPopup(false);
+    router.replace('/home');
+  }, [router]);
+
+  /**
+   * Handle QRIS top-up complete - retry battle preparation
+   */
+  const handleQRISTopupComplete = useCallback(async () => {
+    setShowQRISPopup(false);
+    
+    // Retry preparation with refreshed balance
+    if (address && profile?.selectedCard?.token_id != null) {
+      try {
+        await prepare(profile.selectedCard.token_id);
+        // If successful, go back to preparation phase
+        setPhase('preparation');
+      } catch {
+        // Still insufficient, show error and go home
+        setError('Still insufficient IDRX balance. Please top up and try again.');
+        setPhase('error');
+        setTimeout(() => {
+          router.replace('/home');
+        }, 3000);
+      }
+    }
+  }, [address, profile, prepare, router]);
 
   /**
    * Handle battle end - AFTER visual battle animation completes
@@ -188,9 +230,9 @@ export default function BattlePage() {
       ]);
       
       console.log('[BattlePage] Post-battle processing complete, NFT deselected');
-    } catch (error) {
-      console.error('[BattlePage] Battle execution error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
+    } catch (_battleError) {
+      console.error('[BattlePage] Battle execution error:', _battleError);
+      const errorMessage = _battleError instanceof Error ? _battleError.message : 'Battle execution failed';
       setError(errorMessage);
       setPhase('error');
       
@@ -210,13 +252,7 @@ export default function BattlePage() {
     setTimeout(() => {
       router.replace('/home');
     }, 1000);
-  }, [address, profile, executeBattle, battleState, markAsUsed, refreshInventory, refreshProfile, resetBattle, resetBattleHook, router]);
-
-  // Handle retry on error
-  const handleRetry = useCallback(() => {
-    setError(null);
-    setPhase('loading');
-  }, []);
+  }, [address, profile, executeBattle, battleState, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -278,8 +314,15 @@ export default function BattlePage() {
               
               {error && error.toLowerCase().includes('approval') && (
                 <div className={styles.errorHelp}>
-                  <p>💡 You must approve the Battle Contract to spend IDRX.</p>
-                  <p>Please try again and approve the transaction.</p>
+                  <p>💡 Transaction was rejected or failed.</p>
+                  <p>Please try again and approve in your wallet.</p>
+                </div>
+              )}
+              
+              {error && error.toLowerCase().includes('mint') && (
+                <div className={styles.errorHelp}>
+                  <p>💡 WIN token minting failed.</p>
+                  <p>Please try again and confirm the transaction.</p>
                 </div>
               )}
               
@@ -304,6 +347,17 @@ export default function BattlePage() {
     <div className={styles.battlePageContainer} data-testid="battle-page">
       <div className={styles.mobileFrame}>
         {renderContent()}
+        
+        {/* QRIS Top-up Popup */}
+        {showQRISPopup && battleState.preparation && (
+          <QRISTopupPopup
+            isOpen={showQRISPopup}
+            onClose={handleQRISClose}
+            onTopupComplete={handleQRISTopupComplete}
+            currentBalance={battleState.preparation.idrxBalance}
+            requiredAmount={BATTLE_FEE_AMOUNT}
+          />
+        )}
       </div>
     </div>
   );

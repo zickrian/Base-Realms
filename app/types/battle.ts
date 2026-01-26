@@ -53,12 +53,12 @@ export const INITIAL_PLAYER_STATS: CharacterStats = {
   atk: 15,
 };
 
-// Initial enemy stats (ATK: 25, HP: 100)
+// Initial enemy stats (ATK: 5, HP: 25)
 export const INITIAL_ENEMY_STATS: CharacterStats = {
   name: 'Enemy',
-  currentHp: 100,
-  maxHp: 100,
-  atk: 25,
+  currentHp: 25,
+  maxHp: 25,
+  atk: 5,
 };
 
 // Battle store actions interface

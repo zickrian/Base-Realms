@@ -37,7 +37,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   const chainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { profile } = useGameStore();
-  const { state, prepare, approve } = useBattle();
+  const { state, prepare, approve, mintWin } = useBattle();
   const [currentStep, setCurrentStep] = useState<string>('Initializing...');
   const [isReadyForBattle, setIsReadyForBattle] = useState(false);
 
@@ -102,24 +102,39 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         return;
       }
 
-      // Check if approval needed
+      // Step 1: Check if IDRX approval needed
       if (state.preparation.needsApproval && !state.isApproving) {
         setCurrentStep('Requesting IDRX approval...');
         try {
           await approve();
-          setCurrentStep('Approval confirmed!');
+          setCurrentStep('IDRX approval confirmed!');
+          // Continue to next step after approval
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Approval failed. You must approve IDRX spending to battle.';
+          onError(errorMessage);
+          return;
+        }
+      }
+
+      // Step 2: Check if WIN token minting needed
+      if (!state.preparation.hasWinTokenMinted && !state.isMinting) {
+        setCurrentStep('Minting WIN token...');
+        try {
+          await mintWin();
+          setCurrentStep('WIN token minted successfully!');
           
-          // Proceed to battle
+          // Proceed to battle after both approvals complete
           setTimeout(() => {
             setCurrentStep('Entering battle arena...');
             onReady();
           }, 500);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Approval failed. You must approve IDRX spending to battle.';
+          const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed. Please try again.';
           onError(errorMessage);
+          return;
         }
-      } else if (!state.preparation.needsApproval) {
-        // No approval needed, proceed directly
+      } else if (state.preparation.hasWinTokenMinted && !state.preparation.needsApproval) {
+        // Both requirements met, proceed directly
         setCurrentStep('Entering battle arena...');
         setTimeout(() => {
           onReady();
@@ -129,7 +144,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
     handlePreparationState();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.preparation, isReadyForBattle]); // Run when preparation data is ready
+  }, [state.preparation, state.isApproving, state.isMinting, isReadyForBattle]); // Run when preparation states change
 
   // Show loading screen with current step
   return (
@@ -151,7 +166,13 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         
         {state.isApproving && (
           <p className={styles.detail}>
-            Please approve the transaction in your wallet to allow battle payment.
+            Please approve the IDRX transaction in your wallet.
+          </p>
+        )}
+        
+        {state.isMinting && (
+          <p className={styles.detail}>
+            Please confirm WIN token minting in your wallet.
           </p>
         )}
         

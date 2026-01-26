@@ -15,8 +15,10 @@ import { base } from 'viem/chains';
 import {
   BATTLE_CONTRACT_ADDRESS,
   IDRX_CONTRACT_ADDRESS,
+  WINTOKEN_CONTRACT_ADDRESS,
   BATTLE_CONTRACT_ABI,
   IDRX_CONTRACT_ABI,
+  WINTOKEN_CONTRACT_ABI,
   BATTLE_FEE_AMOUNT,
 } from './contracts';
 import { getProofForToken, type NFTStats } from './merkleService';
@@ -31,6 +33,7 @@ export interface BattlePreparation {
   proof: string[];
   hasEnoughIDRX: boolean;
   needsApproval: boolean;
+  hasWinTokenMinted: boolean;
   idrxBalance: string;
   currentAllowance: string;
 }
@@ -171,6 +174,89 @@ export async function checkIDRXAllowance(walletAddress: Address): Promise<string
   }
 }
 
+// ============================================================================
+// WIN TOKEN OPERATIONS
+// ============================================================================
+
+/**
+ * Check if user has already minted WIN token
+ * 
+ * @param walletAddress - User's wallet address
+ * @returns true if already minted, false otherwise
+ */
+export async function checkWinTokenMinted(walletAddress: Address): Promise<boolean> {
+  try {
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http(),
+    });
+
+    const hasMinted = await publicClient.readContract({
+      address: WINTOKEN_CONTRACT_ADDRESS as Address,
+      abi: WINTOKEN_CONTRACT_ABI,
+      functionName: 'hasMinted',
+      args: [walletAddress],
+    });
+
+    return hasMinted as boolean;
+  } catch (error) {
+    console.error('[BattleService] Error checking WIN token status:', error);
+    throw new Error('Failed to check WIN token status');
+  }
+}
+
+/**
+ * Mint WIN token for battle
+ * User must mint this BEFORE battle starts
+ * Contract will hold and distribute it only if user wins
+ * 
+ * @param walletAddress - User's wallet address
+ * @returns Minting result with transaction hash
+ */
+export async function mintWinToken(walletAddress: Address): Promise<ApprovalResult> {
+  try {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      return {
+        success: false,
+        error: 'Wallet not connected',
+      };
+    }
+
+    const walletClient = createWalletClient({
+      chain: base,
+      transport: custom(window.ethereum),
+    });
+
+    const txHash = await walletClient.writeContract({
+      address: WINTOKEN_CONTRACT_ADDRESS as Address,
+      abi: WINTOKEN_CONTRACT_ABI,
+      functionName: 'mint',
+      args: [],
+      account: walletAddress,
+    });
+
+    // Wait for transaction confirmation
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http(),
+    });
+
+    await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    return {
+      success: true,
+      txHash,
+    };
+  } catch (error) {
+    console.error('[BattleService] WIN token minting error:', error);
+    const parsedError = parseBattleError(error);
+    return {
+      success: false,
+      error: parsedError.userMessage,
+    };
+  }
+}
+
 /**
  * Approve Battle Contract to spend IDRX tokens
  * 
@@ -236,6 +322,7 @@ export async function approveIDRX(
  * 1. Gets Merkle proof for the token
  * 2. Checks IDRX balance
  * 3. Checks approval status
+ * 4. Checks WIN token minting status
  * 
  * @param tokenId - NFT token ID
  * @param walletAddress - User's wallet address
@@ -257,12 +344,16 @@ export async function prepareBattle(
     const allowance = await checkIDRXAllowance(walletAddress);
     const needsApproval = BigInt(allowance) < BigInt(BATTLE_FEE_AMOUNT);
 
+    // Check if WIN token already minted
+    const hasWinTokenMinted = await checkWinTokenMinted(walletAddress);
+
     return {
       tokenId,
       stats,
       proof,
       hasEnoughIDRX,
       needsApproval,
+      hasWinTokenMinted,
       idrxBalance: balance,
       currentAllowance: allowance,
     };
