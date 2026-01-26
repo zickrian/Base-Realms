@@ -17,7 +17,9 @@
     "@tanstack/react-query": "^5.81.5",
     "dotenv": "^17.2.3",
     "ethers": "^6.16.0",
+    "keccak256": "^1.0.6",
     "lucide-react": "^0.562.0",
+    "merkletreejs": "^0.6.0",
     "next": "15.5.7",
     "react": "^19.0.3",
     "react-dom": "^19.0.3",
@@ -41,5 +43,10 @@
     "jest-environment-jsdom": "^30.2.0",
     "ts-jest": "^29.4.6",
     "typescript": "^5"
-  }
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain`](https://www.npmjs.com/package/create-onchain).",
+  "main": "empty-module.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
