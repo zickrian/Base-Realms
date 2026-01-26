@@ -27,7 +27,7 @@ type BattlePhase = 'loading' | 'preparation' | 'battle' | 'processing' | 'error'
 export default function BattlePage() {
   const router = useRouter();
   const { address } = useAccount();
-  const { profile, refreshProfile, refreshInventory } = useGameStore();
+  const { profile, refreshProfile, refreshInventory, selectCard } = useGameStore();
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
   const [isExiting, setIsExiting] = useState(false);
@@ -177,13 +177,17 @@ export default function BattlePage() {
       // Mark NFT as used in database
       await markAsUsed(tokenId);
       
+      // IMPORTANT: Deselect the used NFT so user must choose another one
+      console.log('[BattlePage] Deselecting used NFT...');
+      await selectCard(address, null);
+      
       // Refresh data to reflect changes
       await Promise.all([
         refreshInventory(address),
         refreshProfile(address),
       ]);
       
-      console.log('[BattlePage] Post-battle processing complete');
+      console.log('[BattlePage] Post-battle processing complete, NFT deselected');
     } catch (error) {
       console.error('[BattlePage] Battle execution error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
@@ -257,13 +261,37 @@ export default function BattlePage() {
       case 'error':
         return (
           <div className={styles.errorContainer}>
-            <h1 className={styles.errorTitle}>Error</h1>
-            <p className={styles.errorMessage}>
-              {error || 'Something went wrong. Please try again.'}
-            </p>
-            <button className={styles.retryButton} onClick={() => router.replace('/home')}>
-              Return to Home
-            </button>
+            <div className={styles.errorBox}>
+              <div className={styles.errorIcon}>⚠️</div>
+              <h1 className={styles.errorTitle}>Cannot Start Battle</h1>
+              <p className={styles.errorMessage}>
+                {error || 'Something went wrong. Please try again.'}
+              </p>
+              
+              {/* Show specific help based on error type */}
+              {error && error.toLowerCase().includes('balance') && (
+                <div className={styles.errorHelp}>
+                  <p>💡 You need at least 5 IDRX tokens to battle.</p>
+                  <p>Please get more IDRX and try again.</p>
+                </div>
+              )}
+              
+              {error && error.toLowerCase().includes('approval') && (
+                <div className={styles.errorHelp}>
+                  <p>💡 You must approve the Battle Contract to spend IDRX.</p>
+                  <p>Please try again and approve the transaction.</p>
+                </div>
+              )}
+              
+              {error && error.toLowerCase().includes('used') && (
+                <div className={styles.errorHelp}>
+                  <p>💡 This NFT has already been used in battle.</p>
+                  <p>Please select a different NFT from your deck.</p>
+                </div>
+              )}
+              
+              <p className={styles.errorHint}>Redirecting to home in 3 seconds...</p>
+            </div>
           </div>
         );
 

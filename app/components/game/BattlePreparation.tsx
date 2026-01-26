@@ -57,33 +57,11 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
       try {
         // Step 1: Prepare battle (get proof, check balance/allowance)
-        setCurrentStep('Preparing battle data...');
+        setCurrentStep('Checking IDRX balance...');
         await prepare(tokenId);
 
-        // Check for errors after preparation
-        if (state.error) {
-          onError(state.error);
-          return;
-        }
-
-        // Step 2: Check if approval needed
-        if (state.preparation?.needsApproval) {
-          setCurrentStep('Requesting IDRX approval...');
-          try {
-            await approve();
-            setCurrentStep('Approval confirmed!');
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Approval failed';
-            onError(errorMessage);
-            return;
-          }
-        }
-
-        // Step 3: All checks passed, ready for battle
-        setCurrentStep('Entering battle arena...');
-        setTimeout(() => {
-          onReady();
-        }, 500);
+        // Wait for state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (error) {
         console.error('[BattlePreparation] Initialization error:', error);
@@ -95,6 +73,46 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
     initializeBattle();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount
+
+  // Handle state changes after preparation
+  useEffect(() => {
+    const handlePreparationState = async () => {
+      if (!state.preparation) return;
+
+      // Check for insufficient balance FIRST
+      if (!state.preparation.hasEnoughIDRX) {
+        onError('Insufficient IDRX balance. You need at least 5 IDRX to battle.');
+        return;
+      }
+
+      // Check if approval needed
+      if (state.preparation.needsApproval && !state.isApproving) {
+        setCurrentStep('Requesting IDRX approval...');
+        try {
+          await approve();
+          setCurrentStep('Approval confirmed!');
+          
+          // Proceed to battle
+          setTimeout(() => {
+            setCurrentStep('Entering battle arena...');
+            onReady();
+          }, 500);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Approval failed. You must approve IDRX spending to battle.';
+          onError(errorMessage);
+        }
+      } else if (!state.preparation.needsApproval) {
+        // No approval needed, proceed directly
+        setCurrentStep('Entering battle arena...');
+        setTimeout(() => {
+          onReady();
+        }, 500);
+      }
+    };
+
+    handlePreparationState();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.preparation]); // Run when preparation data is ready
 
   // Show loading screen with current step
   return (

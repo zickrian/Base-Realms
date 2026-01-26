@@ -98,6 +98,18 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                                                             <span className={styles.lockText}>Used</span>
                                                         </div>
                                                     )}
+                                                    
+                                                    {/* Stats Display */}
+                                                    <div className={styles.cardStats}>
+                                                        <div className={styles.statItem}>
+                                                            <span className={styles.statIcon}>⚔️</span>
+                                                            <span className={styles.statValue}>{item.cardTemplate.atk || 0}</span>
+                                                        </div>
+                                                        <div className={styles.statItem}>
+                                                            <span className={styles.statIcon}>❤️</span>
+                                                            <span className={styles.statValue}>{item.cardTemplate.health || 0}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <button

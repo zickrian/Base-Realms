@@ -19,17 +19,8 @@
 
 .spinner {
   font-size: 4rem;
-  animation: spin 2s linear infinite;
   margin-bottom: 1.5rem;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  /* Animation removed - static sword icon */
 }
 
 .title {
