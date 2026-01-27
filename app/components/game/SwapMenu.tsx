@@ -13,7 +13,7 @@ import {
   SwapToast,
 } from '@coinbase/onchainkit/swap';
 import type { Token } from '@coinbase/onchainkit/token';
-import { BASE_CHAIN_ID } from '@/app/lib/blockchain/tokenConfig';
+import { BASE_CHAIN_ID, IDRX_DECIMALS } from '@/app/lib/blockchain/tokenConfig';
 import styles from './SwapMenu.module.css';
 
 interface SwapMenuProps {
@@ -38,7 +38,7 @@ const ETH_TOKEN: Token = {
 const IDRX_TOKEN: Token = {
   address: IDRX_TOKEN_ADDRESS,
   chainId: BASE_CHAIN_ID,
-  decimals: 18,
+  decimals: IDRX_DECIMALS, // Using shared constant (2 decimals)
   name: 'IDRX',
   symbol: 'IDRX',
   image: 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/IDRX.png',
