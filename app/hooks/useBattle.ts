@@ -217,14 +217,14 @@ export function useBattle(): UseBattleReturn {
     try {
       console.log('[useBattle] Approving IDRX via wagmi (max allowance)...');
 
-      // Use wagmi writeContract with explicit chainId for Base
+      // Use wagmi writeContract - OnchainKitProvider already set to Base chain
+      // No need for explicit chainId as it may trigger unnecessary chain checks
       // We approve MAX_UINT256 so user tidak bolak-balik approve untuk setiap battle
       writeApproval({
         address: IDRX_CONTRACT_ADDRESS as Address,
         abi: IDRX_CONTRACT_ABI,
         functionName: 'approve',
         args: [BATTLE_CONTRACT_ADDRESS as Address, MAX_UINT256],
-        chainId: 8453, // Base chain ID - forces transaction on Base
       });
 
       // Wait for the transaction to be submitted
@@ -233,11 +233,17 @@ export function useBattle(): UseBattleReturn {
 
     } catch (error) {
       console.error('[useBattle] Approval error:', error);
+      
+      // Check if user rejected/cancelled the transaction
       const errorMessage = error instanceof Error ? error.message : 'Approval failed';
+      const isUserRejection = errorMessage.toLowerCase().includes('user rejected') || 
+                              errorMessage.toLowerCase().includes('user denied') ||
+                              errorMessage.toLowerCase().includes('user cancelled');
+      
       setState(prev => ({
         ...prev,
         isApproving: false,
-        error: errorMessage,
+        error: isUserRejection ? 'TRANSACTION_CANCELLED' : errorMessage,
       }));
       resetApprovalContract();
       throw error;
@@ -290,24 +296,30 @@ export function useBattle(): UseBattleReturn {
       console.log('[useBattle] Minting WIN token via wagmi...');
       console.log('[useBattle] WIN Token contract:', WINTOKEN_CONTRACT_ADDRESS);
 
-      // Use wagmi writeMint with explicit chainId for Base
+      // Use wagmi writeMint - OnchainKitProvider already set to Base chain
+      // No need for explicit chainId as it may trigger unnecessary chain checks
       writeMint({
         address: WINTOKEN_CONTRACT_ADDRESS as Address,
         abi: WINTOKEN_CONTRACT_ABI,
         functionName: 'mint',
         args: [],
-        chainId: 8453, // Base chain ID - forces transaction on Base
       });
 
       console.log('[useBattle] WIN token mint transaction submitted');
 
     } catch (error) {
       console.error('[useBattle] WIN token minting error:', error);
+      
+      // Check if user rejected/cancelled the transaction
       const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed';
+      const isUserRejection = errorMessage.toLowerCase().includes('user rejected') || 
+                              errorMessage.toLowerCase().includes('user denied') ||
+                              errorMessage.toLowerCase().includes('user cancelled');
+      
       setState(prev => ({
         ...prev,
         isMinting: false,
-        error: errorMessage,
+        error: isUserRejection ? 'TRANSACTION_CANCELLED' : errorMessage,
       }));
       throw error;
     }
@@ -440,24 +452,30 @@ export function useBattle(): UseBattleReturn {
         proofLength: proof.length,
       });
 
-      // Use wagmi writeContract with explicit chainId for Base
+      // Use wagmi writeContract - OnchainKitProvider already set to Base chain
+      // No need for explicit chainId as it may trigger unnecessary chain checks
       writeBattle({
         address: BATTLE_CONTRACT_ADDRESS as Address,
         abi: BATTLE_CONTRACT_ABI,
         functionName: 'battle',
         args: [BigInt(tokenId), BigInt(stats.hp), BigInt(stats.attack), proof as `0x${string}`[]],
-        chainId: 8453, // Base chain ID - forces transaction on Base
       });
 
       console.log('[useBattle] Battle transaction submitted');
 
     } catch (error) {
       console.error('[useBattle] Battle error:', error);
+      
+      // Check if user rejected/cancelled the transaction
       const errorMessage = error instanceof Error ? error.message : 'Battle failed';
+      const isUserRejection = errorMessage.toLowerCase().includes('user rejected') || 
+                              errorMessage.toLowerCase().includes('user denied') ||
+                              errorMessage.toLowerCase().includes('user cancelled');
+      
       setState(prev => ({
         ...prev,
         isBattling: false,
-        error: errorMessage,
+        error: isUserRejection ? 'TRANSACTION_CANCELLED' : errorMessage,
       }));
       resetBattleContract();
       throw error;

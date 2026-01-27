@@ -34,6 +34,7 @@ export default function BattlePage() {
   const [error, setError] = useState<string | null>(null);
   const [showQRISPopup, setShowQRISPopup] = useState(false);
   const [battleResult, setBattleResult] = useState<{ won: boolean; txHash: string } | null>(null);
+  const [isCleaningUp, setIsCleaningUp] = useState(false); // Flag to prevent checks during cleanup
   const { initBattle, resetBattle } = useBattleStore();
   const { state: battleState, markAsUsed, reset: resetBattleHook, prepare } = useBattle();
 
@@ -45,7 +46,13 @@ export default function BattlePage() {
   }, [address, profile, refreshProfile]);
 
   // Check if card is selected before allowing battle (immediate check)
+  // Skip check if we're cleaning up after battle
   useEffect(() => {
+    // Skip all checks if cleaning up after battle
+    if (isCleaningUp) {
+      return;
+    }
+
     if (address && profile) {
       if (!profile.selectedCardId || !profile.selectedCard) {
         setError('Please select a card from your inventory before entering battle');
@@ -68,7 +75,7 @@ export default function BattlePage() {
         router.replace('/home');
       }, 2000);
     }
-  }, [address, profile, router]);
+  }, [address, profile, router, isCleaningUp]);
 
   // Handle loading complete - transition to preparation phase
   const handleLoadComplete = useCallback(() => {
@@ -212,6 +219,9 @@ export default function BattlePage() {
 
     const tokenId = profile.selectedCard.token_id;
     const battleTxHash = battleState.battleResult?.txHash || undefined;
+    
+    // Set cleanup flag to prevent validation checks
+    setIsCleaningUp(true);
     
     try {
       console.log('[BattlePage] 🎯 Visual battle ended, processing cleanup...', {

@@ -262,11 +262,23 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   useEffect(() => {
     if (state.error) {
       console.error('[BattlePreparation] Battle state error detected:', state.error);
+      
+      // Check if user cancelled transaction
+      if (state.error === 'TRANSACTION_CANCELLED') {
+        console.log('[BattlePreparation] User cancelled transaction, redirecting to home...');
+        setCurrentStep('❌ Transaction cancelled');
+        // Redirect to home after short delay
+        setTimeout(() => {
+          router.push('/home');
+        }, 1500);
+        return;
+      }
+      
       // Reset battle execution flag on error to allow retry
       setBattleExecutionStarted(false);
       onError(state.error);
     }
-  }, [state.error, onError]);
+  }, [state.error, onError, router]);
 
   // When on-chain battle tx is confirmed and result available, THEN enter arena
   useEffect(() => {
