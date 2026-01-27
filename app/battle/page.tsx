@@ -197,6 +197,8 @@ export default function BattlePage() {
    * 4. Mark NFT as used (cleanup only, battle already executed)
    * 5. Refresh data
    * 6. Navigate home
+   * 
+   * PHASE 0 ENHANCEMENT: Pass battle tx hash for better tracking
    */
   const handleBattleEnd = useCallback(async () => {
     if (!address || !profile?.selectedCard?.token_id) {
@@ -206,17 +208,22 @@ export default function BattlePage() {
     }
 
     const tokenId = profile.selectedCard.token_id;
+    const battleTxHash = battleState.battleResult?.txHash || undefined;
     
     // Show processing screen
     setPhase('processing');
     
     try {
-      console.log('[BattlePage] Visual battle ended, processing cleanup...');
+      console.log('[BattlePage] 🎯 Visual battle ended, processing cleanup...', {
+        tokenId,
+        battleTxHash,
+        won: battleResult?.won,
+      });
       
       // Battle was already executed during preparation, just cleanup now
       
-      // Mark NFT as used in database
-      await markAsUsed(tokenId);
+      // Mark NFT as used in database with battle tx hash for tracking
+      await markAsUsed(tokenId, battleTxHash);
       
       // IMPORTANT: Deselect the used NFT so user must choose another one
       console.log('[BattlePage] Deselecting used NFT...');
@@ -228,9 +235,9 @@ export default function BattlePage() {
         refreshProfile(address),
       ]);
       
-      console.log('[BattlePage] Post-battle processing complete, NFT deselected');
+      console.log('[BattlePage] ✅ Post-battle processing complete, NFT deselected');
     } catch (_battleError) {
-      console.error('[BattlePage] Battle cleanup error:', _battleError);
+      console.error('[BattlePage] ❌ Battle cleanup error:', _battleError);
       const errorMessage = _battleError instanceof Error ? _battleError.message : 'Battle cleanup failed';
       setError(errorMessage);
       setPhase('error');
@@ -251,7 +258,7 @@ export default function BattlePage() {
     setTimeout(() => {
       router.replace('/home');
     }, 1000);
-  }, [address, profile, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
+  }, [address, profile, battleState.battleResult, battleResult, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
 
   // Cleanup on unmount
   useEffect(() => {

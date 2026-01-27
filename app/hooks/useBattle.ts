@@ -59,7 +59,7 @@ export interface UseBattleReturn {
   approve: () => Promise<void>;
   mintWin: () => Promise<void>;
   battle: () => Promise<void>;
-  markAsUsed: (tokenId: number) => Promise<void>;
+  markAsUsed: (tokenId: number, battleTxHash?: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -200,6 +200,12 @@ export function useBattle(): UseBattleReturn {
       return;
     }
 
+    // GUARD: Prevent duplicate approval calls while one is pending
+    if (state.isApproving || _isApprovalPending) {
+      console.log('[useBattle] Approval already in progress, skipping duplicate call');
+      return;
+    }
+
     setState(prev => ({ ...prev, isApproving: true, error: null }));
 
     try {
@@ -229,7 +235,7 @@ export function useBattle(): UseBattleReturn {
       resetApprovalContract();
       throw error;
     }
-  }, [address, writeApproval, resetApprovalContract]);
+  }, [address, writeApproval, resetApprovalContract, state.isApproving, _isApprovalPending]);
 
   // Handle approval success
   const handleApprovalSuccess = useCallback(() => {
@@ -265,6 +271,12 @@ export function useBattle(): UseBattleReturn {
       return;
     }
 
+    // GUARD: Prevent duplicate mint calls while one is pending
+    if (state.isMinting || _isMintPending) {
+      console.log('[useBattle] WIN token minting already in progress, skipping duplicate call');
+      return;
+    }
+
     setState(prev => ({ ...prev, isMinting: true, error: null }));
 
     try {
@@ -292,7 +304,7 @@ export function useBattle(): UseBattleReturn {
       }));
       throw error;
     }
-  }, [address, writeMint]);
+  }, [address, writeMint, state.isMinting, _isMintPending]);
 
   // Handle mint success
   const handleMintSuccess = useCallback(() => {
@@ -403,6 +415,12 @@ export function useBattle(): UseBattleReturn {
       return;
     }
 
+    // GUARD: Prevent duplicate battle execution while one is pending
+    if (state.isBattling || _isBattlePending) {
+      console.log('[useBattle] Battle execution already in progress, skipping duplicate call');
+      return;
+    }
+
     setState(prev => ({ ...prev, isBattling: true, error: null }));
 
     try {
@@ -437,12 +455,13 @@ export function useBattle(): UseBattleReturn {
       resetBattleContract();
       throw error;
     }
-  }, [address, state.preparation, writeBattle, resetBattleContract]);
+  }, [address, state.preparation, state.isBattling, _isBattlePending, writeBattle, resetBattleContract]);
 
   /**
    * Mark NFT as used in database after successful battle
+   * PHASE 0 ENHANCEMENT: Pass battle tx hash for better tracking
    */
-  const markAsUsed = useCallback(async (tokenId: number) => {
+  const markAsUsed = useCallback(async (tokenId: number, battleTxHash?: string) => {
     if (!address) {
       console.error('[useBattle] No wallet address for marking NFT as used');
       return;
@@ -451,7 +470,11 @@ export function useBattle(): UseBattleReturn {
     setState(prev => ({ ...prev, isProcessing: true }));
 
     try {
-      console.log('[useBattle] Marking NFT as used:', tokenId);
+      console.log('[useBattle] Marking NFT as used:', { 
+        tokenId, 
+        battleTxHash,
+        address,
+      });
 
       const response = await fetch('/api/cards/mark-used', {
         method: 'POST',
@@ -459,7 +482,7 @@ export function useBattle(): UseBattleReturn {
           'Content-Type': 'application/json',
           'x-wallet-address': address,
         },
-        body: JSON.stringify({ tokenId }),
+        body: JSON.stringify({ tokenId, battleTxHash }),
       });
 
       if (!response.ok) {
@@ -467,7 +490,8 @@ export function useBattle(): UseBattleReturn {
         throw new Error(error.error || 'Failed to mark NFT as used');
       }
 
-      console.log('[useBattle] NFT marked as used successfully');
+      const result = await response.json();
+      console.log('[useBattle] NFT marked as used successfully:', result);
       setState(prev => ({ ...prev, isProcessing: false }));
     } catch (error) {
       console.error('[useBattle] Error marking NFT as used:', error);

@@ -14,10 +14,8 @@ export function RootProvider({ children }: { children: ReactNode }) {
           mode: "dark",
           theme: "default",
         },
-        wallet: {
-          display: "modal",
-          preference: "smartWalletOnly",
-        },
+        // Wallet configuration removed to prevent popup dialogs
+        // Transactions will use native wallet UI instead of modal popups
       }}
       miniKit={{
         enabled: true,

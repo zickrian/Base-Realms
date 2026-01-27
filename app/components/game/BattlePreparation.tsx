@@ -46,11 +46,19 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   const chainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { profile } = useGameStore();
-  const { state, prepare, approve, mintWin, battle: executeBattle } = useBattle();
+  const { state, prepare, approve, battle: executeBattle } = useBattle();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<string>('Initializing...');
   const [isReadyForBattle, setIsReadyForBattle] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  
+  // =========================================================================
+  // GUARD FLAG: Prevent duplicate battle execution
+  // This prevents race condition where executeBattle is called twice:
+  // 1. From setTimeout after mintWin success
+  // 2. From useEffect re-run when state.preparation.hasWinTokenMinted updates
+  // =========================================================================
+  const [battleExecutionStarted, setBattleExecutionStarted] = useState(false);
 
   // =========================================================================
   // IDRX BALANCE - Using wagmi hook (same as HeaderBar for consistency)
@@ -202,11 +210,11 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
       // Step 1: MUST approve IDRX first
       if (state.preparation.needsApproval && !state.isApproving) {
-        setCurrentStep('⚔️ Step 1/2: Approving IDRX for battle fee...');
+        setCurrentStep('⚔️ Approving IDRX for battle fee...');
         try {
           await approve();
-          setCurrentStep('✅ IDRX approved! Proceeding to WIN token...');
-          // Continue to next step after approval
+          setCurrentStep('✅ IDRX approved! Starting battle...');
+          // Continue to battle after approval
         } catch (error) {
           console.error('[BattlePreparation] Approval error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Approval failed. You must approve IDRX spending to battle.';
@@ -215,71 +223,64 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         }
       }
 
-      // Step 2: MUST mint WIN token before battle
-      // This is CRITICAL - contract requires user to have WIN token first
-      if (!state.preparation.hasWinTokenMinted && !state.isMinting && !state.preparation.needsApproval) {
-        setCurrentStep('🏆 Step 2/2: Minting WIN token (victory reward)...');
-        try {
-          await mintWin();
-          setCurrentStep('✅ WIN token minted! You can now battle!');
-
-          // ONLY proceed to battle after BOTH requirements met
-          setTimeout(async () => {
-            setCurrentStep('⚔️ Executing battle on-chain...');
-            try {
-              await executeBattle();
-              setCurrentStep('✅ Battle executed! Entering arena...');
-              
-              // Pass battle result to parent
-              setTimeout(() => {
-                onReady(state.battleResult);
-              }, 500);
-            } catch (error) {
-              console.error('[BattlePreparation] Battle execution error:', error);
-              const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
-              onError(errorMessage);
-              return;
-            }
-          }, 1000);
-        } catch (error) {
-          console.error('[BattlePreparation] WIN token minting error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed. You must mint WIN token before battle.';
-          onError(errorMessage);
-          return; // Exit on minting failure
+      // Step 2: Execute battle (no mintWin needed - contract handles it internally)
+      // Battle contract will:
+      // - Transfer 5 IDRX from user
+      // - Run battle simulation on-chain
+      // - Mint WIN token internally if user wins
+      // - Mark NFT as used
+      if (!state.preparation.needsApproval && !state.isBattling) {
+        // GUARD: Prevent duplicate execution if battle already started
+        if (battleExecutionStarted) {
+          console.log('[BattlePreparation] Battle execution already started, skipping duplicate call');
+          return;
         }
-      } else if (state.preparation.hasWinTokenMinted && !state.preparation.needsApproval) {
-        // Both requirements already met - proceed directly to execute battle
-        setCurrentStep('✅ All requirements met! Executing battle on-chain...');
-        setTimeout(async () => {
-          try {
-            await executeBattle();
-            setCurrentStep('✅ Battle executed! Entering arena...');
-            
-            // Pass battle result to parent
-            setTimeout(() => {
-              onReady(state.battleResult);
-            }, 500);
-          } catch (error) {
-            console.error('[BattlePreparation] Battle execution error:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
-            onError(errorMessage);
-            return;
-          }
-        }, 500);
+
+        // Mark battle execution as started to prevent race condition
+        console.log('[BattlePreparation] Starting battle execution');
+        setBattleExecutionStarted(true);
+        
+        setCurrentStep('⚔️ Executing battle on-chain...');
+        try {
+          await executeBattle();
+          setCurrentStep('✅ Battle executed! Entering arena...');
+          
+          // Pass battle result to parent to show visualization
+          setTimeout(() => {
+            onReady(state.battleResult);
+          }, 500);
+        } catch (error) {
+          console.error('[BattlePreparation] Battle execution error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
+          // Reset flag on error to allow retry
+          setBattleExecutionStarted(false);
+          onError(errorMessage);
+          return;
+        }
       }
     };
 
     handlePreparationState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.preparation, state.isApproving, state.isMinting, isReadyForBattle, hasEnoughBalance, idrxBalance, startRedirectCountdown]); // Run when preparation or balance states change
+  }, [state.preparation, state.isApproving, state.isBattling, isReadyForBattle, hasEnoughBalance, idrxBalance, startRedirectCountdown]); // Run when preparation, approval, or battle states change
 
   // SAFETY: If error exists in state, call onError callback
   useEffect(() => {
     if (state.error) {
       console.error('[BattlePreparation] Battle state error detected:', state.error);
+      // Reset battle execution flag on error to allow retry
+      setBattleExecutionStarted(false);
       onError(state.error);
     }
   }, [state.error, onError]);
+
+  // Cleanup: Reset battle execution flag when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log('[BattlePreparation] Component unmounting, resetting battle execution flag');
+      setBattleExecutionStarted(false);
+    };
+  }, []);
 
   // Show loading screen with current step
   return (
@@ -302,21 +303,14 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         {state.isApproving && (
           <div className={styles.detail}>
             <p>Please approve the IDRX transaction in your wallet.</p>
-            <p className={styles.hint}>This allows the battle contract to charge 5 IDRX battle fee.</p>
-          </div>
-        )}
-
-        {state.isMinting && (
-          <div className={styles.detail}>
-            <p>Please confirm WIN token minting in your wallet.</p>
-            <p className={styles.hint}>This token will be awarded to you if you win the battle!</p>
+            <p className={styles.hint}>This allows the battle contract to charge {BATTLE_FEE_IDRX} IDRX battle fee.</p>
           </div>
         )}
 
         {state.isBattling && (
           <div className={styles.detail}>
             <p>Please confirm the battle transaction in your wallet.</p>
-            <p className={styles.hint}>This will execute your battle on-chain.</p>
+            <p className={styles.hint}>This will execute your battle on-chain and determine the outcome!</p>
           </div>
         )}
 
@@ -354,15 +348,21 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
             <p className={styles.balanceInfo}>✅ IDRX Balance: {formatIDRXBalance(idrxBalance)} / {BATTLE_FEE_IDRX}.00 IDRX</p>
             <div className={styles.checklist}>
               <div className={state.preparation.needsApproval ? styles.pending : styles.completed}>
-                {!state.preparation.needsApproval ? '✅' : '⏳'} IDRX Approval ({BATTLE_FEE_IDRX} IDRX battle fee)
+                {!state.preparation.needsApproval ? '✅' : '⏳'} IDRX Approval
+                {state.preparation.needsApproval && (
+                  <span className={styles.securityNote}> - Wallet confirmation required for security</span>
+                )}
               </div>
-              <div className={state.preparation.hasWinTokenMinted ? styles.completed : styles.pending}>
-                {state.preparation.hasWinTokenMinted ? '✅' : '⏳'} WIN Token Minted (victory reward)
-              </div>
-              <div className={state.isBattling ? styles.pending : styles.completed}>
-                {!state.isBattling && state.battleResult ? '✅' : '⏳'} Battle Execution (on-chain)
+              <div className={state.isBattling || state.battleResult ? styles.completed : styles.pending}>
+                {state.battleResult ? '✅' : '⏳'} Battle Execution
+                {!state.battleResult && (
+                  <span className={styles.securityNote}> - Wallet confirmation required for on-chain transaction</span>
+                )}
               </div>
             </div>
+            <p className={styles.securityInfo}>
+              🔒 Wallet confirmations are required by blockchain protocol to protect your assets
+            </p>
           </div>
         )}
       </div>
