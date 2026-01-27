@@ -109,10 +109,10 @@
 }
 
 .currencyValue {
-  font-family: var(--font-pixelify);
-  font-size: 0.7rem;
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
   color: #3e1f08;
-  font-weight: 600;
+  font-weight: bold;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 

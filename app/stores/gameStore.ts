@@ -81,6 +81,12 @@ interface GameState {
   settings: UserSettings | null;
   cardPacks: CardPack[];
   inventory: InventoryCard[];
+  dailyPackCount: number;
+  currentStage: {
+    id: string;
+    name: string;
+    stageNumber: number;
+  } | null;
   
   // Loading states
   isInitialized: boolean;
@@ -149,6 +155,8 @@ const initialState = {
   settings: null,
   cardPacks: [],
   inventory: [],
+  dailyPackCount: 0,
+  currentStage: null,
   isInitialized: false,
   isLoading: false,
   profileLoading: false,
@@ -203,7 +211,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       console.log('[GameStore] Step 2: Fetching all game data...');
       
       // Fetch all data in parallel for fastest load
-      const [profileRes, questsRes, settingsRes, packsRes, inventoryRes] = await Promise.all([
+      const [profileRes, questsRes, settingsRes, packsRes, inventoryRes, dailyPacksRes, stagesRes] = await Promise.all([
         fetch('/api/player/profile', {
           headers: { 'x-wallet-address': walletAddress },
           cache: 'no-store', // Always get fresh data on login
@@ -223,15 +231,25 @@ export const useGameStore = create<GameState>((set, get) => ({
           headers: { 'x-wallet-address': walletAddress },
           cache: 'no-store',
         }),
+        fetch('/api/daily-packs', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+        }),
+        fetch('/api/stages?current=true', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+        }),
       ]);
 
       // Process responses - wait for ALL to complete
-      const [profileData, questsData, settingsData, packsData, inventoryData] = await Promise.all([
+      const [profileData, questsData, settingsData, packsData, inventoryData, dailyPacksData, stagesData] = await Promise.all([
         profileRes.ok ? profileRes.json() : null,
         questsRes.ok ? questsRes.json() : null,
         settingsRes.ok ? settingsRes.json() : null,
         packsRes.ok ? packsRes.json() : null,
         inventoryRes.ok ? inventoryRes.json() : null,
+        dailyPacksRes.ok ? dailyPacksRes.json() : null,
+        stagesRes.ok ? stagesRes.json() : null,
       ]);
 
       // Format card packs
@@ -298,6 +316,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         } : null,
         cardPacks: formattedPacks,
         inventory: formattedInventory,
+        dailyPackCount: dailyPacksData?.packCount || 0,
+        currentStage: stagesData?.currentStage ? {
+          id: stagesData.currentStage.id,
+          name: stagesData.currentStage.name,
+          stageNumber: stagesData.currentStage.stage_number,
+        } : null,
         profileLoading: false,
         questsLoading: false,
         settingsLoading: false,
@@ -311,6 +335,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       console.log(`[GameStore] - Profile: Level ${profileData?.profile?.level || 1}`);
       console.log(`[GameStore] - Quests: ${questsData?.quests?.length || 0} active`);
       console.log(`[GameStore] - Inventory: ${formattedInventory.length} NFTs`);
+      console.log(`[GameStore] - Daily Packs: ${dailyPacksData?.packCount || 0}`);
+      console.log(`[GameStore] - Current Stage: ${stagesData?.currentStage?.name || 'None'}`);
       
       // REMOVED: Background sync NFT - already done at start of initialization
 

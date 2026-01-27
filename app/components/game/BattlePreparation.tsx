@@ -8,6 +8,9 @@
  * 4. Checks/handles IDRX approval
  * 5. Transitions to battle arena when ready
  * 
+ * Note: No manual chain switching needed - wagmi + OnchainKit automatically
+ * handle chain switching when chainId is specified in writeContract calls.
+ * 
  * @module BattlePreparation
  */
 
@@ -15,9 +18,8 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount, useSwitchChain, useChainId, useBalance } from 'wagmi';
+import { useAccount, useBalance } from 'wagmi';
 import { formatUnits } from 'viem';
-import { base } from 'viem/chains';
 import { useGameStore } from '@/app/stores/gameStore';
 import { useBattle } from '@/app/hooks/useBattle';
 import {
@@ -43,8 +45,6 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   onError,
 }) => {
   const { address } = useAccount();
-  const chainId = useChainId();
-  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { profile } = useGameStore();
   const { state, prepare, approve, battle: executeBattle } = useBattle();
   const router = useRouter();
@@ -103,7 +103,9 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
     return () => clearTimeout(timer);
   }, [redirectCountdown, router]);
 
-  // Step 1: Check chain and switch if needed, then initialize battle
+  // Initialize battle preparation
+  // Note: No manual chain switching needed - wagmi + OnchainKit handle it automatically
+  // when chainId is specified in writeContract calls (approve, battle)
   useEffect(() => {
     const initializeBattle = async () => {
       if (!address) {
@@ -111,21 +113,6 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         return;
       }
 
-      // Check if we need to switch chain
-      if (chainId !== base.id) {
-        setCurrentStep('Switching to Base network...');
-        try {
-          switchChain({ chainId: base.id });
-          // Don't continue here - wait for chainId to update
-          return;
-        } catch (error) {
-          console.error('[BattlePreparation] Chain switch error:', error);
-          onError('Please switch to Base network to battle.');
-          return;
-        }
-      }
-
-      // Already on Base, proceed with battle preparation
       if (!profile?.selectedCard) {
         onError('No card selected. Please select a card from your deck.');
         return;
@@ -161,7 +148,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
     initializeBattle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, chainId]); // Re-run when chainId changes (after switch)
+  }, [address]); // Only re-run when address changes
 
   // Handle state changes after preparation
   useEffect(() => {
@@ -316,12 +303,6 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
         {state.isPreparing && (
           <p className={styles.detail}>Validating NFT and generating Merkle proof...</p>
-        )}
-
-        {isSwitchingChain && (
-          <p className={styles.detail}>
-            Please confirm the network switch to Base in your wallet.
-          </p>
         )}
 
         {state.isApproving && (

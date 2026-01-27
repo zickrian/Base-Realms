@@ -11,7 +11,7 @@ export default function Home() {
   const router = useRouter();
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
   const { isConnected, isConnecting, address } = useAccount();
-  const { isInitialized, isLoading, initializeGameData, reset, profile, quests, cardPacks, inventory } = useGameStore();
+  const { isInitialized, isLoading, initializeGameData, reset, profile, quests, cardPacks, inventory, dailyPackCount, currentStage } = useGameStore();
   const initRef = useRef(false);
   const redirectedRef = useRef(false);
   const wasConnectedRef = useRef(false);
@@ -95,19 +95,21 @@ export default function Home() {
       return;
     }
 
-    // Check if all critical data is loaded
+    // Check if all critical data is loaded (including new preloaded data)
     const allDataReady =
       profile !== null &&
       Array.isArray(quests) &&
       Array.isArray(cardPacks) &&
-      Array.isArray(inventory);
+      Array.isArray(inventory) &&
+      dailyPackCount !== undefined &&
+      currentStage !== undefined; // Can be null but should be defined
 
     if (allDataReady) {
       setLoadingStep('ready');
     } else {
       setLoadingStep('loading');
     }
-  }, [isConnected, address, isInitialized, isLoading, profile, quests, cardPacks, inventory]);
+  }, [isConnected, address, isInitialized, isLoading, profile, quests, cardPacks, inventory, dailyPackCount, currentStage]);
 
   // Redirect when all data is ready - only once
   useEffect(() => {
@@ -118,13 +120,15 @@ export default function Home() {
       console.log('[Landing] - Quests:', quests?.length);
       console.log('[Landing] - Card Packs:', cardPacks?.length);
       console.log('[Landing] - Inventory:', inventory?.length);
+      console.log('[Landing] - Daily Packs:', dailyPackCount);
+      console.log('[Landing] - Current Stage:', currentStage?.name);
       // Small delay to ensure all state is settled
       const timer = setTimeout(() => {
         router.replace("/home");
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [loadingStep, profile, quests, cardPacks, inventory, router]);
+  }, [loadingStep, profile, quests, cardPacks, inventory, dailyPackCount, currentStage, router]);
 
   // Start fetching data when wallet is connected but not initialized
   useEffect(() => {
