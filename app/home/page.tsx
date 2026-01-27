@@ -738,12 +738,21 @@ export default function HomePage() {
         onClose={() => {
           setIsCardModalOpen(false);
           setRevealCardData(null);
-          setIsMintingInProgress(false);
-          // Refresh data after closing
-          refetchDailyPacks();
-          if (address) {
-            refreshInventory(address);
-            refreshQuests(address);
+          
+          // FIX #1: Only refresh if NOT currently minting
+          // If minting succeeded, onMintSuccess already handled refresh
+          // If minting failed, we don't want to trigger refresh that might lose data
+          if (!isMintingInProgress) {
+            console.log('[Home] Modal closed, refreshing data...');
+            refetchDailyPacks();
+            if (address) {
+              refreshInventory(address);
+              refreshQuests(address);
+            }
+          } else {
+            console.log('[Home] Modal closed during minting, skipping refresh');
+            // Just reset the flag, onMintSuccess/onMintError will handle it
+            setIsMintingInProgress(false);
           }
         }}
         cardData={revealCardData || undefined}
@@ -756,6 +765,8 @@ export default function HomePage() {
           // Card reveal should continue regardless of backend operations
           (async () => {
             try {
+              console.log('[Home] Minting succeeded, processing backend operations...');
+              
               // Claim pack - this will:
               // 1. Update last_claimed_at to prevent another claim today
               // 2. Update quest progress for 'open_packs'
@@ -772,7 +783,7 @@ export default function HomePage() {
                   },
                   body: JSON.stringify({ transactionHash }),
                 }).catch((recordError) => {
-                  console.warn('Failed to record mint:', recordError);
+                  console.warn('[Home] Failed to record mint:', recordError);
                 });
 
                 // Update quest progress for minting NFT (non-blocking)
@@ -787,51 +798,46 @@ export default function HomePage() {
                     autoClaim: false // User must manually claim quest rewards
                   }),
                 }).catch((questError) => {
-                  console.warn('Failed to update mint_nft quest progress:', questError);
+                  console.warn('[Home] Failed to update mint_nft quest progress:', questError);
                 });
               }
 
-              // CRITICAL FIX: Await sync completion before refreshing inventory
+              // FIX #2: Remove double sync
+              // refreshInventory() already calls sync-nft internally
+              // Just wait for blockchain to settle, then refresh
               if (address) {
                 try {
-                  console.log('[Home] Starting NFT sync after mint...');
-                  await fetch('/api/cards/sync-nft', {
-                    method: 'POST',
-                    headers: {
-                      'x-wallet-address': address,
-                    },
-                  });
-                  
-                  // Add delay to ensure blockchain state is settled and database is updated
+                  console.log('[Home] Waiting for blockchain to settle...');
+                  // Wait for blockchain state to settle
                   await new Promise(resolve => setTimeout(resolve, 2000));
                   
-                  console.log('[Home] NFT sync completed, refreshing inventory...');
-                  // Now refresh inventory, quests, and pack count
+                  console.log('[Home] Refreshing inventory (includes NFT sync)...');
+                  // refreshInventory() will sync NFT from blockchain
                   await Promise.all([
                     refreshInventory(address),
                     refreshQuests(address),
                     refetchDailyPacks(), // Refresh pack count to show 0
                   ]);
-                  console.log('[Home] Inventory, quests, and packs refreshed successfully');
-                } catch (syncError) {
-                  console.error('[Home] Failed to sync NFT from blockchain:', syncError);
-                  // Even on error, try to refresh inventory
+                  console.log('[Home] All data refreshed successfully');
+                } catch (refreshError) {
+                  console.error('[Home] Failed to refresh data after mint:', refreshError);
+                  // On error, still try to refresh (refreshInventory preserves old data on failure)
                   await Promise.all([
                     refreshInventory(address),
                     refreshQuests(address),
                     refetchDailyPacks(),
-                  ]).catch((refreshError) => {
-                    console.warn('Failed to refresh data:', refreshError);
+                  ]).catch((retryError) => {
+                    console.warn('[Home] Retry refresh also failed:', retryError);
                   });
                 }
               }
             } catch (error) {
-              console.error('Failed to claim pack:', error);
+              console.error('[Home] Failed to claim pack:', error);
               // Don't show error to user - card reveal should continue
               // Just refresh pack count in case of error
               if (address) {
                 refetchDailyPacks().catch((refreshError) => {
-                  console.warn('Failed to refresh daily packs:', refreshError);
+                  console.warn('[Home] Failed to refresh daily packs:', refreshError);
                 });
               }
             } finally {
@@ -839,9 +845,12 @@ export default function HomePage() {
             }
           })();
         }}
-        onMintError={(_error) => {
+        onMintError={(error) => {
+          // FIX #4: Proper error handling
+          console.error('[Home] Minting failed:', error);
           setIsMintingInProgress(false);
-          // Don't show Toast - CardRevealModal already shows error
+          // Don't refresh - preserve current data
+          // CardRevealModal already shows error to user
         }}
       />
       <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

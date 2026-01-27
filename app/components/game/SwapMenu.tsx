@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { useAccount } from 'wagmi';
+import { useAccount, useBalance } from 'wagmi';
+import { formatUnits } from 'viem';
 import {
   Swap,
   SwapAmountInput,
@@ -12,6 +13,7 @@ import {
   SwapToast,
 } from '@coinbase/onchainkit/swap';
 import type { Token } from '@coinbase/onchainkit/token';
+import { BASE_CHAIN_ID } from '@/app/lib/blockchain/tokenConfig';
 import styles from './SwapMenu.module.css';
 
 interface SwapMenuProps {
@@ -25,7 +27,7 @@ const IDRX_TOKEN_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22" as const
 // ETH token definition
 const ETH_TOKEN: Token = {
   address: '',
-  chainId: 8453,
+  chainId: BASE_CHAIN_ID,
   decimals: 18,
   name: 'Ethereum',
   symbol: 'ETH',
@@ -35,7 +37,7 @@ const ETH_TOKEN: Token = {
 // IDRX token definition
 const IDRX_TOKEN: Token = {
   address: IDRX_TOKEN_ADDRESS,
-  chainId: 8453,
+  chainId: BASE_CHAIN_ID,
   decimals: 18,
   name: 'IDRX',
   symbol: 'IDRX',
@@ -45,7 +47,46 @@ const IDRX_TOKEN: Token = {
 const swappableTokens: Token[] = [ETH_TOKEN, IDRX_TOKEN];
 
 export const SwapMenu = ({ isOpen, onClose }: SwapMenuProps) => {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+  const [swapKey, setSwapKey] = React.useState(0);
+  
+  // Fetch balances to ensure they're available for the swap component
+  const { data: ethBalanceData, refetch: refetchEthBalance } = useBalance({
+    address: address,
+    chainId: BASE_CHAIN_ID,
+  });
+
+  const { data: idrxBalanceData, refetch: refetchIdrxBalance } = useBalance({
+    address: address,
+    token: IDRX_TOKEN_ADDRESS,
+    chainId: BASE_CHAIN_ID,
+  });
+
+  // Refetch balances and force re-render when the swap menu opens
+  useEffect(() => {
+    if (isOpen && isConnected && address) {
+      console.log('[SwapMenu] Refetching balances and forcing re-render...');
+      refetchEthBalance();
+      refetchIdrxBalance();
+      // Force Swap component to remount with fresh balance data
+      setSwapKey(prev => prev + 1);
+    }
+  }, [isOpen, isConnected, address, refetchEthBalance, refetchIdrxBalance]);
+
+  // Log balance data for debugging
+  useEffect(() => {
+    if (isConnected && address) {
+      const ethBalance = ethBalanceData ? parseFloat(formatUnits(ethBalanceData.value, ethBalanceData.decimals)) : 0;
+      const idrxBalance = idrxBalanceData ? parseFloat(formatUnits(idrxBalanceData.value, idrxBalanceData.decimals)) : 0;
+      
+      console.log('[SwapMenu] Balance data:', {
+        ethBalance,
+        idrxBalance,
+        ethBalanceData,
+        idrxBalanceData,
+      });
+    }
+  }, [ethBalanceData, idrxBalanceData, isConnected, address]);
 
   return (
     <div className={styles.container} style={{ display: isOpen ? 'flex' : 'none' }}>
@@ -67,7 +108,7 @@ export const SwapMenu = ({ isOpen, onClose }: SwapMenuProps) => {
           ) : (
             <>
               <div className={styles.swapWrapper}>
-                <Swap experimental={{ useAggregator: true }}>
+                <Swap key={swapKey} experimental={{ useAggregator: true }}>
                   <div className={styles.swapContainer}>
                     <div className={styles.inputWrapper}>
                       <SwapAmountInput

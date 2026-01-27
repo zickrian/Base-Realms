@@ -446,11 +446,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         console.log('[GameStore] Inventory refreshed successfully:', formatted.length, 'cards');
       } else {
         console.error('[GameStore] Failed to fetch inventory, status:', response.status);
+        // FIX #3: Preserve old inventory data on API failure
+        // Don't clear inventory, just update loading states
         set({ inventoryLoading: false, isSyncing: false });
+        // Old inventory is preserved (not overwritten)
       }
     } catch (error) {
       console.error('[GameStore] Error refreshing inventory:', error);
+      // FIX #3: Preserve old inventory data on error
+      // Don't clear inventory, just update loading states
       set({ inventoryLoading: false, isSyncing: false });
+      // Old inventory is preserved (not overwritten)
     }
   },
 
