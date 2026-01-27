@@ -223,11 +223,11 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         }
       }
 
-      // Step 2: Execute battle (no mintWin needed - contract handles it internally)
+      // Step 2: Execute battle on-chain
       // Battle contract will:
       // - Transfer 5 IDRX from user
       // - Run battle simulation on-chain
-      // - Mint WIN token internally if user wins
+      // - Mint WIN token / handle result internally
       // - Mark NFT as used
       if (!state.preparation.needsApproval && !state.isBattling) {
         // GUARD: Prevent duplicate execution if battle already started
@@ -239,16 +239,10 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         // Mark battle execution as started to prevent race condition
         console.log('[BattlePreparation] Starting battle execution');
         setBattleExecutionStarted(true);
-        
+
         setCurrentStep('⚔️ Executing battle on-chain...');
         try {
           await executeBattle();
-          setCurrentStep('✅ Battle executed! Entering arena...');
-          
-          // Pass battle result to parent to show visualization
-          setTimeout(() => {
-            onReady(state.battleResult);
-          }, 500);
         } catch (error) {
           console.error('[BattlePreparation] Battle execution error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
@@ -273,6 +267,23 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
       onError(state.error);
     }
   }, [state.error, onError]);
+
+  // When on-chain battle tx is confirmed and result available, THEN enter arena
+  useEffect(() => {
+    if (!state.battleResult || state.isBattling) return;
+
+    console.log('[BattlePreparation] On-chain battle finished, transitioning to arena...', {
+      won: state.battleResult.won,
+      txHash: state.battleResult.txHash,
+    });
+
+    setCurrentStep('✅ Battle executed! Entering arena...');
+
+    // Small delay for UX, then hand off to BattlePage/BattleArena
+    setTimeout(() => {
+      onReady(state.battleResult);
+    }, 500);
+  }, [state.battleResult, state.isBattling, onReady]);
 
   // Cleanup: Reset battle execution flag when component unmounts
   useEffect(() => {

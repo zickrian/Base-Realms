@@ -24,10 +24,12 @@ import {
   IDRX_CONTRACT_ABI,
   BATTLE_CONTRACT_ADDRESS,
   BATTLE_CONTRACT_ABI,
-  BATTLE_FEE_AMOUNT,
   WINTOKEN_CONTRACT_ADDRESS,
   WINTOKEN_CONTRACT_ABI,
 } from '@/app/lib/blockchain/contracts';
+
+// Approve "unlimited" IDRX once to avoid insufficient allowance
+const MAX_UINT256 = (2n ** 256n) - 1n;
 
 export interface BattleState {
   // Loading states
@@ -209,14 +211,15 @@ export function useBattle(): UseBattleReturn {
     setState(prev => ({ ...prev, isApproving: true, error: null }));
 
     try {
-      console.log('[useBattle] Approving IDRX via wagmi...');
+      console.log('[useBattle] Approving IDRX via wagmi (max allowance)...');
 
       // Use wagmi writeContract with explicit chainId for Base
+      // We approve MAX_UINT256 so user tidak bolak-balik approve untuk setiap battle
       writeApproval({
         address: IDRX_CONTRACT_ADDRESS as Address,
         abi: IDRX_CONTRACT_ABI,
         functionName: 'approve',
-        args: [BATTLE_CONTRACT_ADDRESS as Address, BigInt(BATTLE_FEE_AMOUNT)],
+        args: [BATTLE_CONTRACT_ADDRESS as Address, MAX_UINT256],
         chainId: 8453, // Base chain ID - forces transaction on Base
       });
 

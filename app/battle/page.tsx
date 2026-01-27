@@ -147,12 +147,9 @@ export default function BattlePage() {
       console.log('[BattlePage] Redirecting to home due to error:', errorMessage);
       setError(errorMessage);
       setPhase('error');
-      
-      // Redirect to home after 2 seconds (reduced from 3)
-      setTimeout(() => {
-        console.log('[BattlePage] Redirecting to home...');
-        router.replace('/home');
-      }, 2000);
+
+      // Segera balik ke home untuk semua error non-balance (termasuk cancel di wallet)
+      router.replace('/home');
     }
   }, [router]);
 
