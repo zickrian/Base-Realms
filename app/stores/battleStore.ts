@@ -179,4 +179,30 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       hitTarget: target,
     });
   },
+
+  /**
+   * Set player HP directly
+   */
+  setPlayerHp: (hp: number) => {
+    const state = get();
+    set({
+      player: {
+        ...state.player,
+        currentHp: Math.max(0, hp),
+      },
+    });
+  },
+
+  /**
+   * Set enemy HP directly
+   */
+  setEnemyHp: (hp: number) => {
+    const state = get();
+    set({
+      enemy: {
+        ...state.enemy,
+        currentHp: Math.max(0, hp),
+      },
+    });
+  },
 }));

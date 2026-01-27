@@ -543,11 +543,12 @@ export async function prepareBattle(
     // Get Merkle proof and stats
     const { proof, stats } = getProofForToken(tokenId);
 
-    // Check if NFT already used in battle (on-chain)
-    const usedOnChain = await hasNFTBeenUsed(tokenId);
-    if (usedOnChain) {
-      console.log('[BattleService] NFT already used on-chain, blocking battle:', { tokenId, walletAddress });
-    }
+    // NOTE: Removed on-chain hasUsed check because:
+    // 1. The contract function is not working correctly (returns 0x)
+    // 2. We already track used status in database reliably
+    // 3. Prevents unnecessary wallet popup ("Dapp wants to continue")
+    // The database `used` field is the source of truth for NFT usage
+    const usedOnChain = false; // Always false - database is source of truth
 
     // Check IDRX balance
     const balance = await checkIDRXBalance(walletAddress);

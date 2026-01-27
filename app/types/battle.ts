@@ -69,6 +69,8 @@ export interface BattleActions {
   setStatus: (status: BattleStatus) => void;
   resetBattle: () => void;
   setHitEffect: (target: 'player' | 'enemy' | null) => void;
+  setPlayerHp: (hp: number) => void;
+  setEnemyHp: (hp: number) => void;
 }
 
 // Combined battle store type

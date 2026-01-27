@@ -36,6 +36,8 @@ export default function HomePage() {
     cardPacks,
     refreshQuests,
     refreshInventory,
+    selectCard,
+    refreshProfile,
   } = useGameStore();
 
   // CRITICAL: Ensure all critical data is loaded before rendering home
@@ -309,8 +311,18 @@ export default function HomePage() {
         const img = new Image();
         img.src = url;
       });
+
+      // Check if current selected NFT is used, auto-unselect it
+      if (profile?.selectedCardId && profile?.selectedCard?.used) {
+        console.warn('[Home] Selected NFT has been used in battle. Auto-unselecting...');
+        selectCard(address!, null)
+          .then(() => refreshProfile(address!))
+          .catch((err) => {
+            console.error('[Home] Failed to auto-unselect used NFT:', err);
+          });
+      }
     }
-  }, [isFullyReady, isConnected, router]);
+  }, [isFullyReady, isConnected, router, profile, address, selectCard, refreshProfile]);
 
   // AUTO-SYNC: Check for pending inventory sync after mint
   // This ensures newly minted NFTs appear in My Deck immediately when returning from shop

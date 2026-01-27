@@ -42,6 +42,8 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
     nextTurn,
     setStatus,
     setHitEffect,
+    setPlayerHp,
+    setEnemyHp,
   } = useBattleStore();
   
   const [battleId, setBattleId] = useState<string | null>(null);
@@ -160,9 +162,11 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
 
           const newEnemyHp = Math.max(0, enemy.currentHp - damage);
 
+          // Update enemy HP in store
+          setEnemyHp(newEnemyHp);
           setHitEffect('enemy');
 
-          // Manually update state since we can't use set directly
+          // Check for battle end
           setTimeout(() => {
             if (newEnemyHp <= 0) {
               setStatus('victory');
@@ -179,9 +183,11 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
 
           const newPlayerHp = Math.max(0, player.currentHp - damage);
 
+          // Update player HP in store
+          setPlayerHp(newPlayerHp);
           setHitEffect('player');
 
-          // Manually update state since we can't use set directly
+          // Check for battle end
           setTimeout(() => {
             if (newPlayerHp <= 0) {
               setStatus('defeat');
@@ -196,7 +202,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
       setIsAttacking(false);
       setAttackingCharacter(null);
     }, 400);
-  }, [status, currentTurn, player, enemy, battleResult, executeAttack, setHitEffect, setStatus]);
+  }, [status, currentTurn, player, enemy, battleResult, executeAttack, setHitEffect, setStatus, setPlayerHp, setEnemyHp]);
 
   // Handle turn progression
   useEffect(() => {
