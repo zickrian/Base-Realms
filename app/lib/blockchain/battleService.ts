@@ -10,7 +10,7 @@
  * @module battleService
  */
 
-import { createPublicClient, createWalletClient, custom, http, type Address, type Hash } from 'viem';
+import { createPublicClient, createWalletClient, custom, fallback, http, type Address, type Hash } from 'viem';
 import { base } from 'viem/chains';
 import {
   BATTLE_CONTRACT_ADDRESS,
@@ -117,6 +117,45 @@ function parseBattleError(error: unknown): BattleError {
 }
 
 // ============================================================================
+// RPC CLIENT
+// ============================================================================
+
+const DEFAULT_BASE_RPCS = [
+  'https://base.llamarpc.com',
+  'https://base.meowrpc.com',
+  'https://base-mainnet.public.blastapi.io',
+  'https://mainnet.base.org',
+];
+
+function createBattlePublicClient() {
+  const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL;
+  const rpcUrlList = (process.env.BASE_RPC_URLS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const transportCandidates = [
+    ...rpcUrlList,
+    rpcUrl,
+    ...(rpcUrlList.length === 0 && !rpcUrl ? DEFAULT_BASE_RPCS : []),
+  ].filter(Boolean);
+
+  const transport = transportCandidates.length > 0
+    ? fallback(
+        transportCandidates.map((url) => http(url, {
+          timeout: 30000,
+          retryCount: 2,
+        }))
+      )
+    : http();
+
+  return createPublicClient({
+    chain: base,
+    transport,
+  });
+}
+
+// ============================================================================
 // IDRX TOKEN OPERATIONS
 // ============================================================================
 
@@ -124,14 +163,14 @@ function parseBattleError(error: unknown): BattleError {
  * Check IDRX balance for a wallet
  * 
  * @param walletAddress - User's wallet address
- * @returns Balance in wei (as string)
- */
+ * @returns Balance in raw units (with 2 decimals: 100 IDRX = 10000)
+  */
 export async function checkIDRXBalance(walletAddress: Address): Promise<string> {
   try {
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    console.log('[BattleService] Checking IDRX balance for:', walletAddress);
+    console.log('[BattleService] IDRX Contract:', IDRX_CONTRACT_ADDRESS);
+    
+    const publicClient = createBattlePublicClient();
 
     const balance = await publicClient.readContract({
       address: IDRX_CONTRACT_ADDRESS as Address,
@@ -140,10 +179,38 @@ export async function checkIDRXBalance(walletAddress: Address): Promise<string> 
       args: [walletAddress],
     });
 
-    return balance.toString();
-  } catch (error) {
-    console.error('[BattleService] Error checking IDRX balance:', error);
-    throw new Error('Failed to check IDRX balance');
+    const balanceStr = balance.toString();
+    const balanceInIDRX = (Number(balanceStr) / 100).toFixed(2);
+    
+    console.log('[BattleService] ✅ IDRX Balance Retrieved:', {
+      wallet: walletAddress,
+      rawBalance: balanceStr,
+      balanceInIDRX: `${balanceInIDRX} IDRX`,
+      minimumRequired: BATTLE_FEE_AMOUNT,
+      minimumInIDRX: `${(Number(BATTLE_FEE_AMOUNT) / 100).toFixed(2)} IDRX`,
+      hasEnough: BigInt(balanceStr) >= BigInt(BATTLE_FEE_AMOUNT),
+    });
+
+    return balanceStr;
+  } catch (error: any) {
+    console.error('[BattleService] ❌ Error checking IDRX balance:', error);
+    console.error('[BattleService] Error details:', {
+      wallet: walletAddress,
+      contract: IDRX_CONTRACT_ADDRESS,
+      errorMessage: error?.message,
+      errorCode: error?.code,
+      errorName: error?.name,
+    });
+    
+    // Handle specific contract errors gracefully
+    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      console.warn('[BattleService] ⚠️ IDRX contract returned no data - contract may not be deployed or wrong network');
+      return '0';
+    }
+    
+    // Return 0 instead of throwing to prevent app crash
+    console.warn('[BattleService] ⚠️ Returning 0 balance due to error');
+    return '0';
   }
 }
 
@@ -155,10 +222,7 @@ export async function checkIDRXBalance(walletAddress: Address): Promise<string> 
  */
 export async function checkIDRXAllowance(walletAddress: Address): Promise<string> {
   try {
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    const publicClient = createBattlePublicClient();
 
     const allowance = await publicClient.readContract({
       address: IDRX_CONTRACT_ADDRESS as Address,
@@ -168,9 +232,17 @@ export async function checkIDRXAllowance(walletAddress: Address): Promise<string
     });
 
     return allowance.toString();
-  } catch (error) {
+  } catch (error: any) {
     console.error('[BattleService] Error checking IDRX allowance:', error);
-    throw new Error('Failed to check IDRX allowance');
+    
+    // Handle specific contract errors gracefully
+    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      console.warn('[BattleService] IDRX contract not accessible, returning 0 allowance');
+      return '0';
+    }
+    
+    // Return 0 instead of throwing to prevent app crash
+    return '0';
   }
 }
 
@@ -186,10 +258,7 @@ export async function checkIDRXAllowance(walletAddress: Address): Promise<string
  */
 export async function checkWinTokenMinted(walletAddress: Address): Promise<boolean> {
   try {
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    const publicClient = createBattlePublicClient();
 
     const hasMinted = await publicClient.readContract({
       address: WINTOKEN_CONTRACT_ADDRESS as Address,
@@ -199,16 +268,40 @@ export async function checkWinTokenMinted(walletAddress: Address): Promise<boole
     });
 
     return hasMinted as boolean;
-  } catch (error) {
+  } catch (error: any) {
+    // Handle specific contract error cases
+    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      // Contract doesn't have hasMinted function or not deployed
+      // Check balance instead as fallback
+      console.warn('[BattleService] hasMinted not available, checking balance instead');
+      try {
+        const publicClient = createBattlePublicClient();
+        const balance = await publicClient.readContract({
+          address: WINTOKEN_CONTRACT_ADDRESS as Address,
+          abi: WINTOKEN_CONTRACT_ABI,
+          functionName: 'balanceOf',
+          args: [walletAddress],
+        });
+        
+        // If user has balance > 0, they have minted
+        return (balance as bigint) > 0n;
+      } catch (balanceError) {
+        console.error('[BattleService] Balance check also failed:', balanceError);
+        // If contract not accessible at all, assume not minted
+        return false;
+      }
+    }
+    
     console.error('[BattleService] Error checking WIN token status:', error);
-    throw new Error('Failed to check WIN token status');
+    // Don't throw, return false to allow user to try minting
+    return false;
   }
 }
 
 /**
  * Mint WIN token for battle
- * User must mint this BEFORE battle starts
- * Contract will hold and distribute it only if user wins
+ * User must mint this BEFORE battle
+ * Contract will hold and distribute only if user wins
  * 
  * @param walletAddress - User's wallet address
  * @returns Minting result with transaction hash
@@ -225,6 +318,7 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
     const walletClient = createWalletClient({
       chain: base,
       transport: custom(window.ethereum),
+      account: walletAddress,
     });
 
     const txHash = await walletClient.writeContract({
@@ -232,23 +326,39 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
       abi: WINTOKEN_CONTRACT_ABI,
       functionName: 'mint',
       args: [],
-      account: walletAddress,
+      chain: base,
     });
 
     // Wait for transaction confirmation
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    const publicClient = createBattlePublicClient();
 
     await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    console.log('[BattleService] WIN token minted successfully:', txHash);
 
     return {
       success: true,
       txHash,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('[BattleService] WIN token minting error:', error);
+    
+    // Handle specific contract errors
+    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      return {
+        success: false,
+        error: 'WIN Token contract not available. Please contact support.',
+      };
+    }
+    
+    // Handle user rejection
+    if (error?.message?.includes('User rejected') || error?.message?.includes('User denied')) {
+      return {
+        success: false,
+        error: 'Transaction rejected by user.',
+      };
+    }
+    
     const parsedError = parseBattleError(error);
     return {
       success: false,
@@ -290,10 +400,7 @@ export async function approveIDRX(
     });
 
     // Wait for transaction confirmation
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    const publicClient = createBattlePublicClient();
 
     await publicClient.waitForTransactionReceipt({ hash: txHash });
 
@@ -301,8 +408,17 @@ export async function approveIDRX(
       success: true,
       txHash,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('[BattleService] Approval error:', error);
+    
+    // Handle specific contract errors
+    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      return {
+        success: false,
+        error: 'IDRX contract not available. Please check your network connection.',
+      };
+    }
+    
     const parsedError = parseBattleError(error);
     return {
       success: false,
@@ -340,6 +456,14 @@ export async function prepareBattle(
     const balance = await checkIDRXBalance(walletAddress);
     const hasEnoughIDRX = BigInt(balance) >= BigInt(BATTLE_FEE_AMOUNT);
 
+    console.log('[BattleService] Battle Preparation Check:', {
+      balance,
+      battleFeeAmount: BATTLE_FEE_AMOUNT,
+      hasEnoughIDRX,
+      balanceInIDRX: (Number(balance) / 100).toFixed(2) + ' IDRX',
+      requiredIDRX: (Number(BATTLE_FEE_AMOUNT) / 100).toFixed(2) + ' IDRX',
+    });
+
     // Check allowance
     const allowance = await checkIDRXAllowance(walletAddress);
     const needsApproval = BigInt(allowance) < BigInt(BATTLE_FEE_AMOUNT);
@@ -370,6 +494,10 @@ export async function prepareBattle(
 /**
  * Execute battle on-chain
  * 
+ * CRITICAL: User MUST have:
+ * 1. Approved IDRX (≥5 IDRX)
+ * 2. Minted WIN token BEFORE calling this
+ * 
  * This calls the Battle Contract with:
  * - tokenId: NFT ID to battle with
  * - hp: HP value from stats.json
@@ -379,11 +507,12 @@ export async function prepareBattle(
  * The contract will:
  * 1. Verify ownership
  * 2. Verify NFT not used before
- * 3. Verify Merkle proof
+ * 3. Verify Merkle proof (hp, attack valid)
  * 4. Transfer 5 IDRX from user
  * 5. Run battle simulation
- * 6. Mint WinToken if won
- * 7. Mark NFT as used forever
+ * 6. IF WON: Transfer WIN token to user
+ * 7. IF LOST: WIN token stays with user (but contract marks it)
+ * 8. Mark NFT as used forever
  * 
  * @param tokenId - NFT token ID
  * @param hp - HP value (from stats.json)
@@ -414,6 +543,7 @@ export async function executeBattle(
     const walletClient = createWalletClient({
       chain: base,
       transport: custom(window.ethereum),
+      account: walletAddress,
     });
 
     // Call battle function
@@ -422,16 +552,13 @@ export async function executeBattle(
       abi: BATTLE_CONTRACT_ABI,
       functionName: 'battle',
       args: [BigInt(tokenId), BigInt(hp), BigInt(attack), proof as `0x${string}`[]],
-      account: walletAddress,
+      chain: base,
     });
 
     console.log('[BattleService] Battle transaction sent:', txHash);
 
     // Wait for transaction confirmation
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    const publicClient = createBattlePublicClient();
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
@@ -459,8 +586,19 @@ export async function executeBattle(
       won,
       txHash,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('[BattleService] Battle execution error:', error);
+    
+    // Handle user rejection
+    if (error?.message?.includes('User rejected') || error?.message?.includes('User denied')) {
+      return {
+        success: false,
+        won: false,
+        txHash: '0x' as Hash,
+        error: 'Battle transaction rejected by user.',
+      };
+    }
+    
     const parsedError = parseBattleError(error);
     return {
       success: false,
@@ -479,10 +617,7 @@ export async function executeBattle(
  */
 export async function hasNFTBeenUsed(tokenId: number): Promise<boolean> {
   try {
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
+    const publicClient = createBattlePublicClient();
 
     const used = await publicClient.readContract({
       address: BATTLE_CONTRACT_ADDRESS as Address,

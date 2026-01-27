@@ -130,20 +130,27 @@ export default function BattlePage() {
 
   /**
    * Handle preparation error
-   * Check for insufficient IDRX and show QRIS popup
+   * Check for insufficient IDRX and show QRIS popup, or redirect home
    */
   const handlePreparationError = useCallback((errorMessage: string) => {
+    console.error('[BattlePage] Preparation error:', errorMessage);
+    
     // Check if error is insufficient IDRX balance
     if (errorMessage.toLowerCase().includes('insufficient') && errorMessage.toLowerCase().includes('idrx')) {
       // Show QRIS top-up popup instead of error
+      console.log('[BattlePage] Showing QRIS popup for insufficient balance');
       setShowQRISPopup(true);
     } else {
       // Show error and redirect to home for other errors
+      console.log('[BattlePage] Redirecting to home due to error:', errorMessage);
       setError(errorMessage);
       setPhase('error');
+      
+      // Redirect to home after 2 seconds (reduced from 3)
       setTimeout(() => {
+        console.log('[BattlePage] Redirecting to home...');
         router.replace('/home');
-      }, 3000);
+      }, 2000);
     }
   }, [router]);
 

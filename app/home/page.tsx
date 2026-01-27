@@ -14,7 +14,6 @@ import {
   LeaderboardMenu,
   SwapMenu,
 } from "../components/game";
-import { LoadingState } from "../components/LoadingState";
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useWalkSound } from "../hooks/useWalkSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
@@ -39,11 +38,10 @@ export default function HomePage() {
     refreshInventory,
   } = useGameStore();
 
-  // CRITICAL: Comprehensive ready check
-  // Ensure ALL critical data is loaded before rendering home
-  const isFullyReady = 
-    isConnected && 
-    isInitialized && 
+  // CRITICAL: Ensure all critical data is loaded before rendering home
+  const isFullyReady =
+    isConnected &&
+    isInitialized &&
     !storeLoading &&
     profile !== null &&
     Array.isArray(quests) &&
@@ -702,44 +700,17 @@ export default function HomePage() {
     </>
   );
 
-  // NOW conditional returns are safe - all hooks have been called
+  // Redirect if not connected - all data should be ready from landing page
+  useEffect(() => {
+    if (mounted && !isConnected && !isConnecting) {
+      console.log('[Home] Not connected, redirecting to landing...');
+      router.replace('/');
+    }
+  }, [mounted, isConnected, isConnecting, router]);
+
   // Render a stable tree until client-side hydration completes
   if (!mounted) {
-    return <LoadingState />;
-  }
-  
-  // CRITICAL FIX: Strict loading check to prevent incomplete renders
-  // User should NOT see home page until ALL data is ready
-  
-  // Case 1: Initial load - not ready yet
-  if (!hasEverBeenReady.current && (isConnecting || storeLoading || !isFullyReady)) {
-    console.log('[Home] Initial load, showing loading screen');
-    return <LoadingState />;
-  }
-  
-  // Case 2: Data reload - connected but not initialized
-  if (hasEverBeenReady.current && isConnected && !isInitialized && storeLoading) {
-    console.log('[Home] Data reloading, showing loading screen');
-    return <LoadingState />;
-  }
-  
-  // Case 3: Not ready yet - missing critical data
-  if (!isFullyReady && !hasEverBeenReady.current) {
-    console.log('[Home] Critical data missing, showing loading screen');
-    return <LoadingState />;
-  }
-  
-  // Case 4: Ready - all data loaded, can render home
-  if (hasEverBeenReady.current && isConnected && isFullyReady) {
-    // User is fully ready, render home immediately
-    // This prevents flash when coming back from battle/shop
-  }
-  
-  // Case 5: Temporarily disconnected but was ready before
-  if (hasEverBeenReady.current && !isConnected && !isConnecting) {
-    // Waiting for reconnection, show loading
-    console.log('[Home] Waiting for reconnection');
-    return <LoadingState />;
+    return <div style={{ width: '100%', height: '100vh', background: '#000' }} />;
   }
 
   return (

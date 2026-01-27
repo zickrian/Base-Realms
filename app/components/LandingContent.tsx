@@ -5,50 +5,34 @@ import Image from "next/image";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 import { getGameIconUrl } from "../utils/supabaseStorage";
-import { useGameStore } from "../stores/gameStore";
 import styles from "./LandingContent.module.css";
 
 interface LandingContentProps {
   isLoggingOut?: boolean;
   initError?: string | null;
+  loadingStep?: 'connecting' | 'initializing' | 'loading' | 'ready';
 }
 
-export function LandingContent({ isLoggingOut = false, initError = null }: LandingContentProps) {
+export function LandingContent({ isLoggingOut = false, initError = null, loadingStep = 'connecting' }: LandingContentProps) {
   const { isConnected, isConnecting, address } = useAccount();
-  const { isInitialized, isLoading: storeLoading } = useGameStore();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
 
-  // Update loading message based on state
+  // Update loading message based on loadingStep
   useEffect(() => {
     if (isLoggingOut) {
       setLoadingMessage("Logging out... See you soon!");
     } else if (initError) {
       setLoadingMessage("Connection failed. Please try again.");
-    } else if (isConnecting) {
+    } else if (loadingStep === 'connecting') {
       setLoadingMessage("Connecting wallet...");
-    } else if (isConnected && address) {
-      if (!isInitialized && !storeLoading) {
-        setLoadingMessage("Preparing your adventure...");
-      } else if (storeLoading) {
-        setLoadingMessage("Loading your profile...");
-        
-        const timer1 = setTimeout(() => {
-          setLoadingMessage("Loading quests and inventory...");
-        }, 1500);
-        
-        const timer2 = setTimeout(() => {
-          setLoadingMessage("Almost ready...");
-        }, 3000);
-        
-        return () => {
-          clearTimeout(timer1);
-          clearTimeout(timer2);
-        };
-      } else if (isInitialized && !storeLoading) {
-        setLoadingMessage("Ready! Entering game...");
-      }
+    } else if (loadingStep === 'initializing') {
+      setLoadingMessage("Loading your profile...");
+    } else if (loadingStep === 'loading') {
+      setLoadingMessage("Loading game data...");
+    } else if (loadingStep === 'ready') {
+      setLoadingMessage("Ready! Entering game...");
     }
-  }, [isLoggingOut, isConnecting, isConnected, address, isInitialized, storeLoading, initError]);
+  }, [isLoggingOut, initError, loadingStep]);
 
   // Show logout screen
   if (isLoggingOut) {

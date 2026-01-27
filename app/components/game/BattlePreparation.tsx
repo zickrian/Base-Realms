@@ -78,7 +78,12 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
       try {
         // Prepare battle (get proof, check balance/allowance)
         setCurrentStep('Checking IDRX balance...');
+        console.log('[BattlePreparation] Preparing battle for token:', tokenId);
+        console.log('[BattlePreparation] Wallet address:', address);
+        
         await prepare(tokenId);
+        
+        console.log('[BattlePreparation] Battle prepared successfully');
         setIsReadyForBattle(true);
       } catch (error) {
         console.error('[BattlePreparation] Initialization error:', error);
@@ -96,46 +101,58 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
     const handlePreparationState = async () => {
       if (!state.preparation || !isReadyForBattle) return;
 
-      // Check for insufficient balance FIRST
+      console.log('[BattlePreparation] Preparation state:', {
+        hasEnoughIDRX: state.preparation.hasEnoughIDRX,
+        needsApproval: state.preparation.needsApproval,
+        hasWinTokenMinted: state.preparation.hasWinTokenMinted,
+        idrxBalance: state.preparation.idrxBalance,
+        currentAllowance: state.preparation.currentAllowance,
+      });
+
+      // Check for insufficient balance FIRST - must exit immediately
       if (!state.preparation.hasEnoughIDRX) {
+        console.error('[BattlePreparation] Insufficient IDRX balance - triggering error callback');
         onError('Insufficient IDRX balance. You need at least 5 IDRX to battle.');
-        return;
+        return; // CRITICAL: Stop here, don't proceed
       }
 
-      // Step 1: Check if IDRX approval needed
+      // Step 1: MUST approve IDRX first
       if (state.preparation.needsApproval && !state.isApproving) {
-        setCurrentStep('Requesting IDRX approval...');
+        setCurrentStep('⚔️ Step 1/2: Approving IDRX for battle fee...');
         try {
           await approve();
-          setCurrentStep('IDRX approval confirmed!');
+          setCurrentStep('✅ IDRX approved! Proceeding to WIN token...');
           // Continue to next step after approval
         } catch (error) {
+          console.error('[BattlePreparation] Approval error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Approval failed. You must approve IDRX spending to battle.';
           onError(errorMessage);
-          return;
+          return; // Exit on approval failure
         }
       }
 
-      // Step 2: Check if WIN token minting needed
-      if (!state.preparation.hasWinTokenMinted && !state.isMinting) {
-        setCurrentStep('Minting WIN token...');
+      // Step 2: MUST mint WIN token before battle
+      // This is CRITICAL - contract requires user to have WIN token first
+      if (!state.preparation.hasWinTokenMinted && !state.isMinting && !state.preparation.needsApproval) {
+        setCurrentStep('🏆 Step 2/2: Minting WIN token (victory reward)...');
         try {
           await mintWin();
-          setCurrentStep('WIN token minted successfully!');
+          setCurrentStep('✅ WIN token minted! You can now battle!');
           
-          // Proceed to battle after both approvals complete
+          // ONLY proceed to battle after BOTH requirements met
           setTimeout(() => {
-            setCurrentStep('Entering battle arena...');
+            setCurrentStep('⚔️ Entering battle arena...');
             onReady();
-          }, 500);
+          }, 1000);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed. Please try again.';
+          console.error('[BattlePreparation] WIN token minting error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed. You must mint WIN token before battle.';
           onError(errorMessage);
-          return;
+          return; // Exit on minting failure
         }
       } else if (state.preparation.hasWinTokenMinted && !state.preparation.needsApproval) {
-        // Both requirements met, proceed directly
-        setCurrentStep('Entering battle arena...');
+        // Both requirements already met - proceed directly to battle
+        setCurrentStep('✅ All requirements met! Entering battle...');
         setTimeout(() => {
           onReady();
         }, 500);
@@ -146,6 +163,14 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.preparation, state.isApproving, state.isMinting, isReadyForBattle]); // Run when preparation states change
 
+  // SAFETY: If error exists in state, call onError callback
+  useEffect(() => {
+    if (state.error) {
+      console.error('[BattlePreparation] Battle state error detected:', state.error);
+      onError(state.error);
+    }
+  }, [state.error, onError]);
+
   // Show loading screen with current step
   return (
     <div className={styles.container}>
@@ -155,31 +180,48 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         <p className={styles.step}>{currentStep}</p>
         
         {state.isPreparing && (
-          <p className={styles.detail}>Generating Merkle proof...</p>
+          <p className={styles.detail}>Validating NFT and generating Merkle proof...</p>
         )}
         
         {isSwitchingChain && (
           <p className={styles.detail}>
-            Please confirm the network switch in your wallet.
+            Please confirm the network switch to Base in your wallet.
           </p>
         )}
         
         {state.isApproving && (
-          <p className={styles.detail}>
-            Please approve the IDRX transaction in your wallet.
-          </p>
+          <div className={styles.detail}>
+            <p>Please approve the IDRX transaction in your wallet.</p>
+            <p className={styles.hint}>This allows the battle contract to charge 5 IDRX battle fee.</p>
+          </div>
         )}
         
         {state.isMinting && (
-          <p className={styles.detail}>
-            Please confirm WIN token minting in your wallet.
-          </p>
+          <div className={styles.detail}>
+            <p>Please confirm WIN token minting in your wallet.</p>
+            <p className={styles.hint}>This token will be awarded to you if you win the battle!</p>
+          </div>
         )}
         
         {state.preparation && !state.preparation.hasEnoughIDRX && (
           <div className={styles.error}>
             <p>❌ Insufficient IDRX balance</p>
             <p>You need at least 5 IDRX to battle.</p>
+            <p className={styles.hint}>Please get IDRX tokens from the shop or faucet.</p>
+          </div>
+        )}
+        
+        {state.preparation && state.preparation.hasEnoughIDRX && (
+          <div className={styles.requirements}>
+            <p className={styles.checklistTitle}>Battle Requirements:</p>
+            <div className={styles.checklist}>
+              <div className={state.preparation.needsApproval ? styles.pending : styles.completed}>
+                {!state.preparation.needsApproval ? '✅' : '⏳'} IDRX Approval (5 IDRX battle fee)
+              </div>
+              <div className={state.preparation.hasWinTokenMinted ? styles.completed : styles.pending}>
+                {state.preparation.hasWinTokenMinted ? '✅' : '⏳'} WIN Token Minted (victory reward)
+              </div>
+            </div>
           </div>
         )}
       </div>
