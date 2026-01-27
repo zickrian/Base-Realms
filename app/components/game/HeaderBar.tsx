@@ -6,15 +6,13 @@ import { formatUnits } from "viem";
 import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { WalletPopup } from "./WalletPopup";
+import { IDRX_TOKEN_ADDRESS, BASE_CHAIN_ID } from "@/app/lib/blockchain/tokenConfig";
 
 import styles from "./HeaderBar.module.css";
 
 interface HeaderBarProps {
   onSettingsClick?: () => void;
 }
-
-const IDRX_TOKEN_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22" as const;
-const BASE_CHAIN_ID = 8453;
 
 export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
@@ -92,7 +90,7 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
       </button>
 
       <div className={styles.currencySection}>
-        <div 
+        <div
           className={styles.currencyItem}
           onClick={() => setIsWalletPopupOpen(true)}
           style={{ cursor: 'pointer' }}
@@ -100,7 +98,7 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
           <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
           <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
         </div>
-        <div 
+        <div
           className={styles.currencyItem}
           onClick={() => setIsWalletPopupOpen(true)}
           style={{ cursor: 'pointer' }}

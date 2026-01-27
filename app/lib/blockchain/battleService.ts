@@ -142,11 +142,11 @@ function createBattlePublicClient() {
 
   const transport = transportCandidates.length > 0
     ? fallback(
-        transportCandidates.map((url) => http(url, {
-          timeout: 30000,
-          retryCount: 2,
-        }))
-      )
+      transportCandidates.map((url) => http(url, {
+        timeout: 30000,
+        retryCount: 2,
+      }))
+    )
     : http();
 
   return createPublicClient({
@@ -160,142 +160,146 @@ function createBattlePublicClient() {
 // ============================================================================
 
 /**
- * Check IDRX balance for a wallet
+ * Check IDRX balance for a wallet with retry mechanism
  * 
  * @param walletAddress - User's wallet address
+ * @param retryCount - Number of retries (default: 3)
  * @returns Balance in raw units (with 2 decimals: 100 IDRX = 10000)
-  */
-export async function checkIDRXBalance(walletAddress: Address): Promise<string> {
-  try {
-    console.log('[BattleService] Checking IDRX balance for:', walletAddress);
-    console.log('[BattleService] IDRX Contract:', IDRX_CONTRACT_ADDRESS);
-    
-    const publicClient = createBattlePublicClient();
+ */
+export async function checkIDRXBalance(walletAddress: Address, retryCount: number = 3): Promise<string> {
+  const MAX_RETRIES = retryCount;
+  const RETRY_DELAY_MS = 1000;
 
-    const balance = await publicClient.readContract({
-      address: IDRX_CONTRACT_ADDRESS as Address,
-      abi: IDRX_CONTRACT_ABI,
-      functionName: 'balanceOf',
-      args: [walletAddress],
-    });
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[BattleService] Checking IDRX balance for: ${walletAddress} (attempt ${attempt}/${MAX_RETRIES})`);
+      console.log('[BattleService] IDRX Contract:', IDRX_CONTRACT_ADDRESS);
 
-    const balanceStr = balance.toString();
-    const balanceInIDRX = (Number(balanceStr) / 100).toFixed(2);
-    
-    console.log('[BattleService] ✅ IDRX Balance Retrieved:', {
-      wallet: walletAddress,
-      rawBalance: balanceStr,
-      balanceInIDRX: `${balanceInIDRX} IDRX`,
-      minimumRequired: BATTLE_FEE_AMOUNT,
-      minimumInIDRX: `${(Number(BATTLE_FEE_AMOUNT) / 100).toFixed(2)} IDRX`,
-      hasEnough: BigInt(balanceStr) >= BigInt(BATTLE_FEE_AMOUNT),
-    });
+      const publicClient = createBattlePublicClient();
 
-    return balanceStr;
-  } catch (error: any) {
-    console.error('[BattleService] ❌ Error checking IDRX balance:', error);
-    console.error('[BattleService] Error details:', {
-      wallet: walletAddress,
-      contract: IDRX_CONTRACT_ADDRESS,
-      errorMessage: error?.message,
-      errorCode: error?.code,
-      errorName: error?.name,
-    });
-    
-    // Handle specific contract errors gracefully
-    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
-      console.warn('[BattleService] ⚠️ IDRX contract returned no data - contract may not be deployed or wrong network');
-      return '0';
+      const balance = await publicClient.readContract({
+        address: IDRX_CONTRACT_ADDRESS as Address,
+        abi: IDRX_CONTRACT_ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress],
+      });
+
+      const balanceStr = balance.toString();
+      const balanceInIDRX = (Number(balanceStr) / 100).toFixed(2);
+
+      console.log('[BattleService] ✅ IDRX Balance Retrieved:', {
+        wallet: walletAddress,
+        rawBalance: balanceStr,
+        balanceInIDRX: `${balanceInIDRX} IDRX`,
+        minimumRequired: BATTLE_FEE_AMOUNT,
+        minimumInIDRX: `${(Number(BATTLE_FEE_AMOUNT) / 100).toFixed(2)} IDRX`,
+        hasEnough: BigInt(balanceStr) >= BigInt(BATTLE_FEE_AMOUNT),
+      });
+
+      return balanceStr;
+    } catch (error: any) {
+      console.error(`[BattleService] ❌ Error checking IDRX balance (attempt ${attempt}/${MAX_RETRIES}):`, error);
+      console.error('[BattleService] Error details:', {
+        wallet: walletAddress,
+        contract: IDRX_CONTRACT_ADDRESS,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorName: error?.name,
+      });
+
+      // Handle specific contract errors that shouldn't be retried
+      if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+        console.warn('[BattleService] ⚠️ IDRX contract returned no data - contract may not be deployed or wrong network');
+        // Only return 0 on last attempt for this error type
+        if (attempt === MAX_RETRIES) {
+          return '0';
+        }
+      }
+
+      // If not the last attempt, wait and retry
+      if (attempt < MAX_RETRIES) {
+        console.log(`[BattleService] ⏳ Retrying in ${RETRY_DELAY_MS}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+      } else {
+        // Last attempt failed - throw error instead of silently returning 0
+        console.error('[BattleService] ❌ All retry attempts failed for IDRX balance check');
+        throw new Error(`Failed to check IDRX balance after ${MAX_RETRIES} attempts: ${error?.message || 'Unknown error'}`);
+      }
     }
-    
-    // Return 0 instead of throwing to prevent app crash
-    console.warn('[BattleService] ⚠️ Returning 0 balance due to error');
-    return '0';
   }
+
+  // This should never be reached due to the throw above, but TypeScript needs it
+  return '0';
 }
 
 /**
- * Check current IDRX allowance for Battle Contract
+ * Check current IDRX allowance for Battle Contract with retry mechanism
  * 
  * @param walletAddress - User's wallet address
+ * @param retryCount - Number of retries (default: 3)
  * @returns Current allowance in wei (as string)
  */
-export async function checkIDRXAllowance(walletAddress: Address): Promise<string> {
-  try {
-    const publicClient = createBattlePublicClient();
+export async function checkIDRXAllowance(walletAddress: Address, retryCount: number = 3): Promise<string> {
+  const MAX_RETRIES = retryCount;
+  const RETRY_DELAY_MS = 1000;
 
-    const allowance = await publicClient.readContract({
-      address: IDRX_CONTRACT_ADDRESS as Address,
-      abi: IDRX_CONTRACT_ABI,
-      functionName: 'allowance',
-      args: [walletAddress, BATTLE_CONTRACT_ADDRESS as Address],
-    });
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[BattleService] Checking IDRX allowance for: ${walletAddress} (attempt ${attempt}/${MAX_RETRIES})`);
+      const publicClient = createBattlePublicClient();
 
-    return allowance.toString();
-  } catch (error: any) {
-    console.error('[BattleService] Error checking IDRX allowance:', error);
-    
-    // Handle specific contract errors gracefully
-    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
-      console.warn('[BattleService] IDRX contract not accessible, returning 0 allowance');
-      return '0';
+      const allowance = await publicClient.readContract({
+        address: IDRX_CONTRACT_ADDRESS as Address,
+        abi: IDRX_CONTRACT_ABI,
+        functionName: 'allowance',
+        args: [walletAddress, BATTLE_CONTRACT_ADDRESS as Address],
+      });
+
+      const allowanceStr = allowance.toString();
+      console.log('[BattleService] ✅ IDRX Allowance Retrieved:', allowanceStr);
+      return allowanceStr;
+    } catch (error: any) {
+      console.error(`[BattleService] ❌ Error checking IDRX allowance (attempt ${attempt}/${MAX_RETRIES}):`, error);
+
+      // Handle specific contract errors gracefully
+      if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+        console.warn('[BattleService] IDRX contract not accessible');
+        if (attempt === MAX_RETRIES) {
+          return '0';
+        }
+      }
+
+      // If not the last attempt, wait and retry
+      if (attempt < MAX_RETRIES) {
+        console.log(`[BattleService] ⏳ Retrying in ${RETRY_DELAY_MS}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+      } else {
+        // Last attempt failed - return 0 for allowance (less critical than balance)
+        console.error('[BattleService] ❌ All retry attempts failed for IDRX allowance check');
+        return '0';
+      }
     }
-    
-    // Return 0 instead of throwing to prevent app crash
-    return '0';
   }
-}
 
-// ============================================================================
-// WIN TOKEN OPERATIONS
-// ============================================================================
+  return '0';
+}
 
 /**
  * Check if user has already minted WIN token
  * 
+ * NOTE: Due to RPC reliability issues with the unverified contract,
+ * we skip the check and assume user hasn't minted.
+ * If user already minted, the mint transaction will fail with a clear error.
+ * 
  * @param walletAddress - User's wallet address
- * @returns true if already minted, false otherwise
+ * @returns false (always assume not minted, let mint transaction handle it)
  */
 export async function checkWinTokenMinted(walletAddress: Address): Promise<boolean> {
-  try {
-    const publicClient = createBattlePublicClient();
-
-    const hasMinted = await publicClient.readContract({
-      address: WINTOKEN_CONTRACT_ADDRESS as Address,
-      abi: WINTOKEN_CONTRACT_ABI,
-      functionName: 'hasMinted',
-      args: [walletAddress],
-    });
-
-    return hasMinted as boolean;
-  } catch (error: any) {
-    // Handle specific contract error cases
-    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
-      // Contract doesn't have hasMinted function or not deployed
-      // Check balance instead as fallback
-      console.warn('[BattleService] hasMinted not available, checking balance instead');
-      try {
-        const publicClient = createBattlePublicClient();
-        const balance = await publicClient.readContract({
-          address: WINTOKEN_CONTRACT_ADDRESS as Address,
-          abi: WINTOKEN_CONTRACT_ABI,
-          functionName: 'balanceOf',
-          args: [walletAddress],
-        });
-        
-        // If user has balance > 0, they have minted
-        return (balance as bigint) > 0n;
-      } catch (balanceError) {
-        console.error('[BattleService] Balance check also failed:', balanceError);
-        // If contract not accessible at all, assume not minted
-        return false;
-      }
-    }
-    
-    console.error('[BattleService] Error checking WIN token status:', error);
-    // Don't throw, return false to allow user to try minting
-    return false;
-  }
+  // Skip RPC check - the contract is unverified and RPC calls are unreliable
+  // If user already minted, the mint() call will revert with appropriate error
+  console.log('[BattleService] Skipping WIN token check (contract unverified) - will attempt mint');
+  console.log('[BattleService] Wallet:', walletAddress);
+  return false;
 }
 
 /**
@@ -315,11 +319,44 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
       };
     }
 
+    // First, ensure we're on the correct chain (Base)
+    try {
+      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const currentChainIdNumber = parseInt(currentChainId as string, 16);
+
+      if (currentChainIdNumber !== 8453) {
+        console.log('[BattleService] Chain mismatch detected, requesting switch to Base...');
+        console.log('[BattleService] Current chain:', currentChainIdNumber, 'Required: 8453 (Base)');
+
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }], // 8453 in hex
+          });
+          console.log('[BattleService] Successfully switched to Base');
+
+          // Wait a moment for the switch to complete
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (switchError: any) {
+          console.error('[BattleService] Failed to switch chain:', switchError);
+          return {
+            success: false,
+            error: 'Please switch to Base network manually and try again.',
+          };
+        }
+      }
+    } catch (chainError) {
+      console.warn('[BattleService] Could not check/switch chain:', chainError);
+    }
+
     const walletClient = createWalletClient({
       chain: base,
       transport: custom(window.ethereum),
       account: walletAddress,
     });
+
+    console.log('[BattleService] Minting WIN token for:', walletAddress);
+    console.log('[BattleService] WIN Token contract:', WINTOKEN_CONTRACT_ADDRESS);
 
     const txHash = await walletClient.writeContract({
       address: WINTOKEN_CONTRACT_ADDRESS as Address,
@@ -342,7 +379,16 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
     };
   } catch (error: any) {
     console.error('[BattleService] WIN token minting error:', error);
-    
+
+    // Handle chain mismatch error
+    if (error?.message?.includes('does not match the target chain') ||
+      error?.message?.includes('chain') && error?.message?.includes('mismatch')) {
+      return {
+        success: false,
+        error: 'Wrong network. Please switch to Base network and try again.',
+      };
+    }
+
     // Handle specific contract errors
     if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
       return {
@@ -350,7 +396,7 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
         error: 'WIN Token contract not available. Please contact support.',
       };
     }
-    
+
     // Handle user rejection
     if (error?.message?.includes('User rejected') || error?.message?.includes('User denied')) {
       return {
@@ -358,7 +404,7 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
         error: 'Transaction rejected by user.',
       };
     }
-    
+
     const parsedError = parseBattleError(error);
     return {
       success: false,
@@ -386,10 +432,40 @@ export async function approveIDRX(
       };
     }
 
+    // First, ensure we're on the correct chain (Base)
+    try {
+      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const currentChainIdNumber = parseInt(currentChainId as string, 16);
+
+      if (currentChainIdNumber !== 8453) {
+        console.log('[BattleService] Chain mismatch detected for approval, requesting switch to Base...');
+
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }], // 8453 in hex
+          });
+          console.log('[BattleService] Successfully switched to Base');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (switchError: any) {
+          console.error('[BattleService] Failed to switch chain:', switchError);
+          return {
+            success: false,
+            error: 'Please switch to Base network manually and try again.',
+          };
+        }
+      }
+    } catch (chainError) {
+      console.warn('[BattleService] Could not check/switch chain:', chainError);
+    }
+
     const walletClient = createWalletClient({
       chain: base,
       transport: custom(window.ethereum),
     });
+
+    console.log('[BattleService] Approving IDRX for:', walletAddress);
+    console.log('[BattleService] Approval amount:', amount);
 
     const txHash = await walletClient.writeContract({
       address: IDRX_CONTRACT_ADDRESS as Address,
@@ -404,13 +480,24 @@ export async function approveIDRX(
 
     await publicClient.waitForTransactionReceipt({ hash: txHash });
 
+    console.log('[BattleService] IDRX approved successfully:', txHash);
+
     return {
       success: true,
       txHash,
     };
   } catch (error: any) {
     console.error('[BattleService] Approval error:', error);
-    
+
+    // Handle chain mismatch error
+    if (error?.message?.includes('does not match the target chain') ||
+      error?.message?.includes('chain') && error?.message?.includes('mismatch')) {
+      return {
+        success: false,
+        error: 'Wrong network. Please switch to Base network and try again.',
+      };
+    }
+
     // Handle specific contract errors
     if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
       return {
@@ -418,7 +505,7 @@ export async function approveIDRX(
         error: 'IDRX contract not available. Please check your network connection.',
       };
     }
-    
+
     const parsedError = parseBattleError(error);
     return {
       success: false,
@@ -588,7 +675,7 @@ export async function executeBattle(
     };
   } catch (error: any) {
     console.error('[BattleService] Battle execution error:', error);
-    
+
     // Handle user rejection
     if (error?.message?.includes('User rejected') || error?.message?.includes('User denied')) {
       return {
@@ -598,7 +685,7 @@ export async function executeBattle(
         error: 'Battle transaction rejected by user.',
       };
     }
-    
+
     const parsedError = parseBattleError(error);
     return {
       success: false,

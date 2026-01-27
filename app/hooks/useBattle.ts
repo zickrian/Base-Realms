@@ -12,13 +12,12 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { type Address } from 'viem';
-import { 
-  prepareBattle, 
+import {
+  prepareBattle,
   executeBattle,
-  mintWinToken,
   type BattlePreparation,
 } from '@/app/lib/blockchain/battleService';
 import {
@@ -26,6 +25,8 @@ import {
   IDRX_CONTRACT_ABI,
   BATTLE_CONTRACT_ADDRESS,
   BATTLE_FEE_AMOUNT,
+  WINTOKEN_CONTRACT_ADDRESS,
+  WINTOKEN_CONTRACT_ABI,
 } from '@/app/lib/blockchain/contracts';
 
 export interface BattleState {
@@ -88,18 +89,31 @@ export interface UseBattleReturn {
  */
 export function useBattle(): UseBattleReturn {
   const { address } = useAccount();
-  
-  // Wagmi hooks for contract writes (properly handles chain via OnchainKit)
-  const { 
-    writeContract,
-    data: approvalHash, 
-    reset: resetWriteContract,
+
+  // Wagmi hooks for IDRX approval (properly handles chain via OnchainKit)
+  const {
+    writeContract: writeApproval,
+    data: approvalHash,
+    reset: resetApprovalContract,
+    isPending: isApprovalPending,
   } = useWriteContract();
-  
+
   const { isSuccess: approvalSuccess } = useWaitForTransactionReceipt({
     hash: approvalHash,
   });
-  
+
+  // Wagmi hooks for WIN token minting (properly handles chain via OnchainKit)
+  const {
+    writeContract: writeMint,
+    data: mintHash,
+    reset: resetMintContract,
+    isPending: isMintPending,
+  } = useWriteContract();
+
+  const { isSuccess: mintSuccess } = useWaitForTransactionReceipt({
+    hash: mintHash,
+  });
+
   const [state, setState] = useState<BattleState>({
     isPreparing: false,
     isApproving: false,
@@ -128,7 +142,7 @@ export function useBattle(): UseBattleReturn {
     try {
       console.log('[useBattle] Preparing battle for token:', tokenId);
       const preparation = await prepareBattle(tokenId, address as Address);
-      
+
       console.log('[useBattle] Battle prepared:', {
         hasEnoughIDRX: preparation.hasEnoughIDRX,
         needsApproval: preparation.needsApproval,
@@ -141,12 +155,14 @@ export function useBattle(): UseBattleReturn {
         isPreparing: false,
       }));
 
-      // Validation checks
+      // Log validation status (don't set error here - let BattlePreparation handle it with more context)
       if (!preparation.hasEnoughIDRX) {
-        setState(prev => ({
-          ...prev,
-          error: 'Insufficient IDRX balance. You need at least 5 IDRX to battle.',
-        }));
+        console.warn('[useBattle] Insufficient IDRX or balance check issue:', {
+          balance: preparation.idrxBalance,
+          balanceInIDRX: (Number(preparation.idrxBalance) / 100).toFixed(2),
+          hasEnoughIDRX: preparation.hasEnoughIDRX,
+        });
+        // Don't set error here - BattlePreparation will handle it with proper UI feedback
       }
     } catch (error) {
       console.error('[useBattle] Preparation error:', error);
@@ -173,9 +189,9 @@ export function useBattle(): UseBattleReturn {
 
     try {
       console.log('[useBattle] Approving IDRX via wagmi...');
-      
+
       // Use wagmi writeContract with explicit chainId for Base
-      writeContract({
+      writeApproval({
         address: IDRX_CONTRACT_ADDRESS as Address,
         abi: IDRX_CONTRACT_ABI,
         functionName: 'approve',
@@ -186,7 +202,7 @@ export function useBattle(): UseBattleReturn {
       // Wait for the transaction to be submitted
       // The actual waiting is handled by useWaitForTransactionReceipt
       console.log('[useBattle] Approval transaction submitted');
-      
+
     } catch (error) {
       console.error('[useBattle] Approval error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Approval failed';
@@ -195,11 +211,11 @@ export function useBattle(): UseBattleReturn {
         isApproving: false,
         error: errorMessage,
       }));
-      resetWriteContract();
+      resetApprovalContract();
       throw error;
     }
-  }, [address, writeContract, resetWriteContract]);
-  
+  }, [address, writeApproval, resetApprovalContract]);
+
   // Handle approval success
   const handleApprovalSuccess = useCallback(() => {
     if (approvalSuccess && state.isApproving) {
@@ -212,19 +228,21 @@ export function useBattle(): UseBattleReturn {
           needsApproval: false,
         } : null,
       }));
-      resetWriteContract();
+      resetApprovalContract();
     }
-  }, [approvalSuccess, approvalHash, state.isApproving, resetWriteContract]);
-  
+  }, [approvalSuccess, approvalHash, state.isApproving, resetApprovalContract]);
+
   // Call handleApprovalSuccess when approval succeeds
-  if (approvalSuccess && state.isApproving) {
-    handleApprovalSuccess();
-  }
+  useEffect(() => {
+    if (approvalSuccess && state.isApproving) {
+      handleApprovalSuccess();
+    }
+  }, [approvalSuccess, state.isApproving, handleApprovalSuccess]);
 
   /**
    * Mint WIN token for battle
    * User must mint this BEFORE battle
-   * Contract holds it and distributes only on win
+   * Uses wagmi's writeContract which properly handles chain via OnchainKit
    */
   const mintWin = useCallback(async () => {
     if (!address) {
@@ -235,24 +253,20 @@ export function useBattle(): UseBattleReturn {
     setState(prev => ({ ...prev, isMinting: true, error: null }));
 
     try {
-      console.log('[useBattle] Minting WIN token...');
-      
-      const result = await mintWinToken(address as Address);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'WIN token minting failed');
-      }
+      console.log('[useBattle] Minting WIN token via wagmi...');
+      console.log('[useBattle] WIN Token contract:', WINTOKEN_CONTRACT_ADDRESS);
 
-      console.log('[useBattle] WIN token minted successfully:', result.txHash);
+      // Use wagmi writeMint with explicit chainId for Base
+      writeMint({
+        address: WINTOKEN_CONTRACT_ADDRESS as Address,
+        abi: WINTOKEN_CONTRACT_ABI,
+        functionName: 'mint',
+        args: [],
+        chainId: 8453, // Base chain ID - forces transaction on Base
+      });
 
-      setState(prev => ({
-        ...prev,
-        isMinting: false,
-        preparation: prev.preparation ? {
-          ...prev.preparation,
-          hasWinTokenMinted: true,
-        } : null,
-      }));
+      console.log('[useBattle] WIN token mint transaction submitted');
+
     } catch (error) {
       console.error('[useBattle] WIN token minting error:', error);
       const errorMessage = error instanceof Error ? error.message : 'WIN token minting failed';
@@ -263,7 +277,27 @@ export function useBattle(): UseBattleReturn {
       }));
       throw error;
     }
-  }, [address]);
+  }, [address, writeMint]);
+
+  // Handle mint success
+  const handleMintSuccess = useCallback(() => {
+    console.log('[useBattle] WIN token minted successfully:', mintHash);
+    setState(prev => ({
+      ...prev,
+      isMinting: false,
+      preparation: prev.preparation ? {
+        ...prev.preparation,
+        hasWinTokenMinted: true,
+      } : null,
+    }));
+  }, [mintHash]);
+
+  // Call handleMintSuccess when mint succeeds
+  useEffect(() => {
+    if (mintSuccess && state.isMinting) {
+      handleMintSuccess();
+    }
+  }, [mintSuccess, state.isMinting, handleMintSuccess]);
 
   /**
    * Execute battle on-chain
