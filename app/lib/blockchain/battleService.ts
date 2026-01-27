@@ -31,6 +31,8 @@ export interface BattlePreparation {
   tokenId: number;
   stats: NFTStats;
   proof: string[];
+  /** Whether this NFT has already been used in battle (on-chain source of truth) */
+  usedOnChain: boolean;
   hasEnoughIDRX: boolean;
   needsApproval: boolean;
   hasWinTokenMinted: boolean;
@@ -541,6 +543,12 @@ export async function prepareBattle(
     // Get Merkle proof and stats
     const { proof, stats } = getProofForToken(tokenId);
 
+    // Check if NFT already used in battle (on-chain)
+    const usedOnChain = await hasNFTBeenUsed(tokenId);
+    if (usedOnChain) {
+      console.log('[BattleService] NFT already used on-chain, blocking battle:', { tokenId, walletAddress });
+    }
+
     // Check IDRX balance
     const balance = await checkIDRXBalance(walletAddress);
     const hasEnoughIDRX = BigInt(balance) >= BigInt(BATTLE_FEE_AMOUNT);
@@ -564,6 +572,7 @@ export async function prepareBattle(
       tokenId,
       stats,
       proof,
+       usedOnChain,
       hasEnoughIDRX,
       needsApproval,
       hasWinTokenMinted,

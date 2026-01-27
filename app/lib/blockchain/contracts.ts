@@ -13,13 +13,16 @@
 export const NFT_CONTRACT_ADDRESS = "0xabab2d0A3EAF9722E3EE0840D0360c68899cB305" as const;
 
 /** Battle Contract - Handles battle logic and Merkle proof verification */
-export const BATTLE_CONTRACT_ADDRESS = "0xF3E01c4a30FCD69DaeB05dc39b9bA277d0423436" as const;
+export const BATTLE_CONTRACT_ADDRESS = "0x4267Da4AC96635c92bbE4232A9792283A1B354F2" as const;
 
 /** WinToken Contract - Soulbound token minted on victory */
-export const WINTOKEN_CONTRACT_ADDRESS = "0x7F82b4D1D76369f9C21b1944C409f9Cc69a95638" as const;
+export const WINTOKEN_CONTRACT_ADDRESS = "0xB5d282f7abC8901a0B70d02442be81366831eB2d" as const;
 
 /** IDRX Token Contract - ERC20 token used for battle fees */
 export const IDRX_CONTRACT_ADDRESS = "0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22" as const;
+
+/** BattleBank Contract - Vault that holds IDRX battle fees */
+export const BATTLE_BANK_CONTRACT_ADDRESS = "0x9885B2DE7b8f0169f4Ed2C17BF71bC3D5a42d684" as const;
 
 /** Official Merkle Root - Embedded in Battle Contract */
 export const MERKLE_ROOT = "0xf92321255d63a7a9d08684e50479f5d9ca625dfd8c902319e28d10bd029406c8" as const;

@@ -173,6 +173,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         // From battleService (may be unreliable)
         battleServiceBalance: state.preparation.idrxBalance,
         battleServiceHasEnough: state.preparation.hasEnoughIDRX,
+        usedOnChain: state.preparation.usedOnChain,
         // From wagmi (same as HeaderBar - reliable)
         wagmiBalance: idrxBalance,
         wagmiHasEnough: hasEnoughBalance,
@@ -181,6 +182,18 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         hasWinTokenMinted: state.preparation.hasWinTokenMinted,
         currentAllowance: state.preparation.currentAllowance,
       });
+
+      // =========================================================================
+      // RULE: If NFT already used on-chain, block battle entirely
+      // =========================================================================
+      if (state.preparation.usedOnChain) {
+        console.warn('[BattlePreparation] NFT already used in battle (on-chain). Blocking battle.', {
+          tokenId: state.preparation.tokenId,
+        });
+        setCurrentStep('❌ This NFT has already been used in battle.');
+        onError('This NFT has already been used in battle. Please select a different card.');
+        return; // Stop here, do not continue to balance / approval / battle
+      }
 
       // =========================================================================
       // USE WAGMI BALANCE AS SOURCE OF TRUTH (same as HeaderBar)

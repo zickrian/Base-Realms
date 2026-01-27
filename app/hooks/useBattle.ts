@@ -29,7 +29,11 @@ import {
 } from '@/app/lib/blockchain/contracts';
 
 // Approve "unlimited" IDRX once to avoid insufficient allowance
-const MAX_UINT256 = (2n ** 256n) - 1n;
+// NOTE: We use BigInt(string) to avoid BigInt literal syntax, which
+// is not supported when the TS target is lower than ES2020.
+const MAX_UINT256 = BigInt(
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+);
 
 export interface BattleState {
   // Loading states

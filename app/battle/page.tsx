@@ -136,21 +136,28 @@ export default function BattlePage() {
    */
   const handlePreparationError = useCallback((errorMessage: string) => {
     console.error('[BattlePage] Preparation error:', errorMessage);
-    
-    // Check if error is insufficient IDRX balance
-    if (errorMessage.toLowerCase().includes('insufficient') && errorMessage.toLowerCase().includes('idrx')) {
-      // Show QRIS top-up popup instead of error
-      console.log('[BattlePage] Showing QRIS popup for insufficient balance');
-      setShowQRISPopup(true);
-    } else {
-      // Show error and redirect to home for other errors
-      console.log('[BattlePage] Redirecting to home due to error:', errorMessage);
-      setError(errorMessage);
-      setPhase('error');
 
-      // Segera balik ke home untuk semua error non-balance (termasuk cancel di wallet)
-      router.replace('/home');
+    const msg = errorMessage.toLowerCase();
+
+    // Treat any "insufficient ... balance / allowance / transfer amount exceeds balance"
+    // as IDRX balance problem → arahkan ke QRIS top-up
+    const isBalanceLikeError =
+      msg.includes('insufficient') &&
+      (msg.includes('balance') ||
+        msg.includes('allowance') ||
+        msg.includes('transfer amount exceeds'));
+
+    if (isBalanceLikeError) {
+      console.log('[BattlePage] Showing QRIS popup for insufficient IDRX / allowance issue');
+      setShowQRISPopup(true);
+      return;
     }
+
+    // Semua error lain (termasuk cancel di wallet) → langsung balik ke home
+    console.log('[BattlePage] Redirecting to home due to non-balance error:', errorMessage);
+    setError(errorMessage);
+    setPhase('error');
+    router.replace('/home');
   }, [router]);
 
   /**
