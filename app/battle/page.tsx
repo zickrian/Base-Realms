@@ -32,7 +32,6 @@ export default function BattlePage() {
   const { profile, refreshProfile, refreshInventory, selectCard } = useGameStore();
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [isExiting, setIsExiting] = useState(false);
   const [showQRISPopup, setShowQRISPopup] = useState(false);
   const [battleResult, setBattleResult] = useState<{ won: boolean; txHash: string } | null>(null);
   const { initBattle, resetBattle } = useBattleStore();
@@ -214,9 +213,6 @@ export default function BattlePage() {
     const tokenId = profile.selectedCard.token_id;
     const battleTxHash = battleState.battleResult?.txHash || undefined;
     
-    // Show processing screen
-    setPhase('processing');
-    
     try {
       console.log('[BattlePage] 🎯 Visual battle ended, processing cleanup...', {
         tokenId,
@@ -253,15 +249,10 @@ export default function BattlePage() {
       return;
     }
     
-    // Cleanup and navigate home
-    setIsExiting(true);
+    // Cleanup and navigate home immediately
     resetBattle();
     resetBattleHook();
-    
-    // Small delay to show success
-    setTimeout(() => {
-      router.replace('/home');
-    }, 1000);
+    router.replace('/home');
   }, [address, profile, battleState.battleResult, battleResult, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
 
   // Cleanup on unmount
@@ -269,23 +260,8 @@ export default function BattlePage() {
     return () => {
       resetBattle();
       resetBattleHook();
-      setIsExiting(false);
     };
   }, [resetBattle, resetBattleHook]);
-
-  // Prevent render during exit or processing
-  if (isExiting || phase === 'processing') {
-    return (
-      <div className={styles.battlePageContainer}>
-        <div className={styles.mobileFrame}>
-          <div className={styles.processingScreen}>
-            <div className={styles.processingSpinner}>⚔️</div>
-            <p className={styles.processingText}>Processing battle results...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Render based on phase
   const renderContent = () => {
