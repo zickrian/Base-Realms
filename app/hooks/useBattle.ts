@@ -17,13 +17,13 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { type Address } from 'viem';
 import {
   prepareBattle,
-  executeBattle,
   type BattlePreparation,
 } from '@/app/lib/blockchain/battleService';
 import {
   IDRX_CONTRACT_ADDRESS,
   IDRX_CONTRACT_ABI,
   BATTLE_CONTRACT_ADDRESS,
+  BATTLE_CONTRACT_ABI,
   BATTLE_FEE_AMOUNT,
   WINTOKEN_CONTRACT_ADDRESS,
   WINTOKEN_CONTRACT_ABI,
@@ -95,7 +95,7 @@ export function useBattle(): UseBattleReturn {
     writeContract: writeApproval,
     data: approvalHash,
     reset: resetApprovalContract,
-    isPending: isApprovalPending,
+    isPending: _isApprovalPending,
   } = useWriteContract();
 
   const { isSuccess: approvalSuccess } = useWaitForTransactionReceipt({
@@ -106,12 +106,27 @@ export function useBattle(): UseBattleReturn {
   const {
     writeContract: writeMint,
     data: mintHash,
-    reset: resetMintContract,
-    isPending: isMintPending,
+    reset: _resetMintContract,
+    isPending: _isMintPending,
   } = useWriteContract();
 
   const { isSuccess: mintSuccess } = useWaitForTransactionReceipt({
     hash: mintHash,
+  });
+
+  // Wagmi hooks for battle execution (properly handles chain via OnchainKit)
+  const {
+    writeContract: writeBattle,
+    data: battleHash,
+    reset: resetBattleContract,
+    isPending: _isBattlePending,
+  } = useWriteContract();
+
+  const { 
+    isSuccess: battleSuccess,
+    data: battleReceipt 
+  } = useWaitForTransactionReceipt({
+    hash: battleHash,
   });
 
   const [state, setState] = useState<BattleState>({
@@ -300,7 +315,82 @@ export function useBattle(): UseBattleReturn {
   }, [mintSuccess, state.isMinting, handleMintSuccess]);
 
   /**
-   * Execute battle on-chain
+   * Parse battle result from transaction receipt
+   * The battle contract returns bool directly, and also emits BattleCompleted event
+   */
+  const parseBattleResult = useCallback((receipt: { logs?: Array<{ address?: string; data?: string }> }): boolean => {
+    try {
+      // The contract function returns bool, so check the receipt logs
+      // BattleCompleted event: event BattleCompleted(address indexed player, uint256 indexed tokenId, bool won)
+      if (!receipt?.logs || receipt.logs.length === 0) {
+        console.warn('[useBattle] No logs in battle receipt, defaulting to loss');
+        return false;
+      }
+
+      // Find BattleCompleted event from Battle Contract
+      const battleEvent = receipt.logs.find((log: { address?: string; data?: string }) => 
+        log.address && log.address.toLowerCase() === BATTLE_CONTRACT_ADDRESS.toLowerCase()
+      );
+
+      if (!battleEvent) {
+        console.warn('[useBattle] BattleCompleted event not found, defaulting to loss');
+        return false;
+      }
+
+      // The 'won' parameter is the 3rd parameter (not indexed), so it's in data
+      // Data format: 0x0000000000000000000000000000000000000000000000000000000000000001 (true)
+      //           or 0x0000000000000000000000000000000000000000000000000000000000000000 (false)
+      if (battleEvent.data) {
+        const won = battleEvent.data !== '0x0000000000000000000000000000000000000000000000000000000000000000';
+        console.log('[useBattle] Battle result parsed from event:', won ? 'WON' : 'LOST');
+        return won;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('[useBattle] Error parsing battle result:', error);
+      return false; // Default to loss on error
+    }
+  }, []);
+
+  /**
+   * Handle battle success - parse result and update state
+   */
+  const handleBattleSuccess = useCallback(() => {
+    if (battleSuccess && battleReceipt && state.isBattling) {
+      console.log('[useBattle] Battle transaction confirmed');
+      
+      // Parse battle result from receipt
+      const won = parseBattleResult(battleReceipt);
+      
+      console.log('[useBattle] Battle completed:', {
+        won,
+        txHash: battleHash,
+      });
+
+      setState(prev => ({
+        ...prev,
+        isBattling: false,
+        battleResult: {
+          won,
+          txHash: battleHash as string,
+        },
+      }));
+      
+      resetBattleContract();
+    }
+  }, [battleSuccess, battleReceipt, battleHash, state.isBattling, parseBattleResult, resetBattleContract]);
+
+  // Call handleBattleSuccess when battle succeeds
+  useEffect(() => {
+    if (battleSuccess && state.isBattling) {
+      handleBattleSuccess();
+    }
+  }, [battleSuccess, state.isBattling, handleBattleSuccess]);
+
+  /**
+   * Execute battle on-chain using wagmi/OnchainKit
+   * Consistent with approve and mintWin operations
    */
   const battle = useCallback(async () => {
     if (!address) {
@@ -318,38 +408,24 @@ export function useBattle(): UseBattleReturn {
     try {
       const { tokenId, stats, proof } = state.preparation;
 
-      console.log('[useBattle] Executing battle...', {
+      console.log('[useBattle] Executing battle via wagmi...', {
         tokenId,
         hp: stats.hp,
         attack: stats.attack,
         proofLength: proof.length,
       });
 
-      const result = await executeBattle(
-        tokenId,
-        stats.hp,
-        stats.attack,
-        proof,
-        address as Address
-      );
-
-      if (!result.success) {
-        throw new Error(result.error || 'Battle failed');
-      }
-
-      console.log('[useBattle] Battle completed:', {
-        won: result.won,
-        txHash: result.txHash,
+      // Use wagmi writeContract with explicit chainId for Base
+      writeBattle({
+        address: BATTLE_CONTRACT_ADDRESS as Address,
+        abi: BATTLE_CONTRACT_ABI,
+        functionName: 'battle',
+        args: [BigInt(tokenId), BigInt(stats.hp), BigInt(stats.attack), proof as `0x${string}`[]],
+        chainId: 8453, // Base chain ID - forces transaction on Base
       });
 
-      setState(prev => ({
-        ...prev,
-        isBattling: false,
-        battleResult: {
-          won: result.won,
-          txHash: result.txHash,
-        },
-      }));
+      console.log('[useBattle] Battle transaction submitted');
+
     } catch (error) {
       console.error('[useBattle] Battle error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Battle failed';
@@ -358,9 +434,10 @@ export function useBattle(): UseBattleReturn {
         isBattling: false,
         error: errorMessage,
       }));
+      resetBattleContract();
       throw error;
     }
-  }, [address, state.preparation]);
+  }, [address, state.preparation, writeBattle, resetBattleContract]);
 
   /**
    * Mark NFT as used in database after successful battle
@@ -414,7 +491,9 @@ export function useBattle(): UseBattleReturn {
       battleResult: null,
       error: null,
     });
-  }, []);
+    resetApprovalContract();
+    resetBattleContract();
+  }, [resetApprovalContract, resetBattleContract]);
 
   return {
     state,

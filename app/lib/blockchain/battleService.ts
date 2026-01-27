@@ -197,18 +197,17 @@ export async function checkIDRXBalance(walletAddress: Address, retryCount: numbe
       });
 
       return balanceStr;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[BattleService] ❌ Error checking IDRX balance (attempt ${attempt}/${MAX_RETRIES}):`, error);
       console.error('[BattleService] Error details:', {
         wallet: walletAddress,
         contract: IDRX_CONTRACT_ADDRESS,
-        errorMessage: error?.message,
-        errorCode: error?.code,
-        errorName: error?.name,
+        errorMessage,
       });
 
       // Handle specific contract errors that shouldn't be retried
-      if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      if (errorMessage.includes('returned no data') || errorMessage.includes('0x')) {
         console.warn('[BattleService] ⚠️ IDRX contract returned no data - contract may not be deployed or wrong network');
         // Only return 0 on last attempt for this error type
         if (attempt === MAX_RETRIES) {
@@ -223,7 +222,7 @@ export async function checkIDRXBalance(walletAddress: Address, retryCount: numbe
       } else {
         // Last attempt failed - throw error instead of silently returning 0
         console.error('[BattleService] ❌ All retry attempts failed for IDRX balance check');
-        throw new Error(`Failed to check IDRX balance after ${MAX_RETRIES} attempts: ${error?.message || 'Unknown error'}`);
+        throw new Error(`Failed to check IDRX balance after ${MAX_RETRIES} attempts: ${errorMessage}`);
       }
     }
   }
@@ -258,11 +257,12 @@ export async function checkIDRXAllowance(walletAddress: Address, retryCount: num
       const allowanceStr = allowance.toString();
       console.log('[BattleService] ✅ IDRX Allowance Retrieved:', allowanceStr);
       return allowanceStr;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[BattleService] ❌ Error checking IDRX allowance (attempt ${attempt}/${MAX_RETRIES}):`, error);
 
       // Handle specific contract errors gracefully
-      if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+      if (errorMessage.includes('returned no data') || errorMessage.includes('0x')) {
         console.warn('[BattleService] IDRX contract not accessible');
         if (attempt === MAX_RETRIES) {
           return '0';
@@ -337,7 +337,7 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
 
           // Wait a moment for the switch to complete
           await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (switchError: any) {
+        } catch (switchError) {
           console.error('[BattleService] Failed to switch chain:', switchError);
           return {
             success: false,
@@ -377,12 +377,13 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
       success: true,
       txHash,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[BattleService] WIN token minting error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     // Handle chain mismatch error
-    if (error?.message?.includes('does not match the target chain') ||
-      error?.message?.includes('chain') && error?.message?.includes('mismatch')) {
+    if (errorMessage.includes('does not match the target chain') ||
+      errorMessage.includes('chain') && errorMessage.includes('mismatch')) {
       return {
         success: false,
         error: 'Wrong network. Please switch to Base network and try again.',
@@ -390,7 +391,7 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
     }
 
     // Handle specific contract errors
-    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+    if (errorMessage.includes('returned no data') || errorMessage.includes('0x')) {
       return {
         success: false,
         error: 'WIN Token contract not available. Please contact support.',
@@ -398,7 +399,7 @@ export async function mintWinToken(walletAddress: Address): Promise<ApprovalResu
     }
 
     // Handle user rejection
-    if (error?.message?.includes('User rejected') || error?.message?.includes('User denied')) {
+    if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
       return {
         success: false,
         error: 'Transaction rejected by user.',
@@ -447,7 +448,7 @@ export async function approveIDRX(
           });
           console.log('[BattleService] Successfully switched to Base');
           await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (switchError: any) {
+        } catch (switchError) {
           console.error('[BattleService] Failed to switch chain:', switchError);
           return {
             success: false,
@@ -486,12 +487,13 @@ export async function approveIDRX(
       success: true,
       txHash,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[BattleService] Approval error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     // Handle chain mismatch error
-    if (error?.message?.includes('does not match the target chain') ||
-      error?.message?.includes('chain') && error?.message?.includes('mismatch')) {
+    if (errorMessage.includes('does not match the target chain') ||
+      errorMessage.includes('chain') && errorMessage.includes('mismatch')) {
       return {
         success: false,
         error: 'Wrong network. Please switch to Base network and try again.',
@@ -499,7 +501,7 @@ export async function approveIDRX(
     }
 
     // Handle specific contract errors
-    if (error?.message?.includes('returned no data') || error?.message?.includes('0x')) {
+    if (errorMessage.includes('returned no data') || errorMessage.includes('0x')) {
       return {
         success: false,
         error: 'IDRX contract not available. Please check your network connection.',
@@ -673,11 +675,11 @@ export async function executeBattle(
       won,
       txHash,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[BattleService] Battle execution error:', error);
 
     // Handle user rejection
-    if (error?.message?.includes('User rejected') || error?.message?.includes('User denied')) {
+    if (error instanceof Error && (error.message?.includes('User rejected') || error.message?.includes('User denied'))) {
       return {
         success: false,
         won: false,

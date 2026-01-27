@@ -12,6 +12,7 @@ import { getStorageUrl } from '../../utils/supabaseStorage';
 
 interface BattleArenaProps {
   onBattleEnd: () => void;
+  battleResult: { won: boolean; txHash: string } | null;
 }
 
 // Background URL from Supabase storage
@@ -25,7 +26,7 @@ const HIT_EFFECT_DURATION = 300;
  * BattleArena Component
  * Main battle scene with turn-based combat
  */
-export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
+export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleResult }) => {
   const { address } = useAccount();
   const { refreshQuests, refreshProfile } = useGameStore();
   const {
@@ -136,7 +137,7 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
     }
   }, [status, setStatus, address]);
 
-  // Execute turn logic
+  // Execute turn logic with pre-determined result
   const executeTurn = useCallback(() => {
     if (status !== 'in_progress') return;
 
@@ -146,11 +147,56 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd }) => {
 
     // Execute attack after brief delay for animation
     setTimeout(() => {
-      executeAttack();
+      if (battleResult) {
+        // Use pre-determined result to guide battle outcome
+        if (currentTurn === 'player') {
+          // Player attacks enemy
+          let damage = player.atk;
+
+          // If player should win and this could finish the enemy, do it
+          if (battleResult.won && enemy.currentHp <= damage * 2) {
+            damage = enemy.currentHp;
+          }
+
+          const newEnemyHp = Math.max(0, enemy.currentHp - damage);
+
+          setHitEffect('enemy');
+
+          // Manually update state since we can't use set directly
+          setTimeout(() => {
+            if (newEnemyHp <= 0) {
+              setStatus('victory');
+            }
+          }, HIT_EFFECT_DURATION);
+        } else {
+          // Enemy attacks player
+          let damage = enemy.atk;
+
+          // If player should lose and this could finish the player, do it
+          if (!battleResult.won && player.currentHp <= damage * 2) {
+            damage = player.currentHp;
+          }
+
+          const newPlayerHp = Math.max(0, player.currentHp - damage);
+
+          setHitEffect('player');
+
+          // Manually update state since we can't use set directly
+          setTimeout(() => {
+            if (newPlayerHp <= 0) {
+              setStatus('defeat');
+            }
+          }, HIT_EFFECT_DURATION);
+        }
+      } else {
+        // Fallback to normal attack logic if no battle result
+        executeAttack();
+      }
+
       setIsAttacking(false);
       setAttackingCharacter(null);
     }, 400);
-  }, [status, currentTurn, executeAttack]);
+  }, [status, currentTurn, player, enemy, battleResult, executeAttack, setHitEffect, setStatus]);
 
   // Handle turn progression
   useEffect(() => {

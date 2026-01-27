@@ -209,7 +209,6 @@
 
 .processingSpinner {
   font-size: 4rem;
-  animation: spin 2s linear infinite;
   margin-bottom: 1.5rem;
 }
 

@@ -34,8 +34,9 @@ export default function BattlePage() {
   const [error, setError] = useState<string | null>(null);
   const [isExiting, setIsExiting] = useState(false);
   const [showQRISPopup, setShowQRISPopup] = useState(false);
+  const [battleResult, setBattleResult] = useState<{ won: boolean; txHash: string } | null>(null);
   const { initBattle, resetBattle } = useBattleStore();
-  const { state: battleState, battle: executeBattle, markAsUsed, reset: resetBattleHook, prepare } = useBattle();
+  const { state: battleState, markAsUsed, reset: resetBattleHook, prepare } = useBattle();
 
   // Load profile if not available
   useEffect(() => {
@@ -119,12 +120,13 @@ export default function BattlePage() {
 
   /**
    * Handle preparation complete - transition to battle arena
-   * Battle arena will show visual battle animation FIRST
-   * On-chain execution happens AFTER animation completes
+   * On-chain battle already executed, now show visual battle animation
+   * with pre-determined result
    */
-  const handlePreparationComplete = useCallback(() => {
-    // Just transition to battle phase
-    // BattleArena will handle the visual battle
+  const handlePreparationComplete = useCallback((result: { won: boolean; txHash: string } | null) => {
+    // Store battle result to pass to BattleArena
+    setBattleResult(result);
+    // Transition to battle phase
     setPhase('battle');
   }, []);
 
@@ -192,10 +194,9 @@ export default function BattlePage() {
    * 1. BattleArena shows visual battle (HP going down, attacks, etc)
    * 2. Visual battle ends (victory/defeat)
    * 3. THIS function called
-   * 4. Execute ACTUAL on-chain battle transaction
-   * 5. Mark NFT as used
-   * 6. Refresh data
-   * 7. Navigate home
+   * 4. Mark NFT as used (cleanup only, battle already executed)
+   * 5. Refresh data
+   * 6. Navigate home
    */
   const handleBattleEnd = useCallback(async () => {
     if (!address || !profile?.selectedCard?.token_id) {
@@ -210,18 +211,9 @@ export default function BattlePage() {
     setPhase('processing');
     
     try {
-      console.log('[BattlePage] Visual battle ended, executing on-chain transaction...');
+      console.log('[BattlePage] Visual battle ended, processing cleanup...');
       
-      // Execute ACTUAL battle on blockchain
-      await executeBattle();
-      
-      if (battleState.error) {
-        setError(battleState.error);
-        setPhase('error');
-        return;
-      }
-      
-      console.log('[BattlePage] On-chain battle executed successfully');
+      // Battle was already executed during preparation, just cleanup now
       
       // Mark NFT as used in database
       await markAsUsed(tokenId);
@@ -238,8 +230,8 @@ export default function BattlePage() {
       
       console.log('[BattlePage] Post-battle processing complete, NFT deselected');
     } catch (_battleError) {
-      console.error('[BattlePage] Battle execution error:', _battleError);
-      const errorMessage = _battleError instanceof Error ? _battleError.message : 'Battle execution failed';
+      console.error('[BattlePage] Battle cleanup error:', _battleError);
+      const errorMessage = _battleError instanceof Error ? _battleError.message : 'Battle cleanup failed';
       setError(errorMessage);
       setPhase('error');
       
@@ -259,7 +251,7 @@ export default function BattlePage() {
     setTimeout(() => {
       router.replace('/home');
     }, 1000);
-  }, [address, profile, executeBattle, battleState, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
+  }, [address, profile, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -299,7 +291,12 @@ export default function BattlePage() {
         );
 
       case 'battle':
-        return <BattleArena onBattleEnd={handleBattleEnd} />;
+        return (
+          <BattleArena
+            onBattleEnd={handleBattleEnd}
+            battleResult={battleResult}
+          />
+        );
 
       case 'error':
         return (

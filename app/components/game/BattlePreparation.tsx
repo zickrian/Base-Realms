@@ -30,7 +30,7 @@ import {
 import styles from './BattlePreparation.module.css';
 
 interface BattlePreparationProps {
-  onReady: () => void;
+  onReady: (battleResult: { won: boolean; txHash: string } | null) => void;
   onError: (error: string) => void;
 }
 
@@ -46,7 +46,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   const chainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { profile } = useGameStore();
-  const { state, prepare, approve, mintWin } = useBattle();
+  const { state, prepare, approve, mintWin, battle: executeBattle } = useBattle();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<string>('Initializing...');
   const [isReadyForBattle, setIsReadyForBattle] = useState(false);
@@ -56,7 +56,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   // IDRX BALANCE - Using wagmi hook (same as HeaderBar for consistency)
   // This is the source of truth for balance checking
   // =========================================================================
-  const { data: idrxBalanceData, isLoading: isBalanceLoading } = useBalance({
+  const { data: idrxBalanceData } = useBalance({
     address: address,
     token: IDRX_TOKEN_ADDRESS,
     chainId: BASE_CHAIN_ID,
@@ -224,9 +224,22 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
           setCurrentStep('✅ WIN token minted! You can now battle!');
 
           // ONLY proceed to battle after BOTH requirements met
-          setTimeout(() => {
-            setCurrentStep('⚔️ Entering battle arena...');
-            onReady();
+          setTimeout(async () => {
+            setCurrentStep('⚔️ Executing battle on-chain...');
+            try {
+              await executeBattle();
+              setCurrentStep('✅ Battle executed! Entering arena...');
+              
+              // Pass battle result to parent
+              setTimeout(() => {
+                onReady(state.battleResult);
+              }, 500);
+            } catch (error) {
+              console.error('[BattlePreparation] Battle execution error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
+              onError(errorMessage);
+              return;
+            }
           }, 1000);
         } catch (error) {
           console.error('[BattlePreparation] WIN token minting error:', error);
@@ -235,10 +248,23 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
           return; // Exit on minting failure
         }
       } else if (state.preparation.hasWinTokenMinted && !state.preparation.needsApproval) {
-        // Both requirements already met - proceed directly to battle
-        setCurrentStep('✅ All requirements met! Entering battle...');
-        setTimeout(() => {
-          onReady();
+        // Both requirements already met - proceed directly to execute battle
+        setCurrentStep('✅ All requirements met! Executing battle on-chain...');
+        setTimeout(async () => {
+          try {
+            await executeBattle();
+            setCurrentStep('✅ Battle executed! Entering arena...');
+            
+            // Pass battle result to parent
+            setTimeout(() => {
+              onReady(state.battleResult);
+            }, 500);
+          } catch (error) {
+            console.error('[BattlePreparation] Battle execution error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Battle execution failed';
+            onError(errorMessage);
+            return;
+          }
         }, 500);
       }
     };
@@ -287,6 +313,13 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
           </div>
         )}
 
+        {state.isBattling && (
+          <div className={styles.detail}>
+            <p>Please confirm the battle transaction in your wallet.</p>
+            <p className={styles.hint}>This will execute your battle on-chain.</p>
+          </div>
+        )}
+
         {/* Show insufficient balance error - using wagmi balance for consistency */}
         {state.preparation && !hasEnoughBalance && (
           <div className={styles.error}>
@@ -325,6 +358,9 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
               </div>
               <div className={state.preparation.hasWinTokenMinted ? styles.completed : styles.pending}>
                 {state.preparation.hasWinTokenMinted ? '✅' : '⏳'} WIN Token Minted (victory reward)
+              </div>
+              <div className={state.isBattling ? styles.pending : styles.completed}>
+                {!state.isBattling && state.battleResult ? '✅' : '⏳'} Battle Execution (on-chain)
               </div>
             </div>
           </div>
