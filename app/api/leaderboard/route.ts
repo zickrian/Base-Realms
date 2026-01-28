@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
-import { isInWhitelist, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { isInWhitelist, devLog } from '@/app/lib/validation';
 
 interface LeaderboardEntry {
   rank: number;
