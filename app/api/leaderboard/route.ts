@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { isInWhitelist, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 interface LeaderboardEntry {
   rank: number;
@@ -35,6 +36,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') || 'level';
 
+    // Validate sortBy parameter
+    if (!isInWhitelist(sortBy, ['level', 'wins', 'winRate'])) {
+      return NextResponse.json(
+        { error: 'Invalid sort parameter' },
+        { status: 400 }
+      );
+    }
+
     // Get all player profiles with user wallet addresses
     // First get all profiles
     const { data: profiles, error: profilesError } = await supabaseAdmin
@@ -42,11 +51,11 @@ export async function GET(request: NextRequest) {
       .select('user_id, level, wins, total_battles');
 
     if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-      return NextResponse.json(
-        { error: 'Failed to fetch leaderboard' },
-        { status: 500 }
-      );
+      devLog.error('Error fetching profiles:', profilesError);
+      // Return empty leaderboard instead of error for better UX
+      return NextResponse.json({
+        leaderboard: [],
+      });
     }
 
     if (!profiles || profiles.length === 0) {
@@ -64,11 +73,11 @@ export async function GET(request: NextRequest) {
       .in('id', userIds);
 
     if (usersError) {
-      console.error('Error fetching users:', usersError);
-      return NextResponse.json(
-        { error: 'Failed to fetch leaderboard' },
-        { status: 500 }
-      );
+      devLog.error('Error fetching users:', usersError);
+      // Return empty leaderboard instead of error
+      return NextResponse.json({
+        leaderboard: [],
+      });
     }
 
     // Create a map of user_id to wallet_address
@@ -147,11 +156,10 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error: unknown) {
-    console.error('Leaderboard error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch leaderboard';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    devLog.error('Leaderboard error:', error);
+    // Return empty leaderboard instead of error for better UX
+    return NextResponse.json({
+      leaderboard: [],
+    });
   }
 }

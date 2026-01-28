@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { isValidEthAddress, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { walletAddress } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { walletAddress } = body;
 
     if (!walletAddress) {
       return NextResponse.json(
         { error: 'Wallet address is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate wallet address format
+    if (!isValidEthAddress(walletAddress)) {
+      return NextResponse.json(
+        { error: 'Invalid wallet address format' },
         { status: 400 }
       );
     }
@@ -219,10 +235,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error('Login error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to login';
+    devLog.error('Login error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to login') },
       { status: 500 }
     );
   }

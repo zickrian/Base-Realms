@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 interface QuestData {
   id: string;
@@ -18,9 +19,11 @@ export async function GET(request: NextRequest) {
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -184,10 +187,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ quests: formattedQuests });
   } catch (error: unknown) {
-    console.error('Get quests error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get quests';
+    devLog.error('Get quests error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to get quests') },
       { status: 500 }
     );
   }

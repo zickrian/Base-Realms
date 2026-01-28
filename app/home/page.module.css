@@ -2,8 +2,10 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for Android/iOS */
   /* Fixed height instead of min-height */
   max-height: 100vh;
+  max-height: 100dvh;
   /* Prevent overflow */
   max-width: 430px;
   width: 100%;

@@ -189,7 +189,7 @@ export default function ShopPage() {
   
   // Wagmi hooks for minting
   const { address, isConnected } = useAccount();
-  const { refreshInventory, refreshQuests } = useGameStore();
+  const { refreshQuests } = useGameStore();
 
   const handleOpenFreeMint = () => {
     if (!isConnected || !address) return;
@@ -235,64 +235,34 @@ export default function ShopPage() {
         console.warn('Failed to update quest progress:', questError);
       });
 
-      // CRITICAL FIX: Await sync completion before refreshing inventory
-      // This ensures the blockchain state is fully synced to database
-      try {
-        console.log('[Shop] Starting NFT sync after mint...');
-        const syncResponse = await fetch('/api/cards/sync-nft', {
-          method: 'POST',
-          headers: {
-            'x-wallet-address': address,
-          },
-        });
-        
-        if (!syncResponse.ok) {
-          console.error('[Shop] Sync NFT API returned error:', syncResponse.status);
-        }
-        
-        // Add delay to ensure blockchain state is settled and database is updated
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        console.log('[Shop] NFT sync completed, refreshing inventory...');
-        // Now refresh inventory and quests
-        await Promise.all([
-          refreshInventory(address),
-          refreshQuests(address),
-        ]);
-        console.log('[Shop] Inventory and quests refreshed successfully');
-        
-        // CRITICAL: Set flag for home page to detect new NFT
-        // This ensures My Deck shows new NFT immediately when user navigates to home
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('pendingInventorySync', JSON.stringify({
-            address: address.toLowerCase(),
-            timestamp: Date.now(),
-            transactionHash,
-          }));
-          console.log('[Shop] Set pendingInventorySync flag for home page');
-        }
-      } catch (syncError) {
-        console.error('[Shop] Failed to sync NFT from blockchain:', syncError);
-        // Even on error, try to refresh inventory and set flag
-        await Promise.all([
-          refreshInventory(address),
-          refreshQuests(address),
-        ]).catch((refreshError) => {
-          console.warn('[Shop] Failed to refresh data:', refreshError);
-        });
-        
-        // Still set flag for home to try sync again
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('pendingInventorySync', JSON.stringify({
-            address: address.toLowerCase(),
-            timestamp: Date.now(),
-            transactionHash,
-            error: true,
-          }));
-        }
+      // OPTIMIZED: Single sync call - realtime subscription handles UI updates
+      console.log('[Shop] Starting NFT sync after free mint...');
+      
+      // Wait for blockchain to settle before syncing
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      const syncResponse = await fetch('/api/cards/sync-nft', {
+        method: 'POST',
+        headers: {
+          'x-wallet-address': address,
+        },
+      });
+      
+      if (syncResponse.ok) {
+        const syncData = await syncResponse.json();
+        console.log(`[Shop] ✅ NFT sync complete! ${syncData.totalItems || 0} items in inventory`);
+      } else {
+        console.warn('[Shop] NFT sync returned non-OK status, realtime will handle update');
       }
+      
+      // Realtime subscription will automatically update inventory in gameStore
+      // Just refresh quests (non-blocking)
+      refreshQuests(address).catch((questError) => {
+        console.warn('[Shop] Failed to refresh quests:', questError);
+      });
+      
     } catch (error) {
-      console.warn('Free mint post-processing failed:', error);
+      console.warn('[Shop] Free mint post-processing failed:', error);
     }
   };
 

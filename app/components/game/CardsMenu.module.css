@@ -7,9 +7,9 @@
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
   background: url(https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/background.png) no-repeat center top;
   background-size: 100% auto;
-  height: calc(100vh - 90px);
-  /* Account for bottom nav */
-  max-height: calc(100vh - 90px);
+  height: auto; /* Let flex handle height */
+  min-height: 500px; /* Minimum height */
+  max-height: 100%; /* Don't exceed parent */
   /* Fixed height to prevent scrolling */
   width: 100%;
   max-width: 100%;

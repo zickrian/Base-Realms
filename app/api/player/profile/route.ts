@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { getStorageUrl } from '@/app/utils/supabaseStorage';
+import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 export async function GET(request: NextRequest) {
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -62,11 +65,10 @@ export async function GET(request: NextRequest) {
         .single();
       
       if (cardData) {
-        // Format image_url using getStorageUrl
         selectedCard = {
           ...cardData,
           image_url: cardData.image_url ? getStorageUrl(cardData.image_url) : null,
-          token_id: cardData.token_id, // Include token_id for CharForBattle mapping
+          token_id: cardData.token_id,
         };
       }
     }
@@ -76,16 +78,16 @@ export async function GET(request: NextRequest) {
       ? (profile.current_xp / profile.max_xp) * 100 
       : 0;
 
-    // Ensure current_xp is a number (handle null/undefined)
     const currentXp = Number(profile.current_xp) || 0;
     const maxXp = Number(profile.max_xp) || 100;
     const level = Number(profile.level) || 1;
 
     return NextResponse.json({
       profile: {
+        userId: user.id, // Added for realtime subscription
         level,
-        currentXp, // This comes directly from current_xp in database
-        maxXp, // This comes directly from max_xp in database
+        currentXp,
+        maxXp,
         xpPercentage: Math.round(xpPercentage * 100) / 100,
         totalBattles: profile.total_battles || 0,
         wins: profile.wins || 0,
@@ -96,10 +98,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error('Get profile error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get profile';
+    devLog.error('Get profile error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to get profile') },
       { status: 500 }
     );
   }

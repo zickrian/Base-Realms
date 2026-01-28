@@ -17,7 +17,7 @@ interface ShopCardsPopupProps {
 
 export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
     const { address } = useAccount();
-    const { cardPacks, packsLoading, refreshInventory, refreshQuests } = useGameStore();
+    const { cardPacks, packsLoading, refreshQuests } = useGameStore();
 
     const isComingSoon = true;
 
@@ -114,6 +114,9 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
 
         isProcessingPurchase.current = true;
         processedTxHashes.current.add(transactionHash);
+        
+        // Show syncing overlay immediately
+        setSyncingNFT(true);
 
         try {
             // After successful mint, record purchase in backend
@@ -150,43 +153,55 @@ export const ShopCardsPopup = ({ isOpen, onClose }: ShopCardsPopupProps) => {
                 console.warn('Failed to update mint_nft quest progress:', questError);
             });
 
-            // CRITICAL FIX: Await sync completion before refreshing inventory
-            try {
-                console.log('[ShopCardsPopup] Starting NFT sync after mint...');
-                await fetch('/api/cards/sync-nft', {
-                    method: 'POST',
-                    headers: {
-                        'x-wallet-address': address!,
-                    },
-                });
-                
-                // Add delay to ensure blockchain state is settled and database is updated
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                console.log('[ShopCardsPopup] NFT sync completed, refreshing inventory...');
-                // Refresh inventory and quests after sync
-                await Promise.all([
-                    refreshInventory(address!),
-                    refreshQuests(address!),
-                ]);
-                console.log('[ShopCardsPopup] Inventory and quests refreshed successfully');
-            } catch (syncError) {
-                console.error('[ShopCardsPopup] Failed to sync NFT from blockchain:', syncError);
-                // Even on error, try to refresh inventory
-                await Promise.all([
-                    refreshInventory(address!),
-                    refreshQuests(address!),
-                ]).catch((refreshError) => {
-                    console.warn('[ShopCardsPopup] Failed to refresh data:', refreshError);
-                });
+            // OPTIMIZED: Single sync call - realtime subscription handles updates
+            console.log('[ShopCardsPopup] Starting NFT sync after mint...');
+            
+            // Wait for blockchain to settle before syncing
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Single sync call - database update will trigger realtime subscription
+            const syncResponse = await fetch('/api/cards/sync-nft', {
+                method: 'POST',
+                headers: {
+                    'x-wallet-address': address!,
+                },
+            });
+            
+            if (syncResponse.ok) {
+                const syncData = await syncResponse.json();
+                console.log(`[ShopCardsPopup] ✅ NFT sync complete! ${syncData.totalItems || 0} items in inventory`);
+            } else {
+                console.warn('[ShopCardsPopup] NFT sync returned non-OK status, realtime will retry');
             }
+            
+            // Realtime subscription will automatically update inventory in gameStore
+            // Just refresh quests (non-blocking)
+            refreshQuests(address!).catch((questError) => {
+                console.warn('[ShopCardsPopup] Failed to refresh quests:', questError);
+            });
+            
+            // Show success toast
+            setToast({
+                message: "NFT minted successfully! Check your deck.",
+                type: "success",
+                isVisible: true,
+            });
+            
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error('Failed to record purchase:', errorMessage);
             // Remove from processed set on error so it can be retried
             processedTxHashes.current.delete(transactionHash);
+            
+            // Show error toast
+            setToast({
+                message: errorMessage,
+                type: "error",
+                isVisible: true,
+            });
         } finally {
             setPurchasing(false);
+            setSyncingNFT(false);
             isProcessingPurchase.current = false;
         }
     };

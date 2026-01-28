@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { createPublicClient, fallback, http, parseAbiItem } from 'viem';
 import { base } from 'viem/chains';
 import { FREE_PACK_CONTRACT_ADDRESS, NFT_CONTRACT_ABI_VIEM } from '@/app/lib/blockchain/nftService';
+import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 const CONTRACT_ADDRESS = FREE_PACK_CONTRACT_ADDRESS.toLowerCase();
 const IMAGE_BASE_URL = process.env.NFT_IMAGE_BASE_URL
@@ -62,7 +63,7 @@ async function supportsEnumerable(publicClient: ReadContractClient): Promise<boo
     });
     return Boolean(response);
   } catch (error) {
-    console.warn('[Sync NFT] supportsInterface check failed, falling back to logs', error);
+    devLog.warn('[Sync NFT] supportsInterface check failed, falling back to logs', error);
     return false;
   }
 }
@@ -71,12 +72,10 @@ async function fetchOwnedTokenIdsFromLogs(
   publicClient: ReadContractClient,
   walletAddress: string
 ): Promise<number[]> {
-  // CRITICAL FIX: Default to recent block (Base Mainnet block ~20M) to prevent timeout
-  // Contract likely deployed recently, so we don't need to query from genesis
   const fromBlockEnv = process.env.NFT_CONTRACT_DEPLOY_BLOCK;
   const fromBlock = fromBlockEnv ? BigInt(fromBlockEnv) : BigInt(20000000);
   
-  console.log(`[Sync NFT] Fetching Transfer logs from block ${fromBlock} to latest`);
+  devLog.log(`[Sync NFT] Fetching Transfer logs from block ${fromBlock}`);
   
   const logs = await publicClient.getLogs({
     address: CONTRACT_ADDRESS as `0x${string}`,
@@ -85,7 +84,7 @@ async function fetchOwnedTokenIdsFromLogs(
     toBlock: 'latest',
   });
 
-  console.log(`[Sync NFT] Found ${logs.length} Transfer events`);
+  devLog.log(`[Sync NFT] Found ${logs.length} Transfer events`);
   
   const owned = new Set<number>();
   const normalizedWallet = walletAddress.toLowerCase();
@@ -101,16 +100,14 @@ async function fetchOwnedTokenIdsFromLogs(
 
     if (to === normalizedWallet) {
       owned.add(tokenId);
-      console.log(`[Sync NFT] Token ${tokenId} minted/transferred to wallet`);
     }
 
     if (from === normalizedWallet) {
       owned.delete(tokenId);
-      console.log(`[Sync NFT] Token ${tokenId} transferred away from wallet`);
     }
   });
 
-  console.log(`[Sync NFT] Final owned tokens:`, Array.from(owned));
+  devLog.log(`[Sync NFT] Final owned tokens count:`, owned.size);
   return Array.from(owned);
 }
 
@@ -121,13 +118,11 @@ async function fetchOwnedTokenIds(
 ): Promise<TokenResolutionResult> {
   const tokenIds: number[] = [];
   
-  // CRITICAL FIX: Try enumerable first, but don't throw error immediately
   try {
     const enumerableSupported = await supportsEnumerable(publicClient);
-    console.log(`[Sync NFT] ERC721Enumerable supported: ${enumerableSupported}`);
+    devLog.log(`[Sync NFT] ERC721Enumerable supported: ${enumerableSupported}`);
     
     if (enumerableSupported) {
-      // Try to get token IDs via enumerable
       for (let index = 0; index < balance; index += 1) {
         try {
           const tokenId = await publicClient.readContract({
@@ -137,13 +132,13 @@ async function fetchOwnedTokenIds(
             args: [walletAddress as `0x${string}`, BigInt(index)],
           });
           tokenIds.push(Number(tokenId));
-        } catch (indexError) {
-          console.warn(`[Sync NFT] Failed to get token at index ${index}:`, indexError);
+        } catch {
+          devLog.warn(`[Sync NFT] Failed to get token at index ${index}`);
         }
       }
       
       if (tokenIds.length > 0) {
-        console.log(`[Sync NFT] Successfully fetched ${tokenIds.length} tokens via enumerable`);
+        devLog.log(`[Sync NFT] Fetched ${tokenIds.length} tokens via enumerable`);
         return {
           tokenIds,
           resolved: true,
@@ -151,28 +146,27 @@ async function fetchOwnedTokenIds(
         };
       }
     }
-  } catch (error) {
-    console.warn('[Sync NFT] ERC721Enumerable check/fetch failed, will try Transfer logs', error);
+  } catch {
+    devLog.warn('[Sync NFT] ERC721Enumerable check/fetch failed, will try Transfer logs');
   }
 
-  // Fallback to Transfer logs (more reliable for most contracts)
-  console.log('[Sync NFT] Attempting Transfer log fallback...');
+  // Fallback to Transfer logs
+  devLog.log('[Sync NFT] Attempting Transfer log fallback...');
   try {
     const logTokenIds = await fetchOwnedTokenIdsFromLogs(publicClient, walletAddress);
     if (logTokenIds.length > 0) {
-      console.log(`[Sync NFT] Successfully fetched ${logTokenIds.length} tokens via Transfer logs`);
+      devLog.log(`[Sync NFT] Fetched ${logTokenIds.length} tokens via Transfer logs`);
       return {
         tokenIds: logTokenIds,
         resolved: true,
         source: 'onchain-log',
       };
     }
-  } catch (logError) {
-    console.error('[Sync NFT] Transfer log fallback failed', logError);
+  } catch {
+    devLog.error('[Sync NFT] Transfer log fallback failed');
   }
 
-  // If we reach here, we couldn't resolve any tokens
-  console.warn('[Sync NFT] Could not resolve token IDs via any method');
+  devLog.warn('[Sync NFT] Could not resolve token IDs via any method');
   return {
     tokenIds: [],
     resolved: false,
@@ -200,29 +194,16 @@ function buildCardTemplateInsert(tokenId: number) {
  * - Blockchain wallet is the SINGLE SOURCE OF TRUTH
  * - Database inventory is just a cache for faster queries
  * - This endpoint ensures database perfectly matches blockchain state
- * 
- * Flow:
- * 1. Query blockchain: What NFTs does this wallet own? (token IDs)
- * 2. Query database: What card templates exist for these token IDs?
- * 3. Create templates: If token ID doesn't have template, create one
- * 4. Sync inventory:
- *    - ADD: NFTs owned on blockchain but not in database inventory
- *    - UPDATE: NFTs already in inventory (update sync timestamp)
- *    - REMOVE: NFTs in database but NOT owned on blockchain (transferred/sold)
- * 5. Return: Updated inventory that matches blockchain exactly
- * 
- * This is called:
- * - On login (initial sync)
- * - After minting (add new NFT)
- * - Periodically (to catch transfers/sales)
  */
 export async function POST(request: NextRequest) {
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -231,7 +212,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -262,7 +243,7 @@ export async function POST(request: NextRequest) {
       ...(rpcUrlList.length === 0 && !rpcUrl ? defaultRpcs : [])
     ].filter(Boolean);
     
-    console.log(`[Sync NFT] Using ${transportCandidates.length} RPC URLs for fallback:`, transportCandidates);
+    devLog.log(`[Sync NFT] Using ${transportCandidates.length} RPC URLs for fallback:`, transportCandidates);
     
     const transport = transportCandidates.length > 0
       ? fallback(transportCandidates.map((url) => http(url, {
@@ -277,19 +258,20 @@ export async function POST(request: NextRequest) {
     });
 
     let nftBalance = 0;
+    const validatedWallet = walletValidation.address;
     
     try {
       // ATTEMPT 1: Try balanceOf (fastest if works)
-      console.log(`[Sync NFT] Attempting balanceOf for wallet ${walletAddress}...`);
+      devLog.log(`[Sync NFT] Attempting balanceOf...`);
       const balance = await publicClient.readContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: NFT_CONTRACT_ABI_VIEM,
         functionName: 'balanceOf',
-        args: [walletAddress as `0x${string}`],
+        args: [validatedWallet as `0x${string}`],
       });
 
       nftBalance = Number(balance);
-      console.log(`[Sync NFT] ✓ balanceOf successful: ${nftBalance} NFTs for contract ${CONTRACT_ADDRESS}`);
+      devLog.log(`[Sync NFT] balanceOf successful: ${nftBalance} NFTs`);
 
       let ownedTokenIds: number[] = [];
       let tokenResolution: TokenResolutionResult = {
@@ -299,25 +281,25 @@ export async function POST(request: NextRequest) {
       };
 
       if (nftBalance > 0) {
-        console.log(`[Sync NFT] Fetching token IDs for ${nftBalance} NFTs...`);
-        tokenResolution = await fetchOwnedTokenIds(publicClient, walletAddress, nftBalance);
+        devLog.log(`[Sync NFT] Fetching token IDs for ${nftBalance} NFTs...`);
+        tokenResolution = await fetchOwnedTokenIds(publicClient, validatedWallet, nftBalance);
         ownedTokenIds = tokenResolution.tokenIds;
-        console.log(`[Sync NFT] ✓ Resolved ${ownedTokenIds.length} tokenIds:`, ownedTokenIds, `(Source: ${tokenResolution.source})`);
+        devLog.log(`[Sync NFT] Resolved ${ownedTokenIds.length} tokenIds (Source: ${tokenResolution.source})`);
         
         // IMPROVED: Even if resolution failed, check if we have partial data
         if (ownedTokenIds.length === 0 && nftBalance > 0) {
-          console.warn(`[Sync NFT] ⚠️ Balance is ${nftBalance} but resolved 0 tokens - possible sync issue`);
+          devLog.warn(`[Sync NFT] ⚠️ Balance is ${nftBalance} but resolved 0 tokens - possible sync issue`);
         }
       } else {
         // CRITICAL: User has 0 NFTs on blockchain
         // We need to clear all inventory for this contract
-        console.log(`[Sync NFT] ⚠️ Balance is 0 - User has no NFTs for this contract`);
-        console.log(`[Sync NFT] Will clear all inventory entries for this contract`);
+        devLog.log(`[Sync NFT] ⚠️ Balance is 0 - User has no NFTs for this contract`);
+        devLog.log(`[Sync NFT] Will clear all inventory entries for this contract`);
       }
 
       // IMPROVED: Only skip if both conditions are true: unresolved AND no tokens found
       if (!tokenResolution.resolved && ownedTokenIds.length === 0 && nftBalance > 0) {
-        console.warn('[Sync NFT] ⚠️ Unable to resolve any token IDs; returning existing inventory to avoid data loss.');
+        devLog.warn('[Sync NFT] ⚠️ Unable to resolve any token IDs; returning existing inventory to avoid data loss.');
         const { data: fallbackInventory, error: fallbackError } = await supabaseAdmin
           .from('user_inventory')
           .select(`
@@ -350,12 +332,12 @@ export async function POST(request: NextRequest) {
       
       // IMPROVED: If we got some tokens even with partial failure, continue with sync
       if (ownedTokenIds.length > 0) {
-        console.log(`[Sync NFT] ✓ Proceeding with sync for ${ownedTokenIds.length} resolved tokens`);
+        devLog.log(`[Sync NFT] ✓ Proceeding with sync for ${ownedTokenIds.length} resolved tokens`);
       }
 
       const ownedTokenIdSet = new Set(ownedTokenIds);
-      console.log(`[Sync NFT] 🎯 User owns ${ownedTokenIds.length} NFTs (token IDs):`, ownedTokenIds);
-      console.log(`[Sync NFT] 🔍 Now checking database for cleanup and sync...`);
+      devLog.log(`[Sync NFT] 🎯 User owns ${ownedTokenIds.length} NFTs (token IDs):`, ownedTokenIds);
+      devLog.log(`[Sync NFT] 🔍 Now checking database for cleanup and sync...`);
 
       // Fetch all templates for the contract (used for cleanup and mapping)
       const { data: contractTemplates, error: templateError } = await supabaseAdmin
@@ -364,11 +346,11 @@ export async function POST(request: NextRequest) {
         .eq('contract_address', toLowerAddress(CONTRACT_ADDRESS));
 
       if (templateError) {
-        console.error('[Sync NFT] ❌ Failed to fetch card templates:', templateError);
+        devLog.error('[Sync NFT] ❌ Failed to fetch card templates:', templateError);
         throw templateError;
       }
       
-      console.log(`[Sync NFT] 📋 Found ${contractTemplates?.length || 0} total card templates for contract ${CONTRACT_ADDRESS}`);
+      devLog.log(`[Sync NFT] 📋 Found ${contractTemplates?.length || 0} total card templates for contract ${CONTRACT_ADDRESS}`);
       
       // Get current user inventory to compare
       const { data: currentInventory } = await supabaseAdmin
@@ -377,11 +359,11 @@ export async function POST(request: NextRequest) {
         .eq('user_id', user.id)
         .eq('card_templates.contract_address', CONTRACT_ADDRESS);
       
-      console.log(`[Sync NFT] 📦 User currently has ${currentInventory?.length || 0} inventory entries`);
+      devLog.log(`[Sync NFT] 📦 User currently has ${currentInventory?.length || 0} inventory entries`);
       if (currentInventory && currentInventory.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const currentTokenIds = currentInventory.map((inv: any) => inv.card_templates?.token_id).filter(Boolean);
-        console.log(`[Sync NFT] 📦 Current inventory token IDs:`, currentTokenIds);
+        devLog.log(`[Sync NFT] 📦 Current inventory token IDs:`, currentTokenIds);
       }
 
       const templateByTokenId = new Map<number, string>();
@@ -394,7 +376,7 @@ export async function POST(request: NextRequest) {
       // Ensure templates exist for owned tokens
       const missingTokenIds = ownedTokenIds.filter((tokenId) => !templateByTokenId.has(tokenId));
       if (missingTokenIds.length > 0) {
-        console.log(`[Sync NFT] Creating ${missingTokenIds.length} missing templates for tokenIds:`, missingTokenIds);
+        devLog.log(`[Sync NFT] Creating ${missingTokenIds.length} missing templates for tokenIds:`, missingTokenIds);
         const inserts = missingTokenIds.map(buildCardTemplateInsert);
         for (const chunk of chunkArray(inserts, 200)) {
           const { data: inserted, error: insertError } = await supabaseAdmin
@@ -403,9 +385,9 @@ export async function POST(request: NextRequest) {
             .select('id, token_id');
 
           if (insertError) {
-            console.error('[Sync NFT] Failed to insert card templates:', insertError);
+            devLog.error('[Sync NFT] Failed to insert card templates:', insertError);
           } else {
-            console.log(`[Sync NFT] Created ${inserted?.length || 0} card templates`);
+            devLog.log(`[Sync NFT] Created ${inserted?.length || 0} card templates`);
           }
 
           (inserted || []).forEach((row) => {
@@ -420,89 +402,92 @@ export async function POST(request: NextRequest) {
         .map((tokenId) => templateByTokenId.get(tokenId))
         .filter((id): id is string => Boolean(id));
       
-      console.log(`[Sync NFT] ✓ Mapped ${ownedTemplateIds.length} template IDs for ${ownedTokenIds.length} tokenIds`);
+      devLog.log(`[Sync NFT] ✓ Mapped ${ownedTemplateIds.length} template IDs for ${ownedTokenIds.length} tokenIds`);
       
       // IMPROVED: Warn if mapping is incomplete
       if (ownedTemplateIds.length < ownedTokenIds.length) {
         const unmappedTokens = ownedTokenIds.filter(tid => !templateByTokenId.has(tid));
-        console.warn(`[Sync NFT] ⚠️ ${unmappedTokens.length} tokens could not be mapped to templates:`, unmappedTokens);
+        devLog.warn(`[Sync NFT] ⚠️ ${unmappedTokens.length} tokens could not be mapped to templates:`, unmappedTokens);
       }
 
       // CRITICAL: Remove inventory entries that should NOT exist
       // BLOCKCHAIN-FIRST: Only keep what user actually owns on blockchain
-      // Remove: 
-      // 1. NFTs transferred/sold (no longer in wallet)
-      // 2. Invalid entries (token_id is null)
-      // 3. Everything if user has 0 NFTs
+      // PERFORMANCE FIX: Only check user's current inventory, not all 999 templates
       
-      if (nftBalance === 0) {
-        // User has NO NFTs on blockchain → Clear ALL inventory for this contract
-        console.log(`[Sync NFT] 🧹 User has 0 NFTs on blockchain, clearing all inventory...`);
+      // Get user's current inventory entries (not all templates)
+      const { data: userInventoryEntries, error: invError } = await supabaseAdmin
+        .from('user_inventory')
+        .select('id, card_template_id, card_templates!inner(token_id)')
+        .eq('user_id', user.id)
+        .eq('card_templates.contract_address', CONTRACT_ADDRESS);
+      
+      if (invError) {
+        devLog.error('[Sync NFT] ❌ Failed to fetch user inventory for cleanup:', invError);
+      }
+      
+      const inventoryToCheck = userInventoryEntries || [];
+      devLog.log(`[Sync NFT] 🔍 Checking ${inventoryToCheck.length} inventory entries for cleanup`);
+      
+      if (nftBalance === 0 && inventoryToCheck.length > 0) {
+        // User has NO NFTs on blockchain → Clear user's inventory for this contract
+        devLog.log(`[Sync NFT] 🧹 User has 0 NFTs on blockchain, clearing ${inventoryToCheck.length} inventory entries...`);
         
-        // Get all template IDs for this contract
-        const allContractTemplateIds = (contractTemplates || []).map(t => t.id);
+        const inventoryIdsToDelete = inventoryToCheck.map(inv => inv.id);
         
-        if (allContractTemplateIds.length > 0) {
-          const { error: clearError, count } = await supabaseAdmin
-            .from('user_inventory')
-            .delete({ count: 'exact' })
-            .eq('user_id', user.id)
-            .in('card_template_id', allContractTemplateIds);
-          
-          if (clearError) {
-            console.error('[Sync NFT] ❌ Failed to clear inventory:', clearError);
-          } else {
-            console.log(`[Sync NFT] ✅ Cleared ${count || 0} inventory entries (user has 0 NFTs)`);
-          }
+        const { error: clearError, count } = await supabaseAdmin
+          .from('user_inventory')
+          .delete({ count: 'exact' })
+          .in('id', inventoryIdsToDelete);
+        
+        if (clearError) {
+          devLog.error('[Sync NFT] ❌ Failed to clear inventory:', clearError);
         } else {
-          console.log(`[Sync NFT] ✓ No templates found for contract, nothing to clear`);
+          devLog.log(`[Sync NFT] ✅ Cleared ${count || 0} inventory entries (user has 0 NFTs)`);
         }
-      } else {
-        // User has NFTs → Remove only what's NOT owned on blockchain
-        const removableTemplateIds = (contractTemplates || [])
-          .filter((template) => {
+      } else if (inventoryToCheck.length > 0) {
+        // User has NFTs → Remove only inventory entries NOT owned on blockchain
+        // Type assertion needed because Supabase inner join returns different shape
+        const inventoryIdsToRemove = inventoryToCheck
+          .filter((inv) => {
+            // card_templates from inner join is an object, not array
+            const cardTemplate = inv.card_templates as unknown as { token_id: number | null } | null;
+            const tokenId = cardTemplate?.token_id;
             // Remove if token_id is null (invalid entry)
-            if (template.token_id === null || template.token_id === undefined) {
-              console.log(`[Sync NFT] ⚠️ Found invalid template with null token_id:`, template.id);
+            if (tokenId === null || tokenId === undefined) {
+              devLog.log(`[Sync NFT] ⚠️ Found invalid inventory with null token_id:`, inv.id);
               return true;
             }
             // Remove if token is not owned on blockchain
-            if (typeof template.token_id === 'number' && !ownedTokenIdSet.has(template.token_id)) {
-              console.log(`[Sync NFT] 🔄 Token #${template.token_id} no longer owned, will remove from inventory`);
+            if (!ownedTokenIdSet.has(tokenId)) {
+              devLog.log(`[Sync NFT] 🔄 Token #${tokenId} no longer owned, removing inventory entry`);
               return true;
             }
             return false;
           })
-          .map((template) => template.id);
+          .map((inv) => inv.id);
 
-        console.log(`[Sync NFT] Found ${removableTemplateIds.length} templates to remove from inventory`);
-        
-        let removedCount = 0;
-        for (const chunk of chunkArray(removableTemplateIds, 200)) {
-          if (chunk.length === 0) continue;
+        if (inventoryIdsToRemove.length > 0) {
+          devLog.log(`[Sync NFT] Found ${inventoryIdsToRemove.length} inventory entries to remove`);
+          
           const { error: deleteError, count } = await supabaseAdmin
             .from('user_inventory')
             .delete({ count: 'exact' })
-            .eq('user_id', user.id)
-            .in('card_template_id', chunk);
+            .in('id', inventoryIdsToRemove);
           
           if (deleteError) {
-            console.error('[Sync NFT] ❌ Failed to delete inventory entries:', deleteError);
+            devLog.error('[Sync NFT] ❌ Failed to delete inventory entries:', deleteError);
           } else {
-            removedCount += count || 0;
-            console.log(`[Sync NFT] ✓ Removed ${count || 0} inventory entries`);
+            devLog.log(`[Sync NFT] ✅ Cleanup complete: Removed ${count || 0} NFTs (transferred/sold/invalid)`);
           }
-        }
-        
-        if (removedCount > 0) {
-          console.log(`[Sync NFT] ✅ Cleanup complete: Removed ${removedCount} NFTs (transferred/sold/invalid)`);
         } else {
-          console.log(`[Sync NFT] ✓ No cleanup needed - inventory already matches blockchain`);
+          devLog.log(`[Sync NFT] ✓ No cleanup needed - inventory already matches blockchain`);
         }
+      } else {
+        devLog.log(`[Sync NFT] ✓ No existing inventory to clean up`);
       }
 
       if (ownedTemplateIds.length > 0) {
-        console.log(`[Sync NFT] Syncing ${ownedTemplateIds.length} template IDs to inventory...`);
+        devLog.log(`[Sync NFT] Syncing ${ownedTemplateIds.length} template IDs to inventory...`);
         
         const { data: existingInventory } = await supabaseAdmin
           .from('user_inventory')
@@ -510,7 +495,7 @@ export async function POST(request: NextRequest) {
           .eq('user_id', user.id)
           .in('card_template_id', ownedTemplateIds);
 
-        console.log(`[Sync NFT] Found ${existingInventory?.length || 0} existing inventory entries`);
+        devLog.log(`[Sync NFT] Found ${existingInventory?.length || 0} existing inventory entries`);
         
         const existingTemplateIdSet = new Set(
           (existingInventory || []).map((row) => row.card_template_id)
@@ -526,8 +511,8 @@ export async function POST(request: NextRequest) {
             last_sync_balance: INVENTORY_SYNC_QUANTITY,
           }));
 
-        console.log(`[Sync NFT] Need to insert ${newInventoryRows.length} new inventory entries`);
-        console.log(`[Sync NFT] Need to update ${existingInventory?.length || 0} existing entries`);
+        devLog.log(`[Sync NFT] Need to insert ${newInventoryRows.length} new inventory entries`);
+        devLog.log(`[Sync NFT] Need to update ${existingInventory?.length || 0} existing entries`);
 
         // Update existing entries
         let updatedCount = 0;
@@ -544,12 +529,12 @@ export async function POST(request: NextRequest) {
             .in('card_template_id', chunk);
           
           if (updateError) {
-            console.error('[Sync NFT] Failed to update inventory chunk:', updateError);
+            devLog.error('[Sync NFT] Failed to update inventory chunk:', updateError);
           } else {
             updatedCount += chunk.length;
           }
         }
-        console.log(`[Sync NFT] ✓ Updated ${updatedCount} inventory entries`);
+        devLog.log(`[Sync NFT] ✓ Updated ${updatedCount} inventory entries`);
 
         // Insert new entries
         let insertedCount = 0;
@@ -561,28 +546,27 @@ export async function POST(request: NextRequest) {
             .select('id');
           
           if (insertError) {
-            console.error('[Sync NFT] ❌ Failed to insert inventory rows:', insertError);
+            devLog.error('[Sync NFT] ❌ Failed to insert inventory rows:', insertError);
           } else {
             insertedCount += insertedData?.length || chunk.length;
-            console.log(`[Sync NFT] ✓ Inserted ${insertedData?.length || chunk.length} new inventory entries`);
+            devLog.log(`[Sync NFT] ✓ Inserted ${insertedData?.length || chunk.length} new inventory entries`);
           }
         }
-        console.log(`[Sync NFT] ✓ Total inserted: ${insertedCount} new entries`);
-        console.log(`[Sync NFT] ✓ Sync complete! User now has ${ownedTemplateIds.length} NFTs in inventory`);
+        devLog.log(`[Sync NFT] ✓ Total inserted: ${insertedCount} new entries`);
+        devLog.log(`[Sync NFT] ✓ Sync complete! User now has ${ownedTemplateIds.length} NFTs in inventory`);
       } else {
-        console.log('[Sync NFT] No owned template IDs to sync (user has 0 NFTs)');
+        devLog.log('[Sync NFT] No owned template IDs to sync (user has 0 NFTs)');
       }
-    } catch (blockchainError: unknown) {
-      console.error('[Sync NFT] ❌ balanceOf failed, attempting Transfer logs-only approach...');
-      console.error('[Sync NFT] Error details:', blockchainError);
+    } catch {
+      devLog.error('[Sync NFT] balanceOf failed, attempting Transfer logs-only approach...');
       
       // FALLBACK: Skip balanceOf, go directly to Transfer logs
       try {
-        console.log('[Sync NFT] 🔄 FALLBACK METHOD: Querying Transfer logs directly...');
-        const logTokenIds = await fetchOwnedTokenIdsFromLogs(publicClient, walletAddress);
+        devLog.log('[Sync NFT] FALLBACK METHOD: Querying Transfer logs directly...');
+        const logTokenIds = await fetchOwnedTokenIdsFromLogs(publicClient, validatedWallet);
         
         if (logTokenIds.length > 0) {
-          console.log(`[Sync NFT] ✅ FALLBACK SUCCESS: Found ${logTokenIds.length} tokens via Transfer logs:`, logTokenIds);
+          devLog.log(`[Sync NFT] ✅ FALLBACK SUCCESS: Found ${logTokenIds.length} tokens via Transfer logs:`, logTokenIds);
           
           // Get or create card templates
           const { data: contractTemplates } = await supabaseAdmin
@@ -602,7 +586,7 @@ export async function POST(request: NextRequest) {
             .map(tokenId => buildCardTemplateInsert(tokenId));
           
           if (templatesToCreate.length > 0) {
-            console.log(`[Sync NFT] Creating ${templatesToCreate.length} new card templates`);
+            devLog.log(`[Sync NFT] Creating ${templatesToCreate.length} new card templates`);
             await supabaseAdmin
               .from('card_templates')
               .insert(templatesToCreate);
@@ -632,18 +616,18 @@ export async function POST(request: NextRequest) {
                 ignoreDuplicates: false,
               });
             
-            console.log(`[Sync NFT] ✅ FALLBACK: Synced ${ownedTemplateIds.length} NFTs to inventory`);
+            devLog.log(`[Sync NFT] ✅ FALLBACK: Synced ${ownedTemplateIds.length} NFTs to inventory`);
           }
         } else {
-          console.log('[Sync NFT] ⚠️ FALLBACK: No tokens found in Transfer logs');
+          devLog.log('[Sync NFT] ⚠️ FALLBACK: No tokens found in Transfer logs');
         }
       } catch (fallbackError) {
-        console.error('[Sync NFT] ❌ FALLBACK FAILED:', fallbackError);
+        devLog.error('[Sync NFT] ❌ FALLBACK FAILED:', fallbackError);
       }
     }
 
     // Return updated inventory
-    console.log('[Sync NFT] Fetching final inventory from database...');
+    devLog.log('[Sync NFT] Fetching final inventory from database...');
     const { data: inventory, error: inventoryError } = await supabaseAdmin
       .from('user_inventory')
       .select(`
@@ -663,15 +647,15 @@ export async function POST(request: NextRequest) {
       .order('acquired_at', { ascending: false});
 
     if (inventoryError) {
-      console.error('[Sync NFT] ❌ Failed to fetch final inventory:', inventoryError);
+      devLog.error('[Sync NFT] ❌ Failed to fetch final inventory:', inventoryError);
       throw inventoryError;
     }
 
-    console.log(`[Sync NFT] ✅ Sync complete! Returning ${inventory?.length || 0} inventory items`);
+    devLog.log(`[Sync NFT] ✅ Sync complete! Returning ${inventory?.length || 0} inventory items`);
     if (inventory && inventory.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tokenIds = inventory.map((item: any) => item.card_templates?.token_id).filter(Boolean);
-      console.log('[Sync NFT] Final token IDs in inventory:', tokenIds);
+      devLog.log('[Sync NFT] Final token IDs in inventory:', tokenIds);
     }
 
     return NextResponse.json({
@@ -681,10 +665,9 @@ export async function POST(request: NextRequest) {
       totalItems: inventory?.length || 0,
     });
   } catch (error: unknown) {
-    console.error('Sync NFT error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to sync NFT inventory';
+    devLog.error('Sync NFT error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to sync NFT inventory') },
       { status: 500 }
     );
   }

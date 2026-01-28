@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { FREE_PACK_CONTRACT_ADDRESS } from '@/app/lib/blockchain/nftService';
+import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 const CONTRACT_ADDRESS = FREE_PACK_CONTRACT_ADDRESS.toLowerCase();
 
@@ -8,9 +9,11 @@ export async function GET(request: NextRequest) {
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -19,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -56,16 +59,11 @@ export async function GET(request: NextRequest) {
       .order('acquired_at', { ascending: false });
 
     if (inventoryError) {
-      console.error('[Inventory API] ❌ Failed to fetch inventory:', inventoryError);
+      devLog.error('[Inventory API] Failed to fetch inventory:', inventoryError);
       throw inventoryError;
     }
 
-    console.log(`[Inventory API] ✓ Returning ${inventory?.length || 0} inventory items for wallet ${walletAddress}`);
-    if (inventory && inventory.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tokenIds = inventory.map((item: any) => item.card_templates?.token_id).filter(Boolean);
-      console.log(`[Inventory API] Token IDs in inventory:`, tokenIds);
-    }
+    devLog.log(`[Inventory API] Returning ${inventory?.length || 0} items`);
 
     return NextResponse.json({ 
       inventory: inventory || [],
@@ -73,10 +71,9 @@ export async function GET(request: NextRequest) {
       fetchedAt: new Date().toISOString()
     });
   } catch (error: unknown) {
-    console.error('Get inventory error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get inventory';
+    devLog.error('Get inventory error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to get inventory') },
       { status: 500 }
     );
   }

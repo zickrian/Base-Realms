@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 export async function GET(request: NextRequest) {
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -16,7 +19,7 @@ export async function GET(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -88,14 +91,13 @@ export async function GET(request: NextRequest) {
       throw packsError;
     }
 
-    // Check if user already claimed today - if yes, packCount should be 0
+    // Check if user already claimed today
     let finalPackCount = currentDailyPacks?.pack_count || 0;
     if (currentDailyPacks?.last_claimed_at) {
       const now = new Date();
       const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
       const lastClaimed = new Date(currentDailyPacks.last_claimed_at);
       
-      // If last claim was today, packCount should be 0 (already claimed)
       if (lastClaimed >= todayStart) {
         finalPackCount = 0;
       }
@@ -106,10 +108,9 @@ export async function GET(request: NextRequest) {
       nextResetAt: currentDailyPacks?.next_reset_at,
     });
   } catch (error: unknown) {
-    console.error('Get daily packs error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get daily packs';
+    devLog.error('Get daily packs error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to get daily packs') },
       { status: 500 }
     );
   }
@@ -119,9 +120,11 @@ export async function POST(request: NextRequest) {
   try {
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -161,22 +164,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already claimed today (only 1x per day)
+    // Check if user already claimed today
     const now = new Date();
     const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     
     if (dailyPacks.last_claimed_at) {
       const lastClaimed = new Date(dailyPacks.last_claimed_at);
-      // Check if last claim was today (in UTC)
       if (lastClaimed >= todayStart) {
-        // User already claimed today - ensure quest is completed
-        // This handles edge case where quest wasn't updated during first claim
         const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
         try {
           await updateQuestProgress(user.id, 'open_packs', 1, false);
-          console.log(`[Daily Pack] User ${user.id} already claimed today - ensured open_packs quest is updated`);
         } catch (questError) {
-          console.error(`[Daily Pack] Error updating quest for already-claimed pack:`, questError);
+          devLog.error('[Daily Pack] Error updating quest:', questError);
         }
         
         return NextResponse.json(
@@ -201,22 +200,19 @@ export async function POST(request: NextRequest) {
       throw updateError;
     }
 
-    // Update quest progress for "open_packs" quest (NO auto-claim)
-    // User must manually claim the quest to get XP - XP will only enter progress bar after claim
-    console.log(`[Daily Pack] Updating open_packs quest for user ${user.id} after successful claim`);
+    // Update quest progress
+    devLog.log('[Daily Pack] Updating open_packs quest');
     const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
-    const questResult = await updateQuestProgress(user.id, 'open_packs', 1, false);
-    console.log(`[Daily Pack] Quest update result - Completed: ${questResult.completedQuestIds.length > 0}, Quest IDs: ${questResult.completedQuestIds.join(', ')}`);
+    await updateQuestProgress(user.id, 'open_packs', 1, false);
 
     return NextResponse.json({
       success: true,
       packCount: updated.pack_count,
     });
   } catch (error: unknown) {
-    console.error('Claim daily pack error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to claim daily pack';
+    devLog.error('Claim daily pack error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to claim daily pack') },
       { status: 500 }
     );
   }

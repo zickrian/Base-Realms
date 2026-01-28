@@ -1,21 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { validateWalletHeader, isValidUUID, isInWhitelist, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { packId, paymentMethod, transactionHash } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { packId, paymentMethod, transactionHash } = body;
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
 
-    if (!packId || !paymentMethod) {
+    // Validate packId format
+    if (!packId || !isValidUUID(packId)) {
       return NextResponse.json(
-        { error: 'Pack ID and payment method are required' },
+        { error: 'Valid pack ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate paymentMethod whitelist
+    if (!isInWhitelist(paymentMethod, ['eth', 'idrx'])) {
+      return NextResponse.json(
+        { error: 'Invalid payment method' },
         { status: 400 }
       );
     }
@@ -24,7 +43,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -49,7 +68,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if purchase with this transaction hash already exists (prevent duplicate)
+    // Check if purchase with this transaction hash already exists
     if (transactionHash) {
       const { data: existingPurchase } = await supabaseAdmin
         .from('user_purchases')
@@ -58,7 +77,6 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (existingPurchase) {
-        // Purchase already recorded, return existing purchase
         return NextResponse.json({
           success: true,
           purchase: existingPurchase,
@@ -87,7 +105,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate random cards based on pack rarity
-    // Get cards of matching rarity
     const { data: cards, error: cardsError } = await supabaseAdmin
       .from('card_templates')
       .select('id')
@@ -101,7 +118,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Select random card (for now, just pick one - you can implement proper random selection)
     const randomCard = cards[Math.floor(Math.random() * cards.length)];
 
     // Create card reveal
@@ -131,7 +147,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invCheckError && invCheckError.code === 'PGRST116') {
-      // Doesn't exist, create new
       await supabaseAdmin
         .from('user_inventory')
         .insert({
@@ -140,15 +155,13 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         });
     } else if (!invCheckError && existingInventory) {
-      // Exists, increment quantity
       await supabaseAdmin
         .from('user_inventory')
         .update({ quantity: existingInventory.quantity + 1 })
         .eq('id', existingInventory.id);
     }
 
-    // Update quest progress for "open_packs" quest (NO auto-claim)
-    // User must manually claim the quest to get XP - XP will only enter progress bar after claim
+    // Update quest progress
     const { updateQuestProgress } = await import('@/app/lib/db/quest-progress');
     await updateQuestProgress(user.id, 'open_packs', 1, false);
 
@@ -158,10 +171,9 @@ export async function POST(request: NextRequest) {
       revealedCard: reveal,
     });
   } catch (error: unknown) {
-    console.error('Purchase card error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to purchase card pack';
+    devLog.error('Purchase card error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to purchase card pack') },
       { status: 500 }
     );
   }

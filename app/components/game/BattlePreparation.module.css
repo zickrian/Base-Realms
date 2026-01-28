@@ -1,4 +1,5 @@
-/* Battle Preparation Styles */
+/* Battle Preparation Styles - Pixel RPG Theme */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 .container {
   font-family: 'VT323', monospace;
@@ -7,147 +8,328 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+  color: #f9fafb;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background pattern */
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.03) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .content {
   text-align: center;
-  max-width: 600px;
-  padding: 2rem;
+  max-width: 520px;
+  padding: 2rem 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
+/* Animated Sword Icon */
 .spinner {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  /* Animation removed - static sword icon */
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.5rem;
+  position: relative;
+  animation: swordFloat 2s ease-in-out infinite;
+}
+
+.spinner::before {
+  content: '⚔️';
+  font-size: 48px;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+}
+
+@keyframes swordFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(5deg);
+  }
 }
 
 .title {
+  font-family: 'VT323', monospace;
   font-size: 2.5rem;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 1rem;
+  letter-spacing: 4px;
+  margin-bottom: 0.5rem;
   color: #ffd700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow:
+    3px 3px 0 #3e1f08,
+    -1px -1px 0 #000,
+    0 0 20px rgba(255, 215, 0, 0.3);
 }
 
 .step {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #e0e0e0;
+  font-family: 'VT323', monospace;
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #e5e7eb;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .detail {
-  font-size: 1.2rem;
-  color: #a0a0a0;
-  margin-top: 1rem;
-  line-height: 1.5;
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  color: #9ca3af;
+  margin-top: 0.75rem;
+  line-height: 1.6;
+  text-shadow: 1px 1px 0 #000;
 }
 
+/* Error Box - Pixel Style */
 .error {
-  margin-top: 2rem;
-  padding: 1rem;
-  background: rgba(255, 0, 0, 0.1);
-  border: 2px solid #ff0000;
-  border-radius: 8px;
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #1a0a0a 0%, #2a1010 100%);
+  border: 3px solid #ff4444;
+  position: relative;
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 68, 68, 0.3),
+    4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Pixel corners for error */
+.error::before,
+.error::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ff4444;
+}
+
+.error::before {
+  top: -2px;
+  left: -2px;
+}
+
+.error::after {
+  bottom: -2px;
+  right: -2px;
 }
 
 .error p {
-  font-size: 1.3rem;
-  margin: 0.5rem 0;
-  color: #ff6b6b;
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  margin: 0.35rem 0;
+  color: #fecaca;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .error p:first-child {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ff6666;
 }
 
 .redirectNotice {
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 215, 0, 0.2);
-  border: 2px solid #ffd700;
-  border-radius: 8px;
-  font-size: 1.2rem !important;
-  color: #ffd700 !important;
-  animation: pulse 1s ease-in-out infinite;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid #fbbf24;
+  font-size: 1rem !important;
+  color: #fbbf24 !important;
+  text-shadow: 1px 1px 0 #000;
 }
 
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.7;
-  }
-}
-
-/* Requirements Checklist Styles */
+/* Requirements Box - Pixel RPG Style */
 .requirements {
   margin-top: 1.5rem;
-  padding: 1rem;
-  background: rgba(0, 255, 0, 0.1);
-  border: 2px solid #00ff00;
-  border-radius: 8px;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #0a1a0a 0%, #102010 100%);
+  border: 3px solid #4ade80;
+  position: relative;
+  box-shadow: 
+    inset 0 0 0 1px rgba(74, 222, 128, 0.2),
+    4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Pixel corners */
+.requirements::before,
+.requirements::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+}
+
+.requirements::before {
+  top: -2px;
+  left: -2px;
+  box-shadow: 
+    8px 0 0 0 #4ade80,
+    0 8px 0 0 #4ade80;
+}
+
+.requirements::after {
+  bottom: -2px;
+  right: -2px;
+  box-shadow: 
+    -8px 0 0 0 #4ade80,
+    0 -8px 0 0 #4ade80;
 }
 
 .checklistTitle {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
+  font-weight: 600;
   color: #ffd700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  text-shadow: 2px 2px 0 #000;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .balanceInfo {
-  font-size: 1.2rem;
-  color: #00ff00;
+  font-family: 'VT323', monospace;
+  font-size: 1.15rem;
+  color: #bbf7d0;
   margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: rgba(0, 255, 0, 0.1);
-  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid #22c55e;
+  text-shadow: 1px 1px 0 #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.balanceInfo::before {
+  content: '💰';
+  font-size: 1rem;
 }
 
 .checklist {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  text-align: left;
+  padding-left: 0.5rem;
 }
 
 .completed {
-  font-size: 1.2rem;
-  color: #00ff00;
+  font-family: 'VT323', monospace;
+  font-size: 1.15rem;
+  color: #4ade80;
+  text-shadow: 1px 1px 0 #000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.completed::before {
+  content: '✓';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #22c55e;
+  color: #000;
+  font-weight: bold;
+  font-size: 0.9rem;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 .pending {
-  font-size: 1.2rem;
-  color: #ffa500;
+  font-family: 'VT323', monospace;
+  font-size: 1.15rem;
+  color: #fbbf24;
+  text-shadow: 1px 1px 0 #000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pending::before {
+  content: '';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 2px solid #fbbf24;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 .hint {
+  font-family: 'VT323', monospace;
   font-size: 1rem !important;
-  color: #a0a0a0 !important;
-  font-style: italic;
+  color: #9ca3af !important;
+  font-style: normal;
+  text-shadow: 1px 1px 0 #000;
 }
+
 .securityNote {
-  font-size: 0.85rem;
-  color: #ffa500;
-  font-style: italic;
-  margin-left: 0.5rem;
+  font-family: 'VT323', monospace;
+  font-size: 0.95rem;
+  color: #fbbf24;
+  font-style: normal;
+  margin-left: 0.25rem;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .securityInfo {
+  font-family: 'VT323', monospace;
   font-size: 1rem;
-  color: #4ade80;
+  color: #86efac;
   margin-top: 1rem;
   padding: 0.75rem;
-  background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.3);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(74, 222, 128, 0.4);
   line-height: 1.5;
   text-align: center;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.securityInfo::before {
+  content: '🔒 ';
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .title {
+    font-size: 2rem;
+    letter-spacing: 2px;
+  }
+
+  .spinner::before {
+    font-size: 40px;
+  }
+
+  .step {
+    font-size: 1.1rem;
+  }
+
+  .checklistTitle {
+    font-size: 1.2rem;
+  }
+
+  .balanceInfo,
+  .completed,
+  .pending {
+    font-size: 1rem;
+  }
+
+  .requirements {
+    padding: 1rem;
+  }
 }

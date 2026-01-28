@@ -118,6 +118,7 @@ const TRANSACTION_CONFIG = {
   TIMEOUT_MS: 45000, // 45 seconds before manual verification
   POLLING_INTERVAL_MS: 3000, // Check every 3 seconds after timeout
   MAX_MANUAL_RETRIES: 3, // Maximum manual verification attempts
+  ABSOLUTE_MAX_TIME_MS: 300000, // 5 minutes absolute maximum before giving up
 } as const;
 
 export function CardRevealModal({ 
@@ -142,16 +143,18 @@ export function CardRevealModal({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isManuallyVerifying, setIsManuallyVerifying] = useState(false);
   
-  // Refs for cleanup and tracking - track if component is mounted
+  // Refs for cleanup and tracking
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const absoluteTimeoutRef = useRef<NodeJS.Timeout | null>(null); // FIX: Absolute max timeout
   const hasCalledSuccessCallback = useRef(false);
   const manualRetryCount = useRef(0);
-  const isMountedRef = useRef(true);
+  const startTimeRef = useRef<number>(0); // Track start time for absolute timeout
 
   /**
    * Cleanup function to clear all timers and intervals
+   * FIX: Use AbortController pattern instead of isMountedRef
    */
   const clearAllTimers = useCallback(() => {
     if (timeoutRef.current !== null) {
@@ -166,26 +169,34 @@ export function CardRevealModal({
       clearInterval(elapsedTimeIntervalRef.current);
       elapsedTimeIntervalRef.current = null;
     }
+    if (absoluteTimeoutRef.current !== null) {
+      clearTimeout(absoluteTimeoutRef.current);
+      absoluteTimeoutRef.current = null;
+    }
   }, []);
 
   /**
    * Manual transaction verification using viem publicClient
    * Fallback when wagmi's useWaitForTransactionReceipt doesn't detect success
+   * FIX: Check absolute timeout before proceeding
    */
   const verifyTransactionManually = useCallback(async (txHash: string) => {
-    // Check if component is still mounted before proceeding
-    if (!isMountedRef.current) {
-      console.log('[CardRevealModal] Component unmounted, skipping verification');
+    // FIX: Check if we've exceeded absolute maximum time
+    const elapsedTotal = Date.now() - startTimeRef.current;
+    if (elapsedTotal > TRANSACTION_CONFIG.ABSOLUTE_MAX_TIME_MS) {
+      console.error('[CardRevealModal] Absolute timeout exceeded (5 minutes)');
+      clearAllTimers();
+      setMintingState("error");
+      setMintError("Transaction verification timeout. Please check your transaction on Base Explorer.");
+      setIsManuallyVerifying(false);
       return;
     }
 
     try {
       console.log('[CardRevealModal] Starting manual verification for tx:', txHash);
       
-      if (isMountedRef.current) {
-        setIsManuallyVerifying(true);
-        setMintingState("verifying");
-      }
+      setIsManuallyVerifying(true);
+      setMintingState("verifying");
 
       const publicClient = createPublicClient({
         chain: base,
@@ -196,12 +207,6 @@ export function CardRevealModal({
         hash: txHash as `0x${string}`,
       });
 
-      // Check again after async operation
-      if (!isMountedRef.current) {
-        console.log('[CardRevealModal] Component unmounted after verification, skipping state updates');
-        return;
-      }
-
       console.log('[CardRevealModal] Transaction receipt:', receipt);
 
       if (receipt && receipt.status === 'success') {
@@ -211,7 +216,7 @@ export function CardRevealModal({
         setIsManuallyVerifying(false);
         
         // Call success callback only once
-        if (!hasCalledSuccessCallback.current && isMountedRef.current) {
+        if (!hasCalledSuccessCallback.current) {
           hasCalledSuccessCallback.current = true;
           if (onMintSuccess) {
             onMintSuccess(txHash);
@@ -220,21 +225,15 @@ export function CardRevealModal({
       } else if (receipt && receipt.status === 'reverted') {
         console.log('[CardRevealModal] Manual verification: Transaction reverted');
         clearAllTimers();
-        if (isMountedRef.current) {
-          setMintingState("error");
-          setMintError("Transaction failed on blockchain. Please try again.");
-          setIsManuallyVerifying(false);
-          if (onMintError) {
-            onMintError("Transaction reverted");
-          }
+        setMintingState("error");
+        setMintError("Transaction failed on blockchain. Please try again.");
+        setIsManuallyVerifying(false);
+        if (onMintError) {
+          onMintError("Transaction reverted");
         }
       }
     } catch (error) {
       console.error('[CardRevealModal] Manual verification error:', error);
-      
-      if (!isMountedRef.current) {
-        return;
-      }
 
       // Increment retry count
       manualRetryCount.current += 1;
@@ -246,23 +245,31 @@ export function CardRevealModal({
         // Continue polling
       } else {
         // Max retries exceeded
-        console.error('[CardRestealModal] Max manual verification retries exceeded');
+        console.error('[CardRevealModal] Max manual verification retries exceeded');
         clearAllTimers();
-        if (isMountedRef.current) {
-          setMintingState("error");
-          setMintError("Unable to verify transaction. Please check your wallet or blockchain explorer.");
-          setIsManuallyVerifying(false);
-        }
+        setMintingState("error");
+        setMintError("Unable to verify transaction. Please check your wallet or blockchain explorer.");
+        setIsManuallyVerifying(false);
       }
     }
   }, [onMintSuccess, onMintError, clearAllTimers]);
 
   /**
    * Start manual verification polling after timeout
+   * FIX: Set absolute timeout to prevent infinite polling
    */
   const startManualVerification = useCallback((txHash: string) => {
     console.log('[CardRevealModal] Starting manual verification polling');
     manualRetryCount.current = 0;
+    
+    // FIX: Set absolute maximum timeout (5 minutes)
+    absoluteTimeoutRef.current = setTimeout(() => {
+      console.error('[CardRevealModal] Absolute timeout reached, stopping polling');
+      clearAllTimers();
+      setMintingState("error");
+      setMintError("Transaction verification timeout (5min). Check Base Explorer for your transaction.");
+      setIsManuallyVerifying(false);
+    }, TRANSACTION_CONFIG.ABSOLUTE_MAX_TIME_MS);
     
     // Immediate first check
     verifyTransactionManually(txHash);
@@ -271,15 +278,15 @@ export function CardRevealModal({
     pollingIntervalRef.current = setInterval(() => {
       verifyTransactionManually(txHash);
     }, TRANSACTION_CONFIG.POLLING_INTERVAL_MS);
-  }, [verifyTransactionManually]);
+  }, [verifyTransactionManually, clearAllTimers]);
 
   /**
    * Reset all state when modal opens/closes
+   * FIX: Proper cleanup on unmount
    */
   useEffect(() => {
     if (isOpen) {
-      console.log('[CardRevealModal] Modal opened, resetting state to ready');
-      isMountedRef.current = true;
+      // Reset state when modal opens
       setMintingState("ready");
       setMintError(null);
       setShowSuccessPopup(false);
@@ -287,15 +294,13 @@ export function CardRevealModal({
       setIsManuallyVerifying(false);
       hasCalledSuccessCallback.current = false;
       manualRetryCount.current = 0;
-      clearAllTimers();
+      startTimeRef.current = Date.now(); // Track start time
       resetWriteContract();
     }
-    
+
+    // Cleanup on unmount
     return () => {
-      if (!isOpen) {
-        isMountedRef.current = false;
-        clearAllTimers();
-      }
+      clearAllTimers();
     };
   }, [isOpen, resetWriteContract, clearAllTimers]);
 
@@ -348,7 +353,7 @@ export function CardRevealModal({
    * - This prevents false "success" states
    */
   useEffect(() => {
-    if (isSuccess && hash && receipt && (mintingState === "processing" || mintingState === "verifying") && isMountedRef.current) {
+    if (isSuccess && hash && receipt && (mintingState === "processing" || mintingState === "verifying")) {
       // Check transaction status from receipt
       if (receipt.status === 'success') {
         // ✅ Transaction truly succeeded
@@ -357,7 +362,7 @@ export function CardRevealModal({
         setMintingState("success");
         
         // Call onMintSuccess callback only once
-        if (!hasCalledSuccessCallback.current && isMountedRef.current) {
+        if (!hasCalledSuccessCallback.current) {
           hasCalledSuccessCallback.current = true;
           if (onMintSuccess) {
             onMintSuccess(hash);
@@ -400,7 +405,7 @@ export function CardRevealModal({
    */
   useEffect(() => {
     // Only handle errors if we're in ready or processing state and modal is open
-    if (writeError && (mintingState === "ready" || mintingState === "processing") && isOpen && isMountedRef.current) {
+    if (writeError && (mintingState === "ready" || mintingState === "processing") && isOpen) {
       console.error('[CardRevealModal] Write error detected:', writeError);
       
       const errorInfo = getErrorInfo(writeError);
@@ -441,7 +446,6 @@ export function CardRevealModal({
 
   const handleCloseClick = () => {
     clearAllTimers();
-    isMountedRef.current = false;
     setMintError(null);
     resetWriteContract();
     
@@ -462,7 +466,7 @@ export function CardRevealModal({
   };
 
   const handleManualCheck = useCallback(() => {
-    if (hash && isMountedRef.current) {
+    if (hash) {
       console.log('[CardRevealModal] User initiated manual check');
       manualRetryCount.current = 0;
       verifyTransactionManually(hash);

@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { getStorageUrl } from '@/app/utils/supabaseStorage';
+import { validateWalletHeader, isValidUUID, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { cardTemplateId } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { cardTemplateId } = body;
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
@@ -18,7 +28,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -30,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // If cardTemplateId is null or undefined, deselect (set to null)
     if (!cardTemplateId) {
-      const { data: _profile, error: profileError } = await supabaseAdmin
+      const { error: profileError } = await supabaseAdmin
         .from('player_profiles')
         .update({ selected_card_id: null })
         .eq('user_id', user.id)
@@ -45,6 +55,14 @@ export async function POST(request: NextRequest) {
         success: true,
         card: null,
       });
+    }
+
+    // Validate cardTemplateId format
+    if (!isValidUUID(cardTemplateId)) {
+      return NextResponse.json(
+        { error: 'Invalid card template ID' },
+        { status: 400 }
+      );
     }
 
     // Verify user has this card in inventory
@@ -63,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get card template details with token_id validation
+    // Get card template details
     const { data: cardTemplate, error: cardError } = await supabaseAdmin
       .from('card_templates')
       .select('*')
@@ -77,15 +95,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate token_id exists for NFT cards (required for battle)
-    if (cardTemplate.source_type === 'nft' && !cardTemplate.token_id) {
-      return NextResponse.json(
-        { error: 'This card cannot be used in battle (missing token_id)' },
-        { status: 400 }
-      );
-    }
-
-    // Validate token_id exists for NFT cards (required for battle)
+    // Validate token_id exists for NFT cards
     if (cardTemplate.source_type === 'nft' && !cardTemplate.token_id) {
       return NextResponse.json(
         { error: 'This card cannot be used in battle (missing token_id)' },
@@ -94,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update player profile with selected card
-    const { data: _profile, error: profileError } = await supabaseAdmin
+    const { error: profileError } = await supabaseAdmin
       .from('player_profiles')
       .update({ selected_card_id: cardTemplateId })
       .eq('user_id', user.id)
@@ -105,11 +115,11 @@ export async function POST(request: NextRequest) {
       throw profileError;
     }
 
-    // Format image_url using getStorageUrl
+    // Format image_url
     const formattedCard = {
       ...cardTemplate,
       image_url: cardTemplate.image_url ? getStorageUrl(cardTemplate.image_url) : null,
-      token_id: cardTemplate.token_id, // Include token_id for CharForBattle mapping
+      token_id: cardTemplate.token_id,
     };
 
     return NextResponse.json({
@@ -117,10 +127,9 @@ export async function POST(request: NextRequest) {
       card: formattedCard,
     });
   } catch (error: unknown) {
-    console.error('Select card error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to select card';
+    devLog.error('Select card error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to select card') },
       { status: 500 }
     );
   }

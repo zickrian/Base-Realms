@@ -4,12 +4,9 @@
  * Handles pre-battle checks and approvals before entering battle arena:
  * 1. Validates selected NFT and gets token_id
  * 2. Generates Merkle proof
- * 3. Checks IDRX balance (≥5 IDRX required)
+ * 3. Checks IDRX balance (5 IDRX required)
  * 4. Checks/handles IDRX approval
  * 5. Transitions to battle arena when ready
- * 
- * Note: No manual chain switching needed - wagmi + OnchainKit automatically
- * handle chain switching when chainId is specified in writeContract calls.
  * 
  * @module BattlePreparation
  */
@@ -18,8 +15,9 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount, useBalance } from 'wagmi';
+import { useAccount, useSwitchChain, useChainId, useBalance } from 'wagmi';
 import { formatUnits } from 'viem';
+import { base } from 'viem/chains';
 import { useGameStore } from '@/app/stores/gameStore';
 import { useBattle } from '@/app/hooks/useBattle';
 import {
@@ -45,6 +43,8 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   onError,
 }) => {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { profile } = useGameStore();
   const { state, prepare, approve, battle: executeBattle } = useBattle();
   const router = useRouter();
@@ -103,9 +103,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
     return () => clearTimeout(timer);
   }, [redirectCountdown, router]);
 
-  // Initialize battle preparation
-  // Note: No manual chain switching needed - wagmi + OnchainKit handle it automatically
-  // when chainId is specified in writeContract calls (approve, battle)
+  // Step 1: Check chain and switch if needed, then initialize battle
   useEffect(() => {
     const initializeBattle = async () => {
       if (!address) {
@@ -113,6 +111,21 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         return;
       }
 
+      // Check if we need to switch chain
+      if (chainId !== base.id) {
+        setCurrentStep('Switching to Base network...');
+        try {
+          switchChain({ chainId: base.id });
+          // Don't continue here - wait for chainId to update
+          return;
+        } catch (error) {
+          console.error('[BattlePreparation] Chain switch error:', error);
+          onError('Please switch to Base network to battle.');
+          return;
+        }
+      }
+
+      // Already on Base, proceed with battle preparation
       if (!profile?.selectedCard) {
         onError('No card selected. Please select a card from your deck.');
         return;
@@ -148,7 +161,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
 
     initializeBattle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address]); // Only re-run when address changes
+  }, [address, chainId]); // Re-run when chainId changes (after switch)
 
   // Handle state changes after preparation
   useEffect(() => {
@@ -160,7 +173,6 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         // From battleService (may be unreliable)
         battleServiceBalance: state.preparation.idrxBalance,
         battleServiceHasEnough: state.preparation.hasEnoughIDRX,
-        usedOnChain: state.preparation.usedOnChain,
         // From wagmi (same as HeaderBar - reliable)
         wagmiBalance: idrxBalance,
         wagmiHasEnough: hasEnoughBalance,
@@ -169,18 +181,6 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         hasWinTokenMinted: state.preparation.hasWinTokenMinted,
         currentAllowance: state.preparation.currentAllowance,
       });
-
-      // =========================================================================
-      // RULE: If NFT already used on-chain, block battle entirely
-      // =========================================================================
-      if (state.preparation.usedOnChain) {
-        console.warn('[BattlePreparation] NFT already used in battle (on-chain). Blocking battle.', {
-          tokenId: state.preparation.tokenId,
-        });
-        setCurrentStep('❌ This NFT has already been used in battle.');
-        onError('This NFT has already been used in battle. Please select a different card.');
-        return; // Stop here, do not continue to balance / approval / battle
-      }
 
       // =========================================================================
       // USE WAGMI BALANCE AS SOURCE OF TRUTH (same as HeaderBar)
@@ -199,21 +199,21 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         // Show appropriate error message based on balance
         if (idrxBalance === 0) {
           console.error('[BattlePreparation] IDRX balance is 0');
-          setCurrentStep('⚠️ No IDRX balance detected');
+          setCurrentStep('No IDRX balance detected');
         } else {
           // Balance is non-zero but less than required
           console.error('[BattlePreparation] Insufficient IDRX balance');
-          setCurrentStep(`❌ Insufficient IDRX: ${formatIDRXBalance(idrxBalance)} / ${BATTLE_FEE_IDRX}.00 IDRX`);
+          setCurrentStep(`Insufficient IDRX: ${formatIDRXBalance(idrxBalance)} / ${BATTLE_FEE_IDRX}.00 IDRX`);
         }
         return; // CRITICAL: Stop here, don't proceed
       }
 
       // Step 1: MUST approve IDRX first
       if (state.preparation.needsApproval && !state.isApproving) {
-        setCurrentStep('⚔️ Approving IDRX for battle fee...');
+        setCurrentStep('Requesting IDRX approval in your wallet...');
         try {
           await approve();
-          setCurrentStep('✅ IDRX approved! Starting battle...');
+          setCurrentStep('IDRX approved. Preparing to start battle...');
           // Continue to battle after approval
         } catch (error) {
           console.error('[BattlePreparation] Approval error:', error);
@@ -240,7 +240,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         console.log('[BattlePreparation] Starting battle execution');
         setBattleExecutionStarted(true);
 
-        setCurrentStep('⚔️ Executing battle on-chain...');
+        setCurrentStep('Executing battle on-chain...');
         try {
           await executeBattle();
         } catch (error) {
@@ -262,23 +262,11 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   useEffect(() => {
     if (state.error) {
       console.error('[BattlePreparation] Battle state error detected:', state.error);
-      
-      // Check if user cancelled transaction
-      if (state.error === 'TRANSACTION_CANCELLED') {
-        console.log('[BattlePreparation] User cancelled transaction, redirecting to home...');
-        setCurrentStep('❌ Transaction cancelled');
-        // Redirect to home after short delay
-        setTimeout(() => {
-          router.push('/home');
-        }, 1500);
-        return;
-      }
-      
       // Reset battle execution flag on error to allow retry
       setBattleExecutionStarted(false);
       onError(state.error);
     }
-  }, [state.error, onError, router]);
+  }, [state.error, onError]);
 
   // When on-chain battle tx is confirmed and result available, THEN enter arena
   useEffect(() => {
@@ -289,7 +277,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
       txHash: state.battleResult.txHash,
     });
 
-    setCurrentStep('✅ Battle executed! Entering arena...');
+    setCurrentStep('Battle executed. Entering arena...');
 
     // Small delay for UX, then hand off to BattlePage/BattleArena
     setTimeout(() => {
@@ -309,12 +297,18 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <div className={styles.spinner}>⚔️</div>
+        <div className={styles.spinner} />
         <h2 className={styles.title}>Preparing for Battle</h2>
         <p className={styles.step}>{currentStep}</p>
 
         {state.isPreparing && (
           <p className={styles.detail}>Validating NFT and generating Merkle proof...</p>
+        )}
+
+        {isSwitchingChain && (
+          <p className={styles.detail}>
+            Please confirm the network switch to Base in your wallet.
+          </p>
         )}
 
         {state.isApproving && (
@@ -337,14 +331,14 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
             {idrxBalance === 0 ? (
               // No IDRX balance
               <>
-                <p>⚠️ No IDRX balance detected</p>
+                <p>No IDRX balance detected</p>
                 <p>You need at least {BATTLE_FEE_IDRX} IDRX to battle.</p>
                 <p className={styles.hint}>Please get IDRX tokens from the shop or faucet.</p>
               </>
             ) : (
               // Has some IDRX but less than required
               <>
-                <p>❌ Insufficient IDRX balance</p>
+                <p>Insufficient IDRX balance</p>
                 <p>You have {formatIDRXBalance(idrxBalance)} IDRX but need at least {BATTLE_FEE_IDRX} IDRX.</p>
                 <p className={styles.hint}>Please get more IDRX tokens from the shop or faucet.</p>
               </>
@@ -352,7 +346,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
             {/* Countdown redirect notice */}
             {redirectCountdown !== null && (
               <p className={styles.redirectNotice}>
-                🏠 Redirecting to home in {redirectCountdown} second{redirectCountdown !== 1 ? 's' : ''}...
+                Redirecting to home in {redirectCountdown} second{redirectCountdown !== 1 ? 's' : ''}...
               </p>
             )}
           </div>
@@ -361,24 +355,24 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         {/* Show battle requirements checklist when balance is sufficient */}
         {state.preparation && hasEnoughBalance && (
           <div className={styles.requirements}>
-            <p className={styles.checklistTitle}>Battle Requirements:</p>
-            <p className={styles.balanceInfo}>✅ IDRX Balance: {formatIDRXBalance(idrxBalance)} / {BATTLE_FEE_IDRX}.00 IDRX</p>
+            <p className={styles.checklistTitle}>Battle Requirements</p>
+            <p className={styles.balanceInfo}>{formatIDRXBalance(idrxBalance)} / {BATTLE_FEE_IDRX}.00 IDRX</p>
             <div className={styles.checklist}>
               <div className={state.preparation.needsApproval ? styles.pending : styles.completed}>
-                {!state.preparation.needsApproval ? '✅' : '⏳'} IDRX Approval
+                IDRX Approval
                 {state.preparation.needsApproval && (
-                  <span className={styles.securityNote}> - Wallet confirmation required for security</span>
+                  <span className={styles.securityNote}>- Confirm in wallet</span>
                 )}
               </div>
               <div className={state.isBattling || state.battleResult ? styles.completed : styles.pending}>
-                {state.battleResult ? '✅' : '⏳'} Battle Execution
+                Battle Execution
                 {!state.battleResult && (
-                  <span className={styles.securityNote}> - Wallet confirmation required for on-chain transaction</span>
+                  <span className={styles.securityNote}>- Confirm in wallet</span>
                 )}
               </div>
             </div>
             <p className={styles.securityInfo}>
-              🔒 Wallet confirmations are required by blockchain protocol to protect your assets
+              Wallet confirmations protect your assets
             </p>
           </div>
         )}

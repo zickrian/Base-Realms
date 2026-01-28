@@ -2,27 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { awardXp } from '@/app/lib/db/xp-award';
 import { updateQuestProgress } from '@/app/lib/db/quest-progress';
+import { 
+  validateWalletHeader, 
+  isValidUUID, 
+  isInWhitelist, 
+  sanitizeErrorMessage, 
+  devLog 
+} from '@/app/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { battleId, result } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { battleId, result } = body;
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
         { status: 400 }
       );
     }
 
-    if (!battleId || !result) {
+    // Validate battleId format
+    if (!battleId || !isValidUUID(battleId)) {
       return NextResponse.json(
-        { error: 'Battle ID and result are required' },
+        { error: 'Valid battle ID is required' },
         { status: 400 }
       );
     }
 
-    if (!['win', 'loss'].includes(result)) {
+    // Validate result whitelist
+    if (!isInWhitelist(result, ['win', 'loss'])) {
       return NextResponse.json(
         { error: 'Result must be win or loss' },
         { status: 400 }
@@ -33,7 +51,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -111,19 +129,14 @@ export async function POST(request: NextRequest) {
         .eq('user_id', user.id);
     }
 
-    // Update quest progress (no auto-claim for battle quests, user can claim manually)
-    // Always update play_games quest
-    console.log(`[Battle Complete] Updating quest progress for user ${user.id}, result: ${result}`);
+    // Update quest progress
+    devLog.log('[Battle Complete] Updating quest progress');
     const playGamesResult = await updateQuestProgress(user.id, 'play_games', 1, false);
-    console.log(`[Battle Complete] play_games quest updated - Progress increased, Completed: ${playGamesResult.completedQuestIds.length > 0}`);
     
     // Update win_games quest only if result is win
     let winGamesResult: { completedQuestIds: string[]; xpAwarded: number } = { completedQuestIds: [], xpAwarded: 0 };
     if (result === 'win') {
       winGamesResult = await updateQuestProgress(user.id, 'win_games', 1, false);
-      console.log(`[Battle Complete] win_games quest updated - Progress increased, Completed: ${winGamesResult.completedQuestIds.length > 0}`);
-    } else {
-      console.log(`[Battle Complete] win_games quest not updated (result is loss)`);
     }
 
     return NextResponse.json({
@@ -138,10 +151,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error('Complete battle error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to complete battle';
+    devLog.error('Complete battle error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to complete battle') },
       { status: 500 }
     );
   }

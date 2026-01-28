@@ -123,10 +123,12 @@ function parseBattleError(error: unknown): BattleError {
 // ============================================================================
 
 const DEFAULT_BASE_RPCS = [
-  'https://base.llamarpc.com',
-  'https://base.meowrpc.com',
-  'https://base-mainnet.public.blastapi.io',
   'https://mainnet.base.org',
+  'https://1rpc.io/base',
+  'https://base.drpc.org',
+  'https://base-mainnet.public.blastapi.io',
+  'https://base.meowrpc.com',
+  'https://base.llamarpc.com',
 ];
 
 function createBattlePublicClient() {
@@ -145,8 +147,8 @@ function createBattlePublicClient() {
   const transport = transportCandidates.length > 0
     ? fallback(
       transportCandidates.map((url) => http(url, {
-        timeout: 30000,
-        retryCount: 2,
+        timeout: 10000,  // 10s per RPC for reliability
+        retryCount: 1,
       }))
     )
     : http();
@@ -160,6 +162,76 @@ function createBattlePublicClient() {
 // ============================================================================
 // IDRX TOKEN OPERATIONS
 // ============================================================================
+
+/**
+ * Fast IDRX balance check using parallel RPC racing
+ * This races multiple RPCs simultaneously and returns the first successful response.
+ * Much faster than sequential fallback approach.
+ * 
+ * @param walletAddress - User's wallet address
+ * @returns Balance in raw units (with 2 decimals: 100 IDRX = 10000)
+ */
+export async function checkIDRXBalanceFast(walletAddress: Address): Promise<string> {
+  console.log(`[BattleService] Fast balance check for: ${walletAddress}`);
+
+  // Get RPC list
+  const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL;
+  const rpcUrlList = (process.env.BASE_RPC_URLS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const rpcs = [
+    ...rpcUrlList,
+    rpcUrl,
+    ...(rpcUrlList.length === 0 && !rpcUrl ? DEFAULT_BASE_RPCS : []),
+  ].filter(Boolean) as string[];
+
+  // Race all RPCs in parallel - first to respond wins
+  const racePromises = rpcs.map(async (rpcUrlItem) => {
+    try {
+      const client = createPublicClient({
+        chain: base,
+        transport: http(rpcUrlItem, { timeout: 12000 }), // 12s per RPC for reliability
+      });
+
+      const balance = await client.readContract({
+        address: IDRX_CONTRACT_ADDRESS as Address,
+        abi: IDRX_CONTRACT_ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress],
+      });
+
+      const balanceStr = balance.toString();
+      console.log(`[BattleService] ✅ Balance from ${rpcUrlItem}: ${balanceStr}`);
+      return balanceStr;
+    } catch (error) {
+      console.warn(`[BattleService] ⚠️ RPC ${rpcUrlItem} failed:`, error);
+      throw error; // Throw so Promise.any continues to next
+    }
+  });
+
+  try {
+    // Promise.any returns the first successful result
+    const balance = await Promise.any(racePromises);
+    const balanceInIDRX = (Number(balance) / 100).toFixed(2);
+    console.log('[BattleService] ✅ Fast balance check completed:', {
+      rawBalance: balance,
+      balanceInIDRX: `${balanceInIDRX} IDRX`,
+    });
+    return balance;
+  } catch {
+    // All RPCs failed
+    console.error('[BattleService] ❌ All RPCs failed for balance check');
+    // IMPORTANT:
+    // - Daripada nunggu retry sequential yang lama, kita fallback cepat
+    //   dengan menganggap saldo "cukup" untuk tujuan flow UI.
+    // - Sumber kebenaran saldo tetap dari wagmi di BattlePreparation.
+    // - Kalau sebenarnya saldo kurang, transaksi battle on-chain yang akan gagal.
+    console.warn('[BattleService] ⚠️ Using fast fallback balance to avoid UI hang');
+    return '99999'; // 999.99 IDRX (raw units dengan 2 desimal)
+  }
+}
 
 /**
  * Check IDRX balance for a wallet with retry mechanism
@@ -535,13 +607,41 @@ export async function approveIDRX(
  * @param walletAddress - User's wallet address
  * @returns Battle preparation data
  */
+/**
+ * Helper function to add timeout to async operations
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => 
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    )
+  ]);
+}
+
+export interface PrepareBattleOptions {
+  /** Skip balance check - use when wagmi already verified balance */
+  skipBalanceCheck?: boolean;
+  /** Pre-verified balance from wagmi (raw units with 2 decimals) */
+  verifiedBalance?: string;
+}
+
 export async function prepareBattle(
   tokenId: number,
-  walletAddress: Address
+  walletAddress: Address,
+  options: PrepareBattleOptions = {}
 ): Promise<BattlePreparation> {
+  const { skipBalanceCheck = false, verifiedBalance } = options;
+  
   try {
-    // Get Merkle proof and stats
-    const { proof, stats } = getProofForToken(tokenId);
+    // Get Merkle proof and stats with timeout
+    console.log('[BattleService] Getting Merkle proof for token:', tokenId);
+    const { proof, stats } = await withTimeout(
+      Promise.resolve(getProofForToken(tokenId)),
+      5000,
+      'Timeout getting Merkle proof. Please try again.'
+    );
+    console.log('[BattleService] Merkle proof retrieved:', { proofLength: proof.length, stats });
 
     // NOTE: Removed on-chain hasUsed check because:
     // 1. The contract function is not working correctly (returns 0x)
@@ -550,9 +650,33 @@ export async function prepareBattle(
     // The database `used` field is the source of truth for NFT usage
     const usedOnChain = false; // Always false - database is source of truth
 
-    // Check IDRX balance
-    const balance = await checkIDRXBalance(walletAddress);
-    const hasEnoughIDRX = BigInt(balance) >= BigInt(BATTLE_FEE_AMOUNT);
+    // Check IDRX balance - skip if wagmi already verified
+    let balance: string;
+    let hasEnoughIDRX: boolean;
+    
+    if (skipBalanceCheck && verifiedBalance !== undefined) {
+      // Use pre-verified balance from wagmi (already confirmed sufficient)
+      console.log('[BattleService] Using pre-verified balance from wagmi:', verifiedBalance);
+      balance = verifiedBalance;
+      hasEnoughIDRX = BigInt(balance) >= BigInt(BATTLE_FEE_AMOUNT);
+    } else {
+      // Fallback: Check IDRX balance with timeout
+      console.log('[BattleService] Checking IDRX balance via RPC...');
+      try {
+        balance = await withTimeout(
+          checkIDRXBalanceFast(walletAddress),
+          20000,  // 20s timeout for RPC balance check
+          'Timeout checking IDRX balance. Please check your connection and try again.'
+        );
+        hasEnoughIDRX = BigInt(balance) >= BigInt(BATTLE_FEE_AMOUNT);
+      } catch {
+        console.warn('[BattleService] ⚠️ Balance check failed, assuming sufficient for approval flow');
+        // If balance check fails but we're just preparing, assume sufficient
+        // The actual battle transaction will fail if insufficient
+        balance = '99999'; // Assume sufficient for now
+        hasEnoughIDRX = true;
+      }
+    }
 
     console.log('[BattleService] Battle Preparation Check:', {
       balance,
@@ -560,20 +684,57 @@ export async function prepareBattle(
       hasEnoughIDRX,
       balanceInIDRX: (Number(balance) / 100).toFixed(2) + ' IDRX',
       requiredIDRX: (Number(BATTLE_FEE_AMOUNT) / 100).toFixed(2) + ' IDRX',
+      skipBalanceCheck,
     });
 
-    // Check allowance
-    const allowance = await checkIDRXAllowance(walletAddress);
-    const needsApproval = BigInt(allowance) < BigInt(BATTLE_FEE_AMOUNT);
+    // Check allowance with timeout - but approval should ALWAYS be requested
+    // after we confirm the user actually has enough IDRX balance.
+    //
+    // Reasoning:
+    // - User experience menjadi lebih jelas: setiap kali mau battle dan saldo cukup,
+    //   mereka akan melihat popup approval IDRX terlebih dahulu.
+    // - Menghindari kasus allowance "nyangkut" / tidak sinkron yang membuat battle
+    //   gagal tanpa ada kesempatan untuk re-approve.
+    console.log('[BattleService] Checking IDRX allowance (for logging only) ...');
+    let allowance: string = '0';
+
+    try {
+      allowance = await withTimeout(
+        checkIDRXAllowance(walletAddress),
+        3000,  // Short 3s timeout - UI should not hang on this
+        'Timeout checking IDRX allowance. Please try again.'
+      );
+    } catch {
+      console.warn('[BattleService] ⚠️ Allowance check failed, will still force approval flow');
+      allowance = '0';
+    }
+
+    // IMPORTANT:
+    // - We intentionally force `needsApproval` = true whenever balance is sufficient.
+    // - Ini memastikan approval SELALU keluar setelah cek IDRX, selama saldo cukup.
+    const needsApproval = hasEnoughIDRX;
 
     // Check if WIN token already minted
-    const hasWinTokenMinted = await checkWinTokenMinted(walletAddress);
+    console.log('[BattleService] Checking WIN token status...');
+    let hasWinTokenMinted = false;
+    try {
+      hasWinTokenMinted = await checkWinTokenMinted(walletAddress);
+    } catch {
+      console.warn('[BattleService] ⚠️ WIN token check failed, assuming not minted');
+      hasWinTokenMinted = false;
+    }
+
+    console.log('[BattleService] ✅ Battle preparation complete:', {
+      hasEnoughIDRX,
+      needsApproval,
+      hasWinTokenMinted,
+    });
 
     return {
       tokenId,
       stats,
       proof,
-       usedOnChain,
+      usedOnChain,
       hasEnoughIDRX,
       needsApproval,
       hasWinTokenMinted,
@@ -581,8 +742,19 @@ export async function prepareBattle(
       currentAllowance: allowance,
     };
   } catch (error) {
-    console.error('[BattleService] Error preparing battle:', error);
-    throw error;
+    console.error('[BattleService] ❌ Error preparing battle:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Provide user-friendly error messages
+    if (errorMessage.includes('Timeout')) {
+      throw new Error(errorMessage);
+    } else if (errorMessage.includes('Merkle')) {
+      throw new Error('Failed to validate NFT. Please try again or contact support.');
+    } else if (errorMessage.includes('balance')) {
+      throw new Error('Unable to check IDRX balance. Please check your wallet connection.');
+    } else {
+      throw new Error('Failed to prepare battle. Please refresh and try again.');
+    }
   }
 }
 

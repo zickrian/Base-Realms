@@ -113,28 +113,43 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
     if (status === 'ready' && !battleStartedRef.current && address) {
       battleStartedRef.current = true;
       
-      // Create battle record
-      fetch('/api/battles/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-wallet-address': address,
-        },
-        body: JSON.stringify({
-          battleType: 'pve',
-        }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.battle) {
+      // Create battle record with proper error handling
+      const createBattleRecord = async () => {
+        try {
+          const response = await fetch('/api/battles/start', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-wallet-address': address,
+            },
+            body: JSON.stringify({
+              battleType: 'pve',
+            }),
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.success && data.battle) {
             console.log('[BattleArena] Battle started:', data.battle.id);
             setBattleId(data.battle.id);
+          } else {
+            // Log error but continue with battle animation
+            // Generate a temporary ID so completion can still be attempted
+            console.error('[BattleArena] Failed to create battle record:', data.error || 'Unknown error');
+            // Use timestamp + random as fallback ID for tracking
+            const fallbackId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            console.log('[BattleArena] Using fallback battle ID:', fallbackId);
+            setBattleId(fallbackId);
           }
-        })
-        .catch(err => {
-          console.error('Failed to create battle:', err);
-        });
+        } catch (err) {
+          console.error('[BattleArena] Network error creating battle:', err);
+          // Still set a fallback ID so battle can proceed
+          const fallbackId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          setBattleId(fallbackId);
+        }
+      };
       
+      createBattleRecord();
       setStatus('in_progress');
     }
   }, [status, setStatus, address]);
@@ -254,6 +269,14 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
     if (battleEnded && battleId && !battleCompletedRef.current) {
       const result = status === 'victory' ? 'win' : 'loss';
       console.log('[BattleArena] Battle ended, completing with result:', result);
+      
+      // Skip completion for temporary/fallback IDs (they start with 'temp_')
+      if (battleId.startsWith('temp_')) {
+        console.log('[BattleArena] Skipping completion for temporary battle ID');
+        battleCompletedRef.current = true; // Mark as completed to prevent retry
+        return;
+      }
+      
       completeBattle(battleId, result);
     }
   }, [battleEnded, battleId, status, completeBattle]);

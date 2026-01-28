@@ -22,8 +22,8 @@
 .menuBox {
   width: 90%;
   max-width: 380px;
-  height: 80vh;
-  max-height: 700px;
+  /* Let the popup breathe vertically; cap height instead of filling screen */
+  max-height: 550px; /* Fixed max height to prevent full-screen on Android */
   background-color: #e8be82;
   box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
   display: flex;

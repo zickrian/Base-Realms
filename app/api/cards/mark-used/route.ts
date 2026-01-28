@@ -3,71 +3,65 @@
  * 
  * Called after successful battle to mark NFT as used (locked)
  * This prevents the NFT from being used in future battles
- * 
- * PHASE 0 ENHANCEMENT: Comprehensive logging for debugging
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { 
+  validateWalletHeader, 
+  isNonNegativeInteger, 
+  sanitizeErrorMessage, 
+  devLog 
+} from '@/app/lib/validation';
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
-  
   try {
     const walletAddress = request.headers.get('x-wallet-address');
     
-    if (!walletAddress) {
-      console.error('[mark-used] ❌ Missing wallet address header');
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address required' },
+        { error: walletValidation.error },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
-    const { tokenId, battleTxHash } = body;
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
-    if (!tokenId && tokenId !== 0) {
-      console.error('[mark-used] ❌ Missing tokenId in request body');
+    const { tokenId } = body;
+
+    // Validate tokenId is a non-negative integer
+    if (!isNonNegativeInteger(tokenId)) {
       return NextResponse.json(
-        { error: 'Token ID required' },
+        { error: 'Invalid token ID' },
         { status: 400 }
       );
     }
 
-    // PHASE 0: Comprehensive logging
-    console.log('[mark-used] 🎯 REQUEST:', {
-      walletAddress: walletAddress.toLowerCase(),
-      tokenId,
-      battleTxHash: battleTxHash || 'not provided',
-      timestamp: new Date().toISOString(),
-    });
+    devLog.log('[mark-used] Processing request for tokenId:', tokenId);
 
     // Get user ID
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
-      console.error('[mark-used] ❌ User not found:', {
-        walletAddress: walletAddress.toLowerCase(),
-        error: userError,
-      });
+      devLog.error('[mark-used] User not found');
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    console.log('[mark-used] ✓ User found:', {
-      userId: user.id,
-      walletAddress: walletAddress.toLowerCase(),
-    });
-
-    // PHASE 4 FIX: Get inventory row first to check existence
-    // This prevents .single() error if row doesn't exist
+    // Get inventory row first to check existence
     const { data: inventoryRows, error: checkError } = await supabaseAdmin
       .from('user_inventory')
       .select(`
@@ -83,25 +77,15 @@ export async function POST(request: NextRequest) {
       .eq('card_templates.token_id', tokenId);
 
     if (checkError) {
-      console.error('[mark-used] ❌ Error checking inventory:', {
-        error: checkError,
-        userId: user.id,
-        tokenId,
-      });
+      devLog.error('[mark-used] Error checking inventory:', checkError);
       return NextResponse.json(
         { error: 'Failed to check inventory' },
         { status: 500 }
       );
     }
 
-    // PHASE 3: Validate row exists (from sync-nft)
+    // Validate row exists
     if (!inventoryRows || inventoryRows.length === 0) {
-      console.error('[mark-used] ❌ NFT NOT FOUND in inventory:', {
-        userId: user.id,
-        tokenId,
-        walletAddress: walletAddress.toLowerCase(),
-        message: 'Row does not exist - possible sync issue',
-      });
       return NextResponse.json(
         { 
           error: 'NFT not found in inventory',
@@ -112,39 +96,26 @@ export async function POST(request: NextRequest) {
     }
 
     const inventoryRow = inventoryRows[0];
-    
-    console.log('[mark-used] ✓ Inventory row found:', {
-      inventoryId: inventoryRow.id,
-      currentUsedStatus: inventoryRow.used,
-      tokenId,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      nftName: (inventoryRow as any).card_templates?.name,
-    });
 
     // Check if already used
     if (inventoryRow.used) {
-      console.warn('[mark-used] ⚠️ NFT already marked as used:', {
-        inventoryId: inventoryRow.id,
-        tokenId,
-      });
       return NextResponse.json(
         { 
           success: true,
           message: 'NFT already marked as used',
-          inventory: inventoryRow,
           alreadyUsed: true,
         }
       );
     }
 
-    // PHASE 4: Mark NFT as used with proper UPDATE query
-    const { data: updated, error: updateError } = await supabaseAdmin
+    // Mark NFT as used
+    const { error: updateError } = await supabaseAdmin
       .from('user_inventory')
       .update({ 
         used: true,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', inventoryRow.id) // Use ID directly, more reliable
+      .eq('id', inventoryRow.id)
       .select(`
         id,
         used,
@@ -158,49 +129,25 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error('[mark-used] ❌ Error updating inventory:', {
-        error: updateError,
-        inventoryId: inventoryRow.id,
-        tokenId,
-      });
+      devLog.error('[mark-used] Error updating inventory:', updateError);
       return NextResponse.json(
-        { error: 'Failed to mark NFT as used', details: updateError.message },
+        { error: 'Failed to mark NFT as used' },
         { status: 500 }
       );
     }
 
-    const duration = Date.now() - startTime;
-    
-    console.log('[mark-used] ✅ SUCCESS:', {
-      inventoryId: updated.id,
-      tokenId,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      nftName: (updated as any).card_templates?.name,
-      used: updated.used,
-      updatedAt: updated.updated_at,
-      battleTxHash: battleTxHash || 'not provided',
-      duration: `${duration}ms`,
-    });
+    devLog.log('[mark-used] Success');
 
     return NextResponse.json({
       success: true,
       message: 'NFT marked as used',
-      inventory: updated,
-      duration: `${duration}ms`,
     });
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const duration = Date.now() - startTime;
-    
-    console.error('[mark-used] ❌ FATAL ERROR:', {
-      error: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined,
-      duration: `${duration}ms`,
-    });
+    devLog.error('[mark-used] Fatal error:', error);
     
     return NextResponse.json(
-      { error: 'Internal server error', details: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Internal server error') },
       { status: 500 }
     );
   }

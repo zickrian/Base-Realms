@@ -32,9 +32,9 @@ export default function BattlePage() {
   const { profile, refreshProfile, refreshInventory, selectCard } = useGameStore();
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [isExiting, setIsExiting] = useState(false);
   const [showQRISPopup, setShowQRISPopup] = useState(false);
   const [battleResult, setBattleResult] = useState<{ won: boolean; txHash: string } | null>(null);
-  const [isCleaningUp, setIsCleaningUp] = useState(false); // Flag to prevent checks during cleanup
   const { initBattle, resetBattle } = useBattleStore();
   const { state: battleState, markAsUsed, reset: resetBattleHook, prepare } = useBattle();
 
@@ -46,13 +46,7 @@ export default function BattlePage() {
   }, [address, profile, refreshProfile]);
 
   // Check if card is selected before allowing battle (immediate check)
-  // Skip check if we're cleaning up after battle
   useEffect(() => {
-    // Skip all checks if cleaning up after battle
-    if (isCleaningUp) {
-      return;
-    }
-
     if (address && profile) {
       if (!profile.selectedCardId || !profile.selectedCard) {
         setError('Please select a card from your inventory before entering battle');
@@ -75,7 +69,7 @@ export default function BattlePage() {
         router.replace('/home');
       }, 2000);
     }
-  }, [address, profile, router, isCleaningUp]);
+  }, [address, profile, router]);
 
   // Handle loading complete - transition to preparation phase
   const handleLoadComplete = useCallback(() => {
@@ -142,28 +136,21 @@ export default function BattlePage() {
    */
   const handlePreparationError = useCallback((errorMessage: string) => {
     console.error('[BattlePage] Preparation error:', errorMessage);
-
-    const msg = errorMessage.toLowerCase();
-
-    // Treat any "insufficient ... balance / allowance / transfer amount exceeds balance"
-    // as IDRX balance problem → arahkan ke QRIS top-up
-    const isBalanceLikeError =
-      msg.includes('insufficient') &&
-      (msg.includes('balance') ||
-        msg.includes('allowance') ||
-        msg.includes('transfer amount exceeds'));
-
-    if (isBalanceLikeError) {
-      console.log('[BattlePage] Showing QRIS popup for insufficient IDRX / allowance issue');
+    
+    // Check if error is insufficient IDRX balance
+    if (errorMessage.toLowerCase().includes('insufficient') && errorMessage.toLowerCase().includes('idrx')) {
+      // Show QRIS top-up popup instead of error
+      console.log('[BattlePage] Showing QRIS popup for insufficient balance');
       setShowQRISPopup(true);
-      return;
-    }
+    } else {
+      // Show error and redirect to home for other errors
+      console.log('[BattlePage] Redirecting to home due to error:', errorMessage);
+      setError(errorMessage);
+      setPhase('error');
 
-    // Semua error lain (termasuk cancel di wallet) → langsung balik ke home
-    console.log('[BattlePage] Redirecting to home due to non-balance error:', errorMessage);
-    setError(errorMessage);
-    setPhase('error');
-    router.replace('/home');
+      // Segera balik ke home untuk semua error non-balance (termasuk cancel di wallet)
+      router.replace('/home');
+    }
   }, [router]);
 
   /**
@@ -205,8 +192,8 @@ export default function BattlePage() {
    * 2. Visual battle ends (victory/defeat)
    * 3. THIS function called
    * 4. Mark NFT as used (cleanup only, battle already executed)
-   * 5. Refresh data
-   * 6. Navigate home
+   * 5. Refresh data in background
+   * 6. Navigate home immediately (no processing screen)
    * 
    * PHASE 0 ENHANCEMENT: Pass battle tx hash for better tracking
    */
@@ -220,18 +207,24 @@ export default function BattlePage() {
     const tokenId = profile.selectedCard.token_id;
     const battleTxHash = battleState.battleResult?.txHash || undefined;
     
-    // Set cleanup flag to prevent validation checks
-    setIsCleaningUp(true);
+    // Mark as exiting immediately - this triggers navigation
+    setIsExiting(true);
     
+    console.log('[BattlePage] Visual battle ended, processing cleanup in background...', {
+      tokenId,
+      battleTxHash,
+      won: battleResult?.won,
+    });
+    
+    // Cleanup and navigate home immediately (no processing screen)
+    resetBattle();
+    resetBattleHook();
+    
+    // Navigate to home first for instant feedback
+    router.replace('/home');
+    
+    // Process cleanup in background (non-blocking)
     try {
-      console.log('[BattlePage] 🎯 Visual battle ended, processing cleanup...', {
-        tokenId,
-        battleTxHash,
-        won: battleResult?.won,
-      });
-      
-      // Battle was already executed during preparation, just cleanup now
-      
       // Mark NFT as used in database with battle tx hash for tracking
       await markAsUsed(tokenId, battleTxHash);
       
@@ -245,24 +238,12 @@ export default function BattlePage() {
         refreshProfile(address),
       ]);
       
-      console.log('[BattlePage] ✅ Post-battle processing complete, NFT deselected');
+      console.log('[BattlePage] Post-battle processing complete');
     } catch (_battleError) {
-      console.error('[BattlePage] ❌ Battle cleanup error:', _battleError);
-      const errorMessage = _battleError instanceof Error ? _battleError.message : 'Battle cleanup failed';
-      setError(errorMessage);
-      setPhase('error');
-      
-      // Show error for 3 seconds then go home
-      setTimeout(() => {
-        router.replace('/home');
-      }, 3000);
-      return;
+      console.error('[BattlePage] Battle cleanup error (non-critical):', _battleError);
+      // Non-critical error - user already navigated home
+      // Data will be refreshed on next home page load
     }
-    
-    // Cleanup and navigate home immediately
-    resetBattle();
-    resetBattleHook();
-    router.replace('/home');
   }, [address, profile, battleState.battleResult, battleResult, markAsUsed, refreshInventory, refreshProfile, selectCard, resetBattle, resetBattleHook, router]);
 
   // Cleanup on unmount
@@ -270,8 +251,23 @@ export default function BattlePage() {
     return () => {
       resetBattle();
       resetBattleHook();
+      setIsExiting(false);
     };
   }, [resetBattle, resetBattleHook]);
+
+  // Prevent render during exit or processing
+  if (isExiting || phase === 'processing') {
+    return (
+      <div className={styles.battlePageContainer}>
+        <div className={styles.mobileFrame}>
+          <div className={styles.processingScreen}>
+            <div className={styles.processingSpinner}>*</div>
+            <p className={styles.processingText}>Processing battle results...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Render based on phase
   const renderContent = () => {
@@ -299,7 +295,7 @@ export default function BattlePage() {
         return (
           <div className={styles.errorContainer}>
             <div className={styles.errorBox}>
-              <div className={styles.errorIcon}>⚠️</div>
+              <div className={styles.errorIcon}>!</div>
               <h1 className={styles.errorTitle}>Cannot Start Battle</h1>
               <p className={styles.errorMessage}>
                 {error || 'Something went wrong. Please try again.'}
@@ -308,28 +304,28 @@ export default function BattlePage() {
               {/* Show specific help based on error type */}
               {error && error.toLowerCase().includes('balance') && (
                 <div className={styles.errorHelp}>
-                  <p>💡 You need at least 5 IDRX tokens to battle.</p>
+                  <p>You need at least 5 IDRX tokens to battle.</p>
                   <p>Please get more IDRX and try again.</p>
                 </div>
               )}
               
               {error && error.toLowerCase().includes('approval') && (
                 <div className={styles.errorHelp}>
-                  <p>💡 Transaction was rejected or failed.</p>
+                  <p>Transaction was rejected or failed.</p>
                   <p>Please try again and approve in your wallet.</p>
                 </div>
               )}
               
               {error && error.toLowerCase().includes('mint') && (
                 <div className={styles.errorHelp}>
-                  <p>💡 WIN token minting failed.</p>
+                  <p>WIN token minting failed.</p>
                   <p>Please try again and confirm the transaction.</p>
                 </div>
               )}
               
               {error && error.toLowerCase().includes('used') && (
                 <div className={styles.errorHelp}>
-                  <p>💡 This NFT has already been used in battle.</p>
+                  <p>This NFT has already been used in battle.</p>
                   <p>Please select a different NFT from your deck.</p>
                 </div>
               )}

@@ -2,6 +2,8 @@
 
 import { create } from 'zustand';
 import { getStorageUrl } from '../utils/supabaseStorage';
+import { supabase } from '../lib/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // Types
 export interface Quest {
@@ -16,6 +18,7 @@ export interface Quest {
 }
 
 export interface PlayerProfile {
+  userId?: string; // For realtime subscription
   level: number;
   currentXp: number;
   maxXp: number;
@@ -101,16 +104,28 @@ interface GameState {
   // Error states
   error: string | null;
   
+  // Internal - AbortController for cleanup
+  _abortController: AbortController | null;
+  
+  // Internal - Realtime subscription
+  _realtimeChannel: RealtimeChannel | null;
+  _userId: string | null;
+  _walletAddress: string | null;
+  _realtimeRetryCount: number;
+  
   // Actions
   initializeGameData: (walletAddress: string) => Promise<void>;
   refreshProfile: (walletAddress: string) => Promise<void>;
   refreshQuests: (walletAddress: string) => Promise<void>;
-  refreshInventory: (walletAddress: string) => Promise<void>;
+  refreshInventory: (walletAddress: string, skipSync?: boolean) => Promise<void>;
+  refreshInventoryFromDb: (walletAddress: string) => Promise<void>;
   updateSettings: (walletAddress: string, updates: Partial<UserSettings>) => Promise<void>;
   claimQuest: (walletAddress: string, questId: string) => Promise<{ xpAwarded: number }>;
   updateProfileXp: (newXp: number, newLevel: number, newMaxXp: number) => void;
   updateQuestStatus: (questId: string, status: 'active' | 'completed' | 'claimed') => void;
   selectCard: (walletAddress: string, cardTemplateId: string | null) => Promise<void>;
+  subscribeToInventory: (userId: string, walletAddress: string) => void;
+  unsubscribeFromInventory: () => void;
   reset: () => void;
 }
 
@@ -166,6 +181,11 @@ const initialState = {
   inventoryLoading: false,
   isSyncing: false,
   error: null,
+  _abortController: null,
+  _realtimeChannel: null,
+  _userId: null,
+  _walletAddress: null,
+  _realtimeRetryCount: 0,
 };
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -174,12 +194,29 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Initialize all game data in parallel (called once on login)
   // This caches all data - components should read from store, not fetch independently
   initializeGameData: async (walletAddress: string) => {
+    // Validate wallet address
+    if (!walletAddress || typeof walletAddress !== 'string' || walletAddress.length < 10) {
+      console.error('[GameStore] Invalid wallet address:', walletAddress);
+      set({ error: 'Invalid wallet address', isLoading: false });
+      return;
+    }
+
     // Check if already initialized for this wallet (prevent duplicate fetches)
     const currentState = get();
     if (currentState.isInitialized && currentState.profile) {
       // Already initialized, skip
       return;
     }
+
+    // Abort any previous initialization
+    if (currentState._abortController) {
+      console.log('[GameStore] Aborting previous initialization...');
+      currentState._abortController.abort();
+    }
+
+    // Create new AbortController for this initialization
+    const abortController = new AbortController();
+    const signal = abortController.signal;
 
     set({ 
       isLoading: true, 
@@ -190,6 +227,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       packsLoading: true, 
       inventoryLoading: true,
       isInitialized: false, // Explicitly set to false during loading
+      _abortController: abortController,
     });
 
     try {
@@ -198,58 +236,125 @@ export const useGameStore = create<GameState>((set, get) => ({
       console.log('[GameStore] Starting login initialization...');
       console.log('[GameStore] Step 1: Syncing NFTs from blockchain...');
       
+      // FIX: Add timeout to NFT sync (max 10 seconds)
+      const syncTimeout = new Promise<Response>((_, reject) => 
+        setTimeout(() => reject(new Error('NFT sync timeout after 10s')), 10000)
+      );
+      
       try {
-        await fetch('/api/cards/sync-nft', {
+        const syncPromise = fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: { 'x-wallet-address': walletAddress },
+          signal, // Add abort signal
         });
+        
+        await Promise.race([syncPromise, syncTimeout]);
         console.log('[GameStore] ✓ NFT sync completed');
       } catch (syncError) {
-        console.warn('[GameStore] ⚠️ NFT sync failed on login, will continue with existing data:', syncError);
+        // FIX: For first-time users, NFT sync failure is CRITICAL
+        // Show error instead of silently continuing
+        const errorMsg = syncError instanceof Error ? syncError.message : 'Unknown error';
+        console.error('[GameStore] ❌ NFT sync failed:', errorMsg);
+        
+        // Check if aborted
+        if (signal.aborted) {
+          console.log('[GameStore] Initialization aborted');
+          return;
+        }
+        
+        // Continue but set error state so UI can show warning
+        set({ error: `NFT sync failed: ${errorMsg}. Your inventory may be incomplete.` });
       }
       
       console.log('[GameStore] Step 2: Fetching all game data...');
       
-      // Fetch all data in parallel for fastest load
-      const [profileRes, questsRes, settingsRes, packsRes, inventoryRes, dailyPacksRes, stagesRes] = await Promise.all([
-        fetch('/api/player/profile', {
-          headers: { 'x-wallet-address': walletAddress },
-          cache: 'no-store', // Always get fresh data on login
-        }),
-        fetch('/api/quests', {
-          headers: { 'x-wallet-address': walletAddress },
-          cache: 'no-store',
-        }),
-        fetch('/api/settings', {
-          headers: { 'x-wallet-address': walletAddress },
-          cache: 'no-store',
-        }),
-        fetch('/api/cards/packs', {
-          cache: 'no-store', // Card packs can change, but less frequently
-        }),
-        fetch('/api/cards/inventory', {
-          headers: { 'x-wallet-address': walletAddress },
-          cache: 'no-store',
-        }),
-        fetch('/api/daily-packs', {
-          headers: { 'x-wallet-address': walletAddress },
-          cache: 'no-store',
-        }),
-        fetch('/api/stages?current=true', {
-          headers: { 'x-wallet-address': walletAddress },
-          cache: 'no-store',
-        }),
-      ]);
+      // FIX: Add timeout wrapper for all fetches (max 30 seconds total)
+      const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs = 30000) => {
+        const timeout = new Promise<Response>((_, reject) =>
+          setTimeout(() => reject(new Error(`Request timeout after ${timeoutMs}ms`)), timeoutMs)
+        );
+        return Promise.race([fetch(url, options), timeout]);
+      };
 
-      // Process responses - wait for ALL to complete
+      // Fetch all data in parallel for fastest load
+      // FIX: Each fetch now has abort signal and timeout
+      const fetchPromises = [
+        fetchWithTimeout('/api/player/profile', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+          signal,
+        }),
+        fetchWithTimeout('/api/quests', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+          signal,
+        }),
+        fetchWithTimeout('/api/settings', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+          signal,
+        }),
+        fetchWithTimeout('/api/cards/packs', {
+          cache: 'no-store',
+          signal,
+        }),
+        fetchWithTimeout('/api/cards/inventory', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+          signal,
+        }),
+        fetchWithTimeout('/api/daily-packs', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+          signal,
+        }),
+        fetchWithTimeout('/api/stages?current=true', {
+          headers: { 'x-wallet-address': walletAddress },
+          cache: 'no-store',
+          signal,
+        }),
+      ];
+
+      // FIX: Use Promise.allSettled instead of Promise.all
+      // This prevents one failed API from killing the entire initialization
+      const results = await Promise.allSettled(fetchPromises);
+      
+      // Check if aborted during fetch
+      if (signal.aborted) {
+        console.log('[GameStore] Initialization aborted during fetch');
+        return;
+      }
+
+      // Process responses with individual error handling
+      const [profileRes, questsRes, settingsRes, packsRes, inventoryRes, dailyPacksRes, stagesRes] = 
+        results.map(result => result.status === 'fulfilled' ? result.value : null);
+
+      // Parse JSON responses with error handling
+      const parseJSON = async (response: Response | null, name: string) => {
+        if (!response) {
+          console.warn(`[GameStore] ${name} fetch failed`);
+          return null;
+        }
+        if (!response.ok) {
+          console.warn(`[GameStore] ${name} returned status ${response.status}`);
+          return null;
+        }
+        try {
+          return await response.json();
+        } catch (error) {
+          console.error(`[GameStore] ${name} JSON parse error:`, error);
+          return null;
+        }
+      };
+
       const [profileData, questsData, settingsData, packsData, inventoryData, dailyPacksData, stagesData] = await Promise.all([
-        profileRes.ok ? profileRes.json() : null,
-        questsRes.ok ? questsRes.json() : null,
-        settingsRes.ok ? settingsRes.json() : null,
-        packsRes.ok ? packsRes.json() : null,
-        inventoryRes.ok ? inventoryRes.json() : null,
-        dailyPacksRes.ok ? dailyPacksRes.json() : null,
-        stagesRes.ok ? stagesRes.json() : null,
+        parseJSON(profileRes, 'Profile'),
+        parseJSON(questsRes, 'Quests'),
+        parseJSON(settingsRes, 'Settings'),
+        parseJSON(packsRes, 'Packs'),
+        parseJSON(inventoryRes, 'Inventory'),
+        parseJSON(dailyPacksRes, 'DailyPacks'),
+        parseJSON(stagesRes, 'Stages'),
       ]);
 
       // Format card packs
@@ -338,10 +443,25 @@ export const useGameStore = create<GameState>((set, get) => ({
       console.log(`[GameStore] - Daily Packs: ${dailyPacksData?.packCount || 0}`);
       console.log(`[GameStore] - Current Stage: ${stagesData?.currentStage?.name || 'None'}`);
       
-      // REMOVED: Background sync NFT - already done at start of initialization
+      // Setup realtime subscription for inventory if we have userId
+      const userId = profileData?.profile?.userId;
+      if (userId) {
+        console.log('[GameStore] Setting up realtime inventory subscription...');
+        get().subscribeToInventory(userId, walletAddress);
+      }
+      
+      // Clear abort controller after success
+      set({ _abortController: null });
 
     } catch (error: unknown) {
+      // Check if error was due to abort
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('[GameStore] Initialization aborted');
+        return;
+      }
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize game data';
+      console.error('[GameStore] Initialization error:', errorMessage);
       set({ 
         error: errorMessage, 
         isLoading: false,
@@ -350,7 +470,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         settingsLoading: false,
         packsLoading: false,
         inventoryLoading: false,
-        isInitialized: false, // Keep false on error
+        isInitialized: false,
+        _abortController: null,
       });
     }
   },
@@ -404,59 +525,89 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  // Refresh inventory with NFT sync
-  refreshInventory: async (walletAddress: string) => {
-    set({ inventoryLoading: true, isSyncing: true });
+  // Refresh inventory with optional NFT sync
+  // skipSync: true = only fetch from database (use when sync already done)
+  // skipSync: false/undefined = sync from blockchain first, then fetch
+  refreshInventory: async (walletAddress: string, skipSync: boolean = false) => {
+    set({ inventoryLoading: true, isSyncing: !skipSync });
+    
+    // Create AbortController for this operation
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    
     try {
-      // CRITICAL FIX: Await sync completion before fetching inventory
-      console.log('[GameStore] Starting NFT sync...');
-      await fetch('/api/cards/sync-nft', {
-        method: 'POST',
-        headers: { 'x-wallet-address': walletAddress },
-      });
+      // Only sync from blockchain if not skipped
+      if (!skipSync) {
+        console.log('[GameStore] Starting NFT sync...');
+        
+        // FIX: Add timeout to sync (max 10 seconds)
+        const syncTimeout = new Promise<Response>((_, reject) =>
+          setTimeout(() => reject(new Error('NFT sync timeout')), 10000)
+        );
+        
+        const syncPromise = fetch('/api/cards/sync-nft', {
+          method: 'POST',
+          headers: { 'x-wallet-address': walletAddress },
+          signal,
+        });
+        
+        await Promise.race([syncPromise, syncTimeout]);
 
-      // Add delay to ensure blockchain state is settled and database is updated
-      await new Promise(resolve => setTimeout(resolve, 1500));
+        // Wait for blockchain to settle (shorter delay since sync already done)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        console.log('[GameStore] NFT sync completed');
+      } else {
+        console.log('[GameStore] Skipping NFT sync, fetching from database only...');
+      }
       
-      console.log('[GameStore] NFT sync completed, fetching inventory...');
-      // Then fetch inventory
-      const response = await fetch('/api/cards/inventory', {
+      // Fetch inventory with timeout
+      const inventoryTimeout = new Promise<Response>((_, reject) =>
+        setTimeout(() => reject(new Error('Inventory fetch timeout')), 10000)
+      );
+      
+      const inventoryPromise = fetch('/api/cards/inventory', {
         headers: { 'x-wallet-address': walletAddress },
+        signal,
+        cache: 'no-store', // Always get fresh data
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        const formatted: InventoryCard[] = (data.inventory || []).map((item: InventoryItemApiResponse) => ({
-          id: item.id,
-          cardTemplate: {
-            id: item.card_templates?.id || '',
-            name: item.card_templates?.name || '',
-            rarity: item.card_templates?.rarity || 'common',
-            imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
-            description: item.card_templates?.description || null,
-            atk: item.card_templates?.atk,
-            health: item.card_templates?.health,
-            token_id: item.card_templates?.token_id,
-          },
-          quantity: item.quantity || 1,
-          used: item.used || false,
-          token_id: item.token_id || item.card_templates?.token_id || null,
-        }));
-        set({ inventory: formatted, inventoryLoading: false, isSyncing: false });
-        console.log('[GameStore] Inventory refreshed successfully:', formatted.length, 'cards');
-      } else {
-        console.error('[GameStore] Failed to fetch inventory, status:', response.status);
-        // FIX #3: Preserve old inventory data on API failure
-        // Don't clear inventory, just update loading states
-        set({ inventoryLoading: false, isSyncing: false });
-        // Old inventory is preserved (not overwritten)
+      const response = await Promise.race([inventoryPromise, inventoryTimeout]);
+      
+      if (!response.ok) {
+        throw new Error(`Inventory API returned ${response.status}`);
       }
+
+      const data = await response.json();
+      const formatted: InventoryCard[] = (data.inventory || []).map((item: InventoryItemApiResponse) => ({
+        id: item.id,
+        cardTemplate: {
+          id: item.card_templates?.id || '',
+          name: item.card_templates?.name || '',
+          rarity: item.card_templates?.rarity || 'common',
+          imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+          description: item.card_templates?.description || null,
+          atk: item.card_templates?.atk,
+          health: item.card_templates?.health,
+          token_id: item.card_templates?.token_id,
+        },
+        quantity: item.quantity || 1,
+        used: item.used || false,
+        token_id: item.token_id || item.card_templates?.token_id || null,
+      }));
+      
+      set({ inventory: formatted, inventoryLoading: false, isSyncing: false });
+      console.log('[GameStore] Inventory refreshed successfully:', formatted.length, 'cards');
     } catch (error) {
+      // Check if aborted
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('[GameStore] Inventory refresh aborted');
+        return;
+      }
+
       console.error('[GameStore] Error refreshing inventory:', error);
-      // FIX #3: Preserve old inventory data on error
-      // Don't clear inventory, just update loading states
+      // Preserve old inventory data on error
       set({ inventoryLoading: false, isSyncing: false });
-      // Old inventory is preserved (not overwritten)
     }
   },
 
@@ -626,8 +777,149 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  // Refresh inventory from database only (no blockchain sync)
+  // Used by realtime subscription to quickly update inventory
+  refreshInventoryFromDb: async (walletAddress: string) => {
+    try {
+      const response = await fetch('/api/cards/inventory', {
+        headers: { 'x-wallet-address': walletAddress },
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Inventory API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      const formatted: InventoryCard[] = (data.inventory || []).map((item: InventoryItemApiResponse) => ({
+        id: item.id,
+        cardTemplate: {
+          id: item.card_templates?.id || '',
+          name: item.card_templates?.name || '',
+          rarity: item.card_templates?.rarity || 'common',
+          imageUrl: item.card_templates?.image_url ? getStorageUrl(item.card_templates.image_url) : '',
+          description: item.card_templates?.description || null,
+          atk: item.card_templates?.atk,
+          health: item.card_templates?.health,
+          token_id: item.card_templates?.token_id,
+        },
+        quantity: item.quantity || 1,
+        used: item.used || false,
+        token_id: item.token_id || item.card_templates?.token_id || null,
+      }));
+
+      set({ inventory: formatted });
+      console.log('[GameStore] Inventory refreshed from DB:', formatted.length, 'cards');
+    } catch (error) {
+      console.error('[GameStore] Error refreshing inventory from DB:', error);
+    }
+  },
+
+  // Subscribe to realtime inventory changes
+  // Note: This is a non-critical feature - game works without it
+  subscribeToInventory: (userId: string, walletAddress: string) => {
+    const currentState = get();
+    const MAX_RETRIES = 3;
+    
+    // Don't resubscribe if already subscribed for same user
+    if (currentState._realtimeChannel && currentState._userId === userId) {
+      console.log('[GameStore] Already subscribed to inventory for this user');
+      return;
+    }
+
+    // Check retry limit
+    if (currentState._realtimeRetryCount >= MAX_RETRIES) {
+      console.warn(`[GameStore] Realtime subscription failed after ${MAX_RETRIES} retries. Feature disabled (non-critical).`);
+      return;
+    }
+
+    // Unsubscribe from previous channel if exists
+    if (currentState._realtimeChannel) {
+      supabase.removeChannel(currentState._realtimeChannel);
+    }
+
+    const channelName = `inventory-${userId}`;
+    console.log(`[GameStore] Subscribing to realtime inventory: ${channelName} (attempt ${currentState._realtimeRetryCount + 1}/${MAX_RETRIES})`);
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'user_inventory',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log('[GameStore] Realtime inventory change:', payload.eventType);
+          // Refresh inventory from database (not blockchain) for fast update
+          get().refreshInventoryFromDb(walletAddress);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[GameStore] ✅ Realtime subscription active: ${channelName}`);
+          // Reset retry count on success
+          set({ _realtimeRetryCount: 0 });
+        } else if (status === 'CHANNEL_ERROR') {
+          const retryCount = get()._realtimeRetryCount;
+          if (retryCount < MAX_RETRIES) {
+            console.warn(`[GameStore] ⚠️ Realtime subscription failed: ${channelName}, retry ${retryCount + 1}/${MAX_RETRIES}...`);
+            // Cleanup current channel
+            const state = get();
+            if (state._realtimeChannel) {
+              supabase.removeChannel(state._realtimeChannel);
+            }
+            // Increment retry count and retry with exponential backoff
+            set({ 
+              _realtimeChannel: null, 
+              _userId: null, 
+              _walletAddress: null,
+              _realtimeRetryCount: retryCount + 1 
+            });
+            setTimeout(() => {
+              get().subscribeToInventory(userId, walletAddress);
+            }, Math.min(3000 * Math.pow(2, retryCount), 15000)); // 3s, 6s, 12s max 15s
+          } else {
+            console.warn(`[GameStore] ⚠️ Realtime disabled after ${MAX_RETRIES} failures (non-critical feature)`);
+          }
+        } else if (status === 'TIMED_OUT') {
+          console.warn(`[GameStore] ⏱️ Realtime subscription timed out: ${channelName}`);
+          // Don't retry on timeout - just log it
+        }
+      });
+
+    set({ 
+      _realtimeChannel: channel, 
+      _userId: userId,
+      _walletAddress: walletAddress,
+    });
+  },
+
+  // Unsubscribe from realtime inventory changes
+  unsubscribeFromInventory: () => {
+    const currentState = get();
+    if (currentState._realtimeChannel) {
+      console.log('[GameStore] Unsubscribing from realtime inventory');
+      supabase.removeChannel(currentState._realtimeChannel);
+      set({ _realtimeChannel: null, _userId: null, _walletAddress: null, _realtimeRetryCount: 0 });
+    }
+  },
+
   // Reset store (on logout)
   reset: () => {
+    // Abort any pending requests
+    const currentState = get();
+    if (currentState._abortController) {
+      currentState._abortController.abort();
+    }
+    
+    // Unsubscribe from realtime
+    if (currentState._realtimeChannel) {
+      supabase.removeChannel(currentState._realtimeChannel);
+    }
+    
     set(initialState);
   },
 }));

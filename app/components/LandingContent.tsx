@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
-import { getGameIconUrl } from "../utils/supabaseStorage";
 import styles from "./LandingContent.module.css";
+
+// Direct Supabase URL for logo
+const LOGO_URL = "https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/game/icons/logos.png";
 
 interface LandingContentProps {
   isLoggingOut?: boolean;
@@ -41,12 +43,13 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
         <div className={styles.card}>
           <div className={styles.logoSection}>
             <Image
-              src={getGameIconUrl("logos.png")}
+              src={LOGO_URL}
               alt="Logo"
-              width={500}
-              height={500}
+              width={150}
+              height={150}
               className={styles.logo}
               priority
+              unoptimized
             />
           </div>
           <div className={styles.welcomeSection}>
@@ -70,12 +73,13 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
         <div className={styles.card}>
           <div className={styles.logoSection}>
             <Image
-              src={getGameIconUrl("logos.png")}
+              src={LOGO_URL}
               alt="Logo"
-              width={500}
-              height={500}
+              width={150}
+              height={150}
               className={styles.logo}
               priority
+              unoptimized
             />
           </div>
           <div className={styles.welcomeSection}>
@@ -111,12 +115,13 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
       <div className={styles.card}>
         <div className={styles.logoSection}>
           <Image
-            src={getGameIconUrl("logos.png")}
+            src={LOGO_URL}
             alt="Logo"
-            width={500}
-            height={500}
+            width={150}
+            height={150}
             className={styles.logo}
             priority
+            unoptimized
           />
         </div>
 

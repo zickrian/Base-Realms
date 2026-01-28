@@ -17,9 +17,8 @@
 .menuBox {
     width: 90%;
     max-width: 400px;
-    /* Increased width for cards */
-    height: 80vh;
-    max-height: 700px;
+    /* Increased width for cards; gunakan max-height agar popup mengambang di tengah */
+    max-height: 600px; /* Fixed max height to prevent full-screen on Android */
     background-color: #e8be82;
     box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
     display: flex;

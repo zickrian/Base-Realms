@@ -11,7 +11,7 @@ import styles from "./CardsMenu.module.css";
 
 export function CardsMenu() {
   const { address } = useAccount();
-  const { cardPacks, inventory, packsLoading, inventoryLoading, refreshInventory, refreshQuests, refreshProfile, selectCard, profile } = useGameStore();
+  const { cardPacks, inventory, packsLoading, inventoryLoading, refreshQuests, refreshProfile, selectCard, profile } = useGameStore();
   const isComingSoon = true;
   const [selectedPack, setSelectedPack] = useState<CardPack | null>(null);
   const [purchasing, setPurchasing] = useState(false);
@@ -143,29 +143,30 @@ export function CardsMenu() {
         console.warn('Failed to update mint_nft quest progress:', questError);
       });
 
-      // IMPROVED: Sync NFT with clear progress feedback
+      // OPTIMIZED: Single sync call - realtime subscription handles UI updates
       try {
         console.log('[CardsMenu] 🔄 Syncing NFT from blockchain...');
         
-        await fetch('/api/cards/sync-nft', {
+        // Wait for blockchain to settle before syncing
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const syncResponse = await fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
             'x-wallet-address': address!,
           },
         });
         
-        // Add small delay to ensure blockchain state is settled
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (syncResponse.ok) {
+          const syncData = await syncResponse.json();
+          console.log(`[CardsMenu] ✅ NFT sync complete! ${syncData.totalItems || 0} items`);
+        }
         
-        console.log('[CardsMenu] ✅ NFT synced! Refreshing inventory...');
-        
-        // Refresh inventory and quests after sync
-        await Promise.all([
-          refreshInventory(address!),
-          refreshQuests(address!),
-        ]);
-        
-        console.log('[CardsMenu] ✅ All done! NFT now in My Deck');
+        // Realtime subscription will auto-update inventory in gameStore
+        // Just refresh quests (non-blocking)
+        refreshQuests(address!).catch((questError) => {
+          console.warn('[CardsMenu] Failed to refresh quests:', questError);
+        });
         
         // Show success toast
         setToast({
@@ -176,19 +177,11 @@ export function CardsMenu() {
       } catch (syncError) {
         console.error('[CardsMenu] ❌ Failed to sync NFT from blockchain:', syncError);
         
-        // Show error toast but still try to refresh
+        // Show error toast but realtime will retry automatically
         setToast({
-          message: "Mint succeeded but sync failed. Try refreshing.",
+          message: "Mint succeeded but sync delayed. It will appear shortly.",
           type: "error",
           isVisible: true,
-        });
-        
-        // Even on error, try to refresh inventory
-        await Promise.all([
-          refreshInventory(address!),
-          refreshQuests(address!),
-        ]).catch((refreshError) => {
-          console.warn('[CardsMenu] Failed to refresh data:', refreshError);
         });
       }
     } catch (error: unknown) {

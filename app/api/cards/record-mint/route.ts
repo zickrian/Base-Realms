@@ -4,12 +4,26 @@ import { supabaseAdmin } from '@/app/lib/supabase/server';
 /**
  * Record NFT mint transaction to user_purchases
  * This endpoint records the mint transaction hash for tracking purposes
+ * 
+ * FIX: Better error codes - 400 for validation, 500 for server errors
  */
 export async function POST(request: NextRequest) {
   try {
-    const { transactionHash } = await request.json();
+    // Parse request body with validation
+    let transactionHash: string;
+    try {
+      const body = await request.json();
+      transactionHash = body.transactionHash;
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON body' },
+        { status: 400 }
+      );
+    }
+
     const walletAddress = request.headers.get('x-wallet-address');
 
+    // Validation errors - 400
     if (!walletAddress) {
       return NextResponse.json(
         { error: 'Wallet address is required' },
@@ -24,7 +38,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user
+    // Validate transaction hash format (0x + 64 hex chars)
+    if (!/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
+      return NextResponse.json(
+        { error: 'Invalid transaction hash format' },
+        { status: 400 }
+      );
+    }
+
+    // Get user - 404 if not found
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
@@ -46,12 +68,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingPurchase) {
-      // Transaction already recorded
+      // FIX: Return 409 Conflict instead of 200 for duplicates
       return NextResponse.json({
         success: true,
+        isDuplicate: true,
         purchase: existingPurchase,
         message: 'Transaction already recorded',
-      });
+      }, { status: 409 });
     }
 
     // Create purchase record for mint transaction
@@ -62,36 +85,31 @@ export async function POST(request: NextRequest) {
     
     // For now, let's check if we can make it work with NULL
     // But first, let's try to find or create a "Free Mint" pack
-    let { data: freeMintPack } = await supabaseAdmin
+    // FIX: Use upsert to avoid race condition when creating "Free Mint" pack
+    // Multiple concurrent mints could try to create the pack simultaneously
+    const { data: freeMintPack, error: packError } = await supabaseAdmin
       .from('card_packs')
+      .upsert({
+        name: 'Free Mint',
+        rarity: 'rare', // Minimum valid rarity for card_packs
+        price_idrx: 0,
+        price_eth: 0,
+        image_url: 'game/icons/commoncards.png',
+        description: 'Free NFT mint from blockchain contract',
+        is_active: true,
+      }, {
+        onConflict: 'name', // Assumes unique constraint on name
+        ignoreDuplicates: false, // Return existing record if duplicate
+      })
       .select('id')
-      .eq('name', 'Free Mint')
       .single();
 
-    if (!freeMintPack) {
-      // Create a special "Free Mint" pack if it doesn't exist
-      // Use 'rare' as minimum valid rarity (card_packs doesn't allow 'common')
-      const { data: newPack, error: createPackError } = await supabaseAdmin
-        .from('card_packs')
-        .insert({
-          name: 'Free Mint',
-          rarity: 'rare', // Minimum valid rarity for card_packs
-          price_idrx: 0,
-          price_eth: 0,
-          image_url: 'game/icons/commoncards.png',
-          description: 'Free NFT mint from blockchain contract',
-          is_active: true,
-        })
-        .select('id')
-        .single();
-
-      if (createPackError || !newPack) {
-        // If we can't create pack, we need to make card_pack_id nullable
-        // For now, throw error and suggest migration
-        throw new Error('Failed to create Free Mint pack. Please run migration to make card_pack_id nullable.');
-      }
-
-      freeMintPack = newPack;
+    if (packError || !freeMintPack) {
+      console.error('[record-mint] Failed to create/get Free Mint pack:', packError);
+      return NextResponse.json(
+        { error: 'Database error: Failed to create Free Mint pack' },
+        { status: 500 }
+      );
     }
 
     // Create purchase record
@@ -108,16 +126,30 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (purchaseError) {
-      throw purchaseError;
+      console.error('[record-mint] Failed to create purchase record:', purchaseError);
+      return NextResponse.json(
+        { error: 'Database error: Failed to create purchase record' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
+      isDuplicate: false,
       purchase,
     });
   } catch (error: unknown) {
-    console.error('Record mint error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to record mint transaction';
+    console.error('[record-mint] Unexpected error:', error);
+    
+    // FIX: Better error distinction
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: 'Invalid JSON body' },
+        { status: 400 }
+      );
+    }
+    
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

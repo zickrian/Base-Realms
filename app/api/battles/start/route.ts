@@ -1,14 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { 
+  validateWalletHeader, 
+  isInWhitelist, 
+  sanitizeErrorMessage, 
+  devLog 
+} from '@/app/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { stageId, battleType = 'pve' } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { stageId, battleType = 'pve' } = body;
     const walletAddress = request.headers.get('x-wallet-address');
 
-    if (!walletAddress) {
+    // Validate wallet address
+    const walletValidation = validateWalletHeader(walletAddress);
+    if (!walletValidation.isValid) {
       return NextResponse.json(
-        { error: 'Wallet address is required' },
+        { error: walletValidation.error },
+        { status: 400 }
+      );
+    }
+
+    // Validate battleType whitelist
+    if (!isInWhitelist(battleType, ['pve', 'pvp'])) {
+      return NextResponse.json(
+        { error: 'Invalid battle type' },
         { status: 400 }
       );
     }
@@ -17,7 +40,7 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('id')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', walletValidation.address)
       .single();
 
     if (userError || !user) {
@@ -48,10 +71,9 @@ export async function POST(request: NextRequest) {
       battle,
     });
   } catch (error: unknown) {
-    console.error('Start battle error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to start battle';
+    devLog.error('Start battle error:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: sanitizeErrorMessage(error, 'Failed to start battle') },
       { status: 500 }
     );
   }

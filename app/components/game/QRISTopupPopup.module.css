@@ -29,7 +29,7 @@
   padding: 0;
   max-width: 90%;
   width: 440px;
-  max-height: 85vh;
+  max-height: 650px; /* Fixed max height to prevent full-screen on Android */
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
@@ -272,7 +272,7 @@
 @media (max-width: 480px) {
   .popup {
     width: 95%;
-    max-height: 90vh;
+    max-height: 700px; /* Fixed max height for mobile */
   }
 
   .title {
