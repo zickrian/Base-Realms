@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { startTransition } from "react";
+import { Lock } from "lucide-react";
 import { useGameStore } from "../../stores/gameStore";
 import styles from "./BattleSection.module.css";
 
@@ -73,7 +74,7 @@ export function BattleSection({ onStageSelect: _onStageSelect, onBattle, onSwapC
         >
           <div className={styles.battleContent}>
             {isBattleDisabled ? (
-              <span className={styles.lockEmoji}>🔒</span>
+              <Lock size={32} className={styles.lockEmoji} />
             ) : (
               <span className={styles.battleLabel} suppressHydrationWarning>BATTLE</span>
             )}

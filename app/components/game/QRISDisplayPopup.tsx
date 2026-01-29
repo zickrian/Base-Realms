@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, RefreshCw } from 'lucide-react';
+import { X, RefreshCw, Copy, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import styles from './QRISDisplayPopup.module.css';
 
@@ -69,6 +69,21 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
     setIsChecking(true);
     try {
       const response = await fetch(`/api/qris/status/${orderId}`);
+      
+      // Check if response is OK before parsing JSON
+      if (!response.ok) {
+        console.error('[QRIS] Status check failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url
+        });
+        
+        // Try to get error message
+        const text = await response.text();
+        console.error('[QRIS] Response body:', text.substring(0, 200));
+        return;
+      }
+      
       const data = await response.json();
 
       console.log('[QRIS] Polling status:', {
@@ -86,7 +101,10 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
         onPaymentSuccess();
       }
     } catch (error) {
-      console.error('Failed to check payment status:', error);
+      console.error('[QRIS] Failed to check payment status:', error);
+      if (error instanceof SyntaxError) {
+        console.error('[QRIS] Received non-JSON response (likely HTML error page)');
+      }
     } finally {
       setIsChecking(false);
     }
@@ -218,7 +236,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
                 />
               ) : (
                 <div className={styles.qrisPlaceholder}>
-                  <div className={styles.qrisIcon}>📱</div>
+                  <Smartphone size={48} className={styles.qrisIcon} />
                   <p>Generating QRIS...</p>
                 </div>
               )}
@@ -243,13 +261,16 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
 
           {/* Simulator Instructions */}
           <div className={styles.simulatorBox}>
-            <div className={styles.simulatorTitle}>💻 Test Payment (Sandbox)</div>
+            <div className={styles.simulatorTitle}>Test Payment (Sandbox)</div>
             <div className={styles.simulatorText}>
               Copy URL ini untuk Midtrans Simulator:
             </div>
             <div className={styles.urlBox} onClick={handleCopyUrl}>
               <div className={styles.urlText}>{qrisUrl}</div>
-              <div className={styles.copyIcon}>{copySuccess ? '✓ Copied!' : '📋 Copy'}</div>
+              <button className={styles.copyIcon} onClick={handleCopyUrl}>
+                <Copy size={16} />
+                <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
+              </button>
             </div>
             <div className={styles.simulatorLink}>
               <a 

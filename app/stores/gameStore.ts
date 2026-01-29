@@ -538,27 +538,44 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       // Only sync from blockchain if not skipped
       if (!skipSync) {
-        console.log('[GameStore] Starting NFT sync...');
+        console.log('[GameStore] Starting NFT sync from blockchain...');
         
-        // FIX: Add timeout to sync (max 10 seconds)
-        const syncTimeout = new Promise<Response>((_, reject) =>
-          setTimeout(() => reject(new Error('NFT sync timeout')), 10000)
-        );
-        
-        const syncPromise = fetch('/api/cards/sync-nft', {
-          method: 'POST',
-          headers: { 'x-wallet-address': walletAddress },
-          signal,
-        });
-        
-        await Promise.race([syncPromise, syncTimeout]);
-
-        // Wait for blockchain to settle (shorter delay since sync already done)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        console.log('[GameStore] NFT sync completed');
+        try {
+          // CRITICAL: Wait longer for blockchain to fully settle after mint
+          // Sometimes RPC nodes need time to index the latest Transfer events
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // FIX: Add timeout to sync (max 15 seconds for blockchain operations)
+          const syncTimeout = new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error('NFT sync timeout - blockchain may still be settling')), 15000)
+          );
+          
+          const syncPromise = fetch('/api/cards/sync-nft', {
+            method: 'POST',
+            headers: { 'x-wallet-address': walletAddress },
+            signal,
+          });
+          
+          const syncResponse = await Promise.race([syncPromise, syncTimeout]);
+          
+          if (!syncResponse.ok) {
+            const syncData = await syncResponse.json().catch(() => ({}));
+            console.warn(`[GameStore] NFT sync returned ${syncResponse.status}: ${syncData.error || 'Unknown error'}`);
+            console.warn('[GameStore] Continuing with DB fetch - blockchain sync will retry on next refresh');
+          } else {
+            const syncData = await syncResponse.json();
+            console.log('[GameStore] ✅ NFT sync completed successfully:', syncData.totalItems || 0, 'items');
+            // Wait brief moment for DB writes to complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        } catch (syncError) {
+          // Don't fail entire operation if sync fails - just log and continue
+          const errorMsg = syncError instanceof Error ? syncError.message : 'Unknown error';
+          console.warn('[GameStore] ⚠️ NFT sync failed:', errorMsg);
+          console.warn('[GameStore] This is OK - continuing with DB fetch. Sync will auto-retry on next refresh.');
+        }
       } else {
-        console.log('[GameStore] Skipping NFT sync, fetching from database only...');
+        console.log('[GameStore] ⚡ Fast refresh: Skipping blockchain sync, fetching from database only...');
       }
       
       // Fetch inventory with timeout
@@ -598,6 +615,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       set({ inventory: formatted, inventoryLoading: false, isSyncing: false });
       console.log('[GameStore] Inventory refreshed successfully:', formatted.length, 'cards');
+      
+      // OPTIMIZATION: Dispatch event for other components to react
+      window.dispatchEvent(new CustomEvent('refresh-quests-inventory', { 
+        detail: { skipBlockchainSync: skipSync }
+      }));
     } catch (error) {
       // Check if aborted
       if (error instanceof Error && error.name === 'AbortError') {

@@ -87,8 +87,6 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
             </div>
           </div>
 
-          <div className={styles.celebrationEmoji}>🎉</div>
-
           {/* Claim Button */}
           <button
             className={styles.claimButton}

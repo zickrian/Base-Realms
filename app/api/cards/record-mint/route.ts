@@ -78,38 +78,61 @@ export async function POST(request: NextRequest) {
     }
 
     // Create purchase record for mint transaction
-    // For minting, we don't have a card_pack_id, so we'll use a special handling
-    // Since card_pack_id is NOT NULL, we need to either:
-    // 1. Create a special "Free Mint" pack, or
-    // 2. Make card_pack_id nullable (requires migration)
-    
-    // For now, let's check if we can make it work with NULL
-    // But first, let's try to find or create a "Free Mint" pack
-    // FIX: Use upsert to avoid race condition when creating "Free Mint" pack
-    // Multiple concurrent mints could try to create the pack simultaneously
-    const { data: freeMintPack, error: packError } = await supabaseAdmin
+    // Find or use existing "Free Mint" pack
+    // FIX: Use select first, then insert only if not exists (race-safe)
+    const { data: existingFreeMintPack } = await supabaseAdmin
       .from('card_packs')
-      .upsert({
-        name: 'Free Mint',
-        rarity: 'rare', // Minimum valid rarity for card_packs
-        price_idrx: 0,
-        price_eth: 0,
-        image_url: 'game/icons/commoncards.png',
-        description: 'Free NFT mint from blockchain contract',
-        is_active: true,
-      }, {
-        onConflict: 'name', // Assumes unique constraint on name
-        ignoreDuplicates: false, // Return existing record if duplicate
-      })
       .select('id')
+      .eq('name', 'Free Mint')
       .single();
 
-    if (packError || !freeMintPack) {
-      console.error('[record-mint] Failed to create/get Free Mint pack:', packError);
-      return NextResponse.json(
-        { error: 'Database error: Failed to create Free Mint pack' },
-        { status: 500 }
-      );
+    let freeMintPackId: string;
+
+    if (existingFreeMintPack) {
+      // Use existing pack
+      freeMintPackId = existingFreeMintPack.id;
+    } else {
+      // Create new Free Mint pack (only if not exists)
+      const { data: newFreeMintPack, error: packError } = await supabaseAdmin
+        .from('card_packs')
+        .insert({
+          name: 'Free Mint',
+          rarity: 'rare', // Minimum valid rarity for card_packs
+          price_idrx: 0,
+          price_eth: 0,
+          image_url: 'game/icons/commoncards.png',
+          description: 'Free NFT mint from blockchain contract',
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (packError) {
+        // Might be race condition - try to fetch again
+        const { data: retryFetch } = await supabaseAdmin
+          .from('card_packs')
+          .select('id')
+          .eq('name', 'Free Mint')
+          .single();
+
+        if (retryFetch) {
+          freeMintPackId = retryFetch.id;
+        } else {
+          console.error('[record-mint] Failed to create/get Free Mint pack:', packError);
+          return NextResponse.json(
+            { error: 'Database error: Failed to get Free Mint pack reference' },
+            { status: 500 }
+          );
+        }
+      } else if (newFreeMintPack) {
+        freeMintPackId = newFreeMintPack.id;
+      } else {
+        console.error('[record-mint] Unexpected: No pack created and no error');
+        return NextResponse.json(
+          { error: 'Database error: Failed to create Free Mint pack' },
+          { status: 500 }
+        );
+      }
     }
 
     // Create purchase record
@@ -117,7 +140,7 @@ export async function POST(request: NextRequest) {
       .from('user_purchases')
       .insert({
         user_id: user.id,
-        card_pack_id: freeMintPack.id,
+        card_pack_id: freeMintPackId,
         payment_method: 'eth', // Minting uses ETH (gas)
         amount_paid: 0, // Free mint, only gas cost
         transaction_hash: transactionHash,

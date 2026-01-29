@@ -61,7 +61,8 @@ export function useInventoryRealtime({
         if (status === 'SUBSCRIBED') {
           console.log(`[Realtime] ✅ Subscribed to ${channelName}`);
         } else if (status === 'CHANNEL_ERROR') {
-          console.error(`[Realtime] ❌ Failed to subscribe to ${channelName}`);
+          console.warn(`[Realtime] ⚠️ Failed to subscribe to ${channelName} - Realtime disabled, falling back to manual refresh`);
+          // Don't throw error, just log warning - app will work without realtime
         }
       });
 

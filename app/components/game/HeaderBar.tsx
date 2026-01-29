@@ -6,7 +6,7 @@ import { formatUnits } from "viem";
 import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { WalletPopup } from "./WalletPopup";
-import { IDRX_TOKEN_ADDRESS, BASE_CHAIN_ID } from "@/app/lib/blockchain/tokenConfig";
+import { IDRX_TOKEN_ADDRESS, BASE_CHAIN_ID, formatIDRXBalance } from "@/app/lib/blockchain/tokenConfig";
 
 import styles from "./HeaderBar.module.css";
 
@@ -28,12 +28,6 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
     token: IDRX_TOKEN_ADDRESS,
     chainId: BASE_CHAIN_ID,
   });
-
-  const formatIDRX = (value: number) => {
-    if (value === 0) return "0.000000";
-    if (value < 0.000001) return value.toExponential(2);
-    return value.toFixed(6);
-  };
 
   const idrxBalance = useMemo(() => {
     if (!idrxBalanceData || !isConnected) return 0;
@@ -104,7 +98,7 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
           style={{ cursor: 'pointer' }}
         >
           <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
-          <span className={styles.currencyValue}>{formatIDRX(idrxBalance)}</span>
+          <span className={styles.currencyValue}>{formatIDRXBalance(idrxBalance)}</span>
         </div>
       </div>
 

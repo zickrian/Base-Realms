@@ -338,12 +338,12 @@ export const BattleArena: React.FC<BattleArenaProps> = ({ onBattleEnd, battleRes
           {/* Attack Arrow */}
           {isAttacking && attackingCharacter === 'player' && (
             <div className={`${styles.attackArrow} ${styles.attackArrowLeft}`}>
-              ⚔️
+              →
             </div>
           )}
           {isAttacking && attackingCharacter === 'enemy' && (
             <div className={`${styles.attackArrow} ${styles.attackArrowRight}`}>
-              ⚔️
+              ←
             </div>
           )}
 

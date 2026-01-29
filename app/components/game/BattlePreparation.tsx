@@ -356,7 +356,7 @@ export const BattlePreparation: React.FC<BattlePreparationProps> = ({
         {state.preparation && hasEnoughBalance && (
           <div className={styles.requirements}>
             <p className={styles.checklistTitle}>Battle Requirements</p>
-            <p className={styles.balanceInfo}>{formatIDRXBalance(idrxBalance)} / {BATTLE_FEE_IDRX}.00 IDRX</p>
+            <p className={styles.balanceInfo}>{formatIDRXBalance(idrxBalance)} / {BATTLE_FEE_IDRX} IDRX</p>
             <div className={styles.checklist}>
               <div className={state.preparation.needsApproval ? styles.pending : styles.completed}>
                 IDRX Approval

@@ -38,12 +38,12 @@ export function useInventory() {
   // Guard untuk mencegah multiple sync bersamaan
   const syncInProgressRef = useRef(false);
   const lastSyncedAddressRef = useRef<string | null>(null);
-  const syncFnRef = useRef<((forceSync?: boolean) => Promise<void>) | null>(null);
+  const syncFnRef = useRef<((forceSync?: boolean, skipBlockchainSync?: boolean) => Promise<void>) | null>(null);
   const initializedAddressRef = useRef<string | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const syncAndFetchInventory = useCallback(async (forceSync: boolean = false) => {
+  const syncAndFetchInventory = useCallback(async (forceSync: boolean = false, skipBlockchainSync: boolean = false) => {
     if (!isConnected || !address) {
       setInventory([]);
       setLoading(false);
@@ -86,19 +86,20 @@ export function useInventory() {
       setError(null);
       setLoading(false);
       
-      if (forceSync) {
+      // OPTIMIZATION: Skip blockchain sync if skipBlockchainSync is true
+      // This is useful for database-minted cards (freebox) that don't need blockchain verification
+      if (forceSync && !skipBlockchainSync) {
         // Skip sync if already synced for this address recently
         if (lastSyncedAddressRef.current === address && syncInProgressRef.current) {
           console.log('[useInventory] Already syncing for this address, skipping...');
           return;
         }
 
-        // CRITICAL FIX: Reduce cooldown from 10s to 3s to allow faster syncs after minting
-        // This prevents blocking legitimate sync requests while still preventing spam
+        // OPTIMIZATION: Reduce cooldown from 3s to 1s for better UX
         const now = Date.now();
         const timeSinceLastSync = now - lastSyncTimeRef.current;
-        if (lastSyncedAddressRef.current === address && timeSinceLastSync < 3000) {
-          console.log('[useInventory] Sync cooldown active (3s), skipping...');
+        if (lastSyncedAddressRef.current === address && timeSinceLastSync < 1000) {
+          console.log('[useInventory] Sync cooldown active (1s), skipping...');
           return;
         }
 
@@ -106,7 +107,7 @@ export function useInventory() {
         lastSyncedAddressRef.current = address;
         setIsSyncing(true);
         
-        console.log('[useInventory] Starting NFT sync...');
+        console.log('[useInventory] Starting NFT blockchain sync...');
         fetch('/api/cards/sync-nft', {
           method: 'POST',
           headers: {
@@ -157,6 +158,8 @@ export function useInventory() {
             syncInProgressRef.current = false;
             lastSyncTimeRef.current = Date.now(); // Update waktu sync terakhir
           });
+      } else if (forceSync && skipBlockchainSync) {
+        console.log('[useInventory] ⚡ Fast refresh: Skipping blockchain sync (database mint detected)');
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -230,16 +233,19 @@ export function useInventory() {
 
   // Listen for refresh events
   useEffect(() => {
-    const handleRefresh = () => {
+    const handleRefresh = (event?: CustomEvent) => {
       if (address && isConnected && !syncInProgressRef.current && syncFnRef.current) {
+        // OPTIMIZATION: Check if event has skipBlockchainSync flag
+        const skipBlockchainSync = event?.detail?.skipBlockchainSync || false;
+        console.log('[useInventory] Refresh event received, skipBlockchainSync:', skipBlockchainSync);
         // Force sync when refresh event is triggered (e.g., after minting)
-        syncFnRef.current(true);
+        syncFnRef.current(true, skipBlockchainSync);
       }
     };
 
-    window.addEventListener('refresh-quests-inventory', handleRefresh);
+    window.addEventListener('refresh-quests-inventory', handleRefresh as EventListener);
     return () => {
-      window.removeEventListener('refresh-quests-inventory', handleRefresh);
+      window.removeEventListener('refresh-quests-inventory', handleRefresh as EventListener);
     };
   }, [address, isConnected]); // Hanya depend pada address dan isConnected
 
@@ -248,7 +254,7 @@ export function useInventory() {
     loading, 
     error, 
     isSyncing,
-    refetch: () => syncAndFetchInventory(true)
+    refetch: (skipBlockchainSync?: boolean) => syncAndFetchInventory(true, skipBlockchainSync)
   };
 }
 

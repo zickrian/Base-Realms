@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Swords } from 'lucide-react';
 import styles from './HomeLoadingScreen.module.css';
 import { getGameIconUrl, getStorageUrl } from '../utils/supabaseStorage';
 
@@ -145,7 +146,7 @@ export function HomeLoadingScreen({ onLoadComplete, minLoadTime = 800 }: HomeLoa
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.logoContainer}>
-          <div className={styles.logo}>⚔️</div>
+          <Swords size={64} className={styles.logo} />
           <div className={`${styles.title} notranslate`}>LOADING</div>
         </div>
 

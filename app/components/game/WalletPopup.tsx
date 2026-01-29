@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Copy, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { getGameIconUrl } from '../../utils/supabaseStorage';
+import { formatIDRXBalance } from '@/app/lib/blockchain/tokenConfig';
 import { PriceSelectionPopup } from './PriceSelectionPopup';
 import { QRISDisplayPopup } from './QRISDisplayPopup';
 import { QRISSuccessPopup } from './QRISSuccessPopup';
@@ -22,6 +23,8 @@ const formatBalance = (value: number) => {
   if (value < 0.000001) return value.toExponential(2);
   return value.toFixed(6);
 };
+
+const formatIDRX = formatIDRXBalance;
 
 const shortenAddress = (address: string) => {
   if (!address) return "";
@@ -214,7 +217,7 @@ export const WalletPopup = ({
                 height={24}
                 priority
               />
-              <div className={styles.balanceValue}>{formatBalance(idrxBalance)}</div>
+              <div className={styles.balanceValue}>{formatIDRX(idrxBalance)}</div>
             </div>
           </div>
 

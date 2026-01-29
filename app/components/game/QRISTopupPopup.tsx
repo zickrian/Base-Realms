@@ -10,7 +10,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, RefreshCw } from 'lucide-react';
+import { X, RefreshCw, Smartphone } from 'lucide-react';
 import styles from './QRISTopupPopup.module.css';
 
 interface QRISTopupPopupProps {
@@ -85,14 +85,14 @@ export const QRISTopupPopup: React.FC<QRISTopupPopupProps> = ({
             {/* QRIS Code Placeholder */}
             <div className={styles.qrisCode}>
               <div className={styles.qrisPlaceholder}>
-                <div className={styles.qrisIcon}>📱</div>
+                <Smartphone size={48} className={styles.qrisIcon} />
                 <p className={styles.qrisText}>QRIS Code</p>
                 <p className={styles.qrisSubtext}>Scan to top up IDRX</p>
               </div>
             </div>
 
             <p className={styles.hint}>
-              💡 After completing the payment, click &quot;I&apos;ve Topped Up&quot; to refresh your balance.
+              After completing the payment, click &quot;I&apos;ve Topped Up&quot; to refresh your balance.
             </p>
           </div>
 

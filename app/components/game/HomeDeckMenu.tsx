@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { X } from 'lucide-react';
+import { X, Lock, Sword } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useGameStore } from '../../stores/gameStore';
 import styles from './HomeDeckMenu.module.css';
@@ -94,7 +94,7 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                                                     )}
                                                     {isLocked && (
                                                         <div className={styles.lockOverlay}>
-                                                            <span className={styles.lockIcon}>🔒</span>
+                                                            <Lock size={24} className={styles.lockIcon} />
                                                             <span className={styles.lockText}>Used</span>
                                                         </div>
                                                     )}
@@ -102,7 +102,7 @@ export const HomeDeckMenu = ({ isOpen, onClose }: HomeDeckMenuProps) => {
                                                     {/* Stats Display */}
                                                     <div className={styles.cardStats}>
                                                         <div className={styles.statItem}>
-                                                            <span className={styles.statIcon}>⚔️</span>
+                                                            <Sword size={18} className={styles.statIcon} />
                                                             <span className={styles.statValue}>{item.cardTemplate.atk || 0}</span>
                                                         </div>
                                                         <div className={styles.statItem}>

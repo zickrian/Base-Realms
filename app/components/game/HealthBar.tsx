@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { Sword } from 'lucide-react';
 import styles from './HealthBar.module.css';
 
 interface HealthBarProps {
@@ -45,7 +46,7 @@ export const HealthBar: React.FC<HealthBarProps> = ({
       {/* Stats Row: ATK and HP */}
       <div className={styles.statsRow}>
         <div className={styles.atkDisplay}>
-          <span className={styles.atkIcon}>⚔️</span>
+          <Sword size={16} className={styles.atkIcon} />
           <span>ATK: {atk}</span>
         </div>
         <div className={styles.hpDisplay}>

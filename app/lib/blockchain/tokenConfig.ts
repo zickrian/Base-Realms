@@ -29,12 +29,14 @@ export function hasEnoughIDRXForBattle(balance: number): boolean {
 }
 
 /**
- * Format IDRX balance for display
+ * Format IDRX balance for display as whole numbers with thousand separators
  * @param value - Balance value
- * @returns Formatted string with 6 decimal places
+ * @returns Formatted string as whole number (e.g., "100", "1,000", "10,000")
+ * @example
+ * formatIDRXBalance(100) // "100"
+ * formatIDRXBalance(1000) // "1,000"
+ * formatIDRXBalance(10000) // "10,000"
  */
 export function formatIDRXBalance(value: number): string {
-    if (value === 0) return '0.00';
-    if (value < 0.01) return value.toFixed(6);
-    return value.toFixed(2);
+    return Math.floor(value).toLocaleString('en-US');
 }

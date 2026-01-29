@@ -17,6 +17,7 @@ import {
 import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useWalkSound } from "../hooks/useWalkSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
+import { useInventoryRealtime } from "../hooks/useInventoryRealtime";
 import { prefetchLeaderboard } from "../hooks/useLeaderboard";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
@@ -269,6 +270,20 @@ export default function HomePage() {
   // This ensures React Hooks rules are followed
   useAmbientSound(isConnected);
   useWalkSound(isMoving); // Play walk sound only when character is moving
+  
+  // OPTIMIZATION: Real-time inventory updates for instant sync
+  // When user_inventory changes in DB, auto-refresh without blockchain sync
+  useInventoryRealtime({
+    userId: profile?.userId || null,
+    onInventoryChange: () => {
+      if (address) {
+        console.log('[Home] 🔄 Realtime: Inventory changed in DB, fast refresh...');
+        // Skip blockchain sync since realtime detects DB changes (blockchain sync already done)
+        refreshInventory(address, true); // true = skip blockchain, just fetch updated DB
+      }
+    },
+    enabled: isConnected && !!profile?.userId,
+  });
 
   // Preload home assets in background (non-blocking)
   useEffect(() => {
@@ -743,10 +758,12 @@ export default function HomePage() {
           // If minting succeeded, onMintSuccess already handled refresh
           // If minting failed, we don't want to trigger refresh that might lose data
           if (!isMintingInProgress) {
-            console.log('[Home] Modal closed, refreshing data...');
+            console.log('[Home] Modal closed, checking if refresh needed...');
             refetchDailyPacks();
             if (address) {
-              refreshInventory(address);
+              // Skip blockchain sync on modal close - only sync after successful mint
+              // This prevents unnecessary blockchain queries
+              refreshInventory(address, true); // true = skip blockchain, just fetch DB
               refreshQuests(address);
             }
           } else {
@@ -802,32 +819,32 @@ export default function HomePage() {
                 });
               }
 
-              // FIX #2: Remove double sync
-              // refreshInventory() already calls sync-nft internally
-              // Just wait for blockchain to settle, then refresh
+              // BLOCKCHAIN MINT: Freebox mints real NFT to blockchain
+              // Must sync from blockchain to get tokenId
               if (address) {
                 try {
-                  console.log('[Home] Waiting for blockchain to settle...');
-                  // Wait for blockchain state to settle
-                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  console.log('[Home] Waiting for blockchain to settle after mint...');
+                  // Wait longer for blockchain to fully settle and emit events
+                  await new Promise(resolve => setTimeout(resolve, 3000));
                   
-                  console.log('[Home] Refreshing inventory (includes NFT sync)...');
-                  // refreshInventory() will sync NFT from blockchain
+                  console.log('[Home] Syncing NFTs from blockchain to get tokenId...');
+                  // MUST do blockchain sync to get minted NFT tokenId
                   await Promise.all([
-                    refreshInventory(address),
+                    refreshInventory(address, false), // false = DO sync from blockchain to get tokenId!
                     refreshQuests(address),
                     refetchDailyPacks(), // Refresh pack count to show 0
                   ]);
-                  console.log('[Home] All data refreshed successfully');
+                  console.log('[Home] NFT synced and inventory refreshed successfully');
                 } catch (refreshError) {
-                  console.error('[Home] Failed to refresh data after mint:', refreshError);
-                  // On error, still try to refresh (refreshInventory preserves old data on failure)
+                  console.error('[Home] Failed to sync NFT after mint:', refreshError);
+                  // On error, still try to refresh with retry
+                  await new Promise(resolve => setTimeout(resolve, 2000)); // Wait a bit more
                   await Promise.all([
-                    refreshInventory(address),
+                    refreshInventory(address, false), // Retry blockchain sync
                     refreshQuests(address),
                     refetchDailyPacks(),
                   ]).catch((retryError) => {
-                    console.warn('[Home] Retry refresh also failed:', retryError);
+                    console.warn('[Home] Retry sync also failed:', retryError);
                   });
                 }
               }

@@ -404,10 +404,27 @@
 }
 
 .copyIcon {
-  font-size: 0.9rem;
-  color: #4a90e2;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  border: 2px solid #2e7d32;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  color: #ffffff;
+  font-size: 1rem;
   font-weight: bold;
-  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.copyIcon:hover {
+  background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
+}
+
+.copyIcon:active {
+  transform: scale(0.95);
 }
 
 .simulatorLink {

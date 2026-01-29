@@ -99,30 +99,48 @@ export async function POST(request: NextRequest) {
     if (newStatus === 'success') {
       console.log('[QRIS Webhook] Payment successful, crediting IDRX...');
       
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('idrx_balance')
-        .eq('wallet_address', payment.user_wallet_address)
+      // Get user first to find their profile
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('wallet_address', payment.user_wallet_address.toLowerCase())
         .single();
 
-      if (profile) {
-        const newBalance = (profile.idrx_balance || 0) + payment.amount;
-        
-        const { error: balanceError } = await supabase
-          .from('user_profiles')
-          .update({ idrx_balance: newBalance })
-          .eq('wallet_address', payment.user_wallet_address);
+      if (user) {
+        // Get or create player profile
+        const { data: profile } = await supabase
+          .from('player_profiles')
+          .select('id, idrx_balance')
+          .eq('user_id', user.id)
+          .single();
 
-        if (balanceError) {
-          console.error('[QRIS Webhook] Failed to credit IDRX:', balanceError);
+        if (profile) {
+          const currentBalance = profile.idrx_balance || 0;
+          const newBalance = currentBalance + payment.amount;
+          
+          const { error: balanceError } = await supabase
+            .from('player_profiles')
+            .update({ 
+              idrx_balance: newBalance,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', profile.id);
+
+          if (balanceError) {
+            console.error('[QRIS Webhook] Failed to credit IDRX:', balanceError);
+          } else {
+            console.log('[QRIS Webhook] IDRX credited successfully:', {
+              wallet: payment.user_wallet_address,
+              amount: payment.amount,
+              oldBalance: currentBalance,
+              newBalance
+            });
+          }
         } else {
-          console.log('[QRIS Webhook] IDRX credited successfully:', {
-            wallet: payment.user_wallet_address,
-            amount: payment.amount,
-            newBalance
-          });
+          console.error('[QRIS Webhook] Player profile not found for user:', user.id);
         }
+      } else {
+        console.error('[QRIS Webhook] User not found for wallet:', payment.user_wallet_address);
       }
 
       // Root tetap sama, tidak perlu auto-update untuk menghemat gas
