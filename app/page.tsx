@@ -1,9 +1,35 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
 
 export default function Landing() {
   const router = useRouter();
+  const { isConnected, isConnecting } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  // Wait for client-side hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // If user is already connected, redirect to home
+  useEffect(() => {
+    if (mounted && isConnected && !isConnecting) {
+      router.replace('/home');
+    }
+  }, [mounted, isConnected, isConnecting, router]);
+
+  // Show blank screen while checking connection status
+  if (!mounted || isConnecting) {
+    return <div style={{ width: '100%', height: '100vh', background: '#8b5a2b' }} />;
+  }
+
+  // If connected, don't show landing (will redirect to home)
+  if (isConnected) {
+    return <div style={{ width: '100%', height: '100vh', background: '#8b5a2b' }} />;
+  }
 
   const handlePlayClick = () => {
     router.push('/login');

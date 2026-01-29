@@ -19,7 +19,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
       }}
       miniKit={{
         enabled: true,
-        autoConnect: true,
+        autoConnect: false, // CHANGED: Disable auto-connect to prevent wallet popup on landing
         notificationProxyUrl: undefined,
       }}
     >
