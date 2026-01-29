@@ -101,7 +101,7 @@ export default function HomePage() {
   const SEUM_X = 1985;
   const _SHOP_X_OLD = 1010; // Updated: shifted right
 
-  // Character Movement State
+  // Character Movement 
   // Migrated from percentage (50%) to pixels (215px) relative to world start
   // y: 179px to match home/shop bottom position exactly
   // Load saved position from sessionStorage if available
