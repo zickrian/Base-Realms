@@ -10,6 +10,9 @@ export { LeaderboardMenu } from "./LeaderboardMenu";
 export { CardRevealModal } from "./CardRevealModal";
 export { SettingsMenu } from "./SettingsMenu";
 export { WalletPopup } from "./WalletPopup";
+export { PriceSelectionPopup } from "./PriceSelectionPopup";
+export { QRISDisplayPopup } from "./QRISDisplayPopup";
+export { QRISSuccessPopup } from "./QRISSuccessPopup";
 
 // Battle Arena Components
 export { HealthBar } from "./HealthBar";

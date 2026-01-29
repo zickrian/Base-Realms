@@ -922,4 +922,21 @@ export default function HomePage() {
       )}
     </div>
   );
+
+  // Show loading screen while data is loading
+  if (!mounted || !isFullyReady) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
+          <div className={styles.loadingSpinner}></div>
+          <div className={styles.loadingText}>Loading game data...</div>
+          {!isConnected && !isConnecting && (
+            <div className={styles.loadingHint}>Please connect your wallet</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return renderArenaView();
 }

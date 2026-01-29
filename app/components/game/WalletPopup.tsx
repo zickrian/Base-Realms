@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Copy, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { getGameIconUrl } from '../../utils/supabaseStorage';
+import { PriceSelectionPopup } from './PriceSelectionPopup';
+import { QRISDisplayPopup } from './QRISDisplayPopup';
+import { QRISSuccessPopup } from './QRISSuccessPopup';
 import styles from './WalletPopup.module.css';
 
 interface WalletPopupProps {
@@ -36,6 +39,17 @@ export const WalletPopup = ({
   const [isLoadingName, setIsLoadingName] = useState(true);
   const [copySuccess, setCopySuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
+  
+  // QRIS flow states
+  const [isPriceSelectionOpen, setIsPriceSelectionOpen] = useState(false);
+  const [isQRISDisplayOpen, setIsQRISDisplayOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [qrisData, setQrisData] = useState<{
+    orderId: string;
+    qrisUrl: string;
+    amount: number;
+    expiresAt: string;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -101,8 +115,57 @@ export const WalletPopup = ({
   };
 
   const handleTopup = () => {
-    // UI only for now
-    console.log('Topup QRIS clicked - UI only');
+    setIsPriceSelectionOpen(true);
+  };
+
+  const handleAmountSelect = async (amount: number) => {
+    setIsPriceSelectionOpen(false);
+
+    try {
+      const response = await fetch('/api/qris/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress,
+          amount,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.payment) {
+        setQrisData({
+          orderId: data.payment.orderId,
+          qrisUrl: data.payment.qrisUrl,
+          amount: data.payment.amount,
+          expiresAt: data.payment.expiresAt,
+        });
+        setIsQRISDisplayOpen(true);
+      } else {
+        console.error('Failed to create QRIS:', data.error);
+        alert('Failed to generate QRIS code. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating QRIS:', error);
+      alert('Failed to generate QRIS code. Please try again.');
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsQRISDisplayOpen(false);
+    setIsSuccessOpen(true);
+  };
+
+  const handleSuccessClose = () => {
+    setIsSuccessOpen(false);
+    setQrisData(null);
+  };
+
+  const handleQRISDisplayClose = () => {
+    setIsQRISDisplayOpen(false);
+    setQrisData(null);
   };
 
   if (!isOpen || !mounted) return null;
@@ -217,6 +280,34 @@ export const WalletPopup = ({
           </div>
         </div>
       </div>
+
+      {/* QRIS Popups */}
+      <PriceSelectionPopup
+        isOpen={isPriceSelectionOpen}
+        onClose={() => setIsPriceSelectionOpen(false)}
+        onSelectAmount={handleAmountSelect}
+      />
+
+      {qrisData && (
+        <>
+          <QRISDisplayPopup
+            isOpen={isQRISDisplayOpen}
+            onClose={handleQRISDisplayClose}
+            onPaymentSuccess={handlePaymentSuccess}
+            orderId={qrisData.orderId}
+            qrisUrl={qrisData.qrisUrl}
+            amount={qrisData.amount}
+            expiresAt={qrisData.expiresAt}
+          />
+
+          <QRISSuccessPopup
+            isOpen={isSuccessOpen}
+            onClose={handleSuccessClose}
+            orderId={qrisData.orderId}
+            amount={qrisData.amount}
+          />
+        </>
+      )}
     </div>
   );
 };

@@ -60,6 +60,7 @@ export function useLeaderboard() {
             'Content-Type': 'application/json',
           },
           cache: 'no-store',
+          signal: AbortSignal.timeout(10000), // 10 second timeout
         });
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Unknown error');
@@ -76,7 +77,8 @@ export function useLeaderboard() {
         return leaderboardData;
       } catch (err) {
         console.error('Error fetching leaderboard:', err);
-        throw err;
+        // Return empty array instead of throwing, so app doesn't crash
+        return [];
       } finally {
         fetchPromise = null;
       }
@@ -87,12 +89,15 @@ export function useLeaderboard() {
       if (mountedRef.current) {
         setLeaderboard(data);
         setLoading(false);
+        setError(null); // Clear error on success
       }
       return data;
     } catch (err) {
       if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
         setLoading(false);
+        // Set empty array so UI doesn't break
+        setLeaderboard([]);
       }
       return [];
     }
