@@ -58,7 +58,7 @@ export default function Landing() {
         {/* Links Center (desktop only) */}
         <div className={styles.navLinks}>
           <a href="#" className={styles.navLink}>Home</a>
-          <a href="#" className={styles.navLink}>Docs</a>
+          <a href="/docs" className={styles.navLink}>Docs</a>
           <a href="#" className={styles.navLink}>Tutorial</a>
           <a href="#" className={styles.navLink}>Economy</a>
         </div>
@@ -103,7 +103,7 @@ export default function Landing() {
         </div>
         <div className={styles.navDrawerLinks}>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Home</a>
-          <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Docs</a>
+          <a href="/docs" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Docs</a>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Tutorial</a>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Economy</a>
         </div>
@@ -213,7 +213,7 @@ export default function Landing() {
               <span className={styles.footerLegalDot}>·</span>
               <a href="#">Privacy Policy</a>
               <span className={styles.footerLegalDot}>·</span>
-              <a href="#">Docs</a>
+              <a href="/docs">Docs</a>
             </div>
           </div>
         </div>

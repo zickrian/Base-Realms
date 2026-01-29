@@ -1,0 +1,503 @@
+/* 1:1 SWR/Nextra-style docs: white page, subtle dotted bg on main */
+.docsOuter {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+.docsCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+/* Header: logo left, nav + search + icons right */
+.docsHeader {
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.docsHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.docsHeaderBrand {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.docsHeaderBrand:hover {
+  color: #111;
+}
+
+.docsHeaderLogo {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+
+.docsHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.docsHeaderNav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.docsHeaderLink {
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.docsHeaderLink:hover {
+  color: #111;
+}
+
+.docsHeaderLinkActive {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.docsSearchWrap {
+  position: relative;
+}
+
+.docsSearchInput {
+  width: 220px;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #111;
+  outline: none;
+}
+
+.docsSearchInput::placeholder {
+  color: #9ca3af;
+}
+
+.docsSearchInput:focus {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+.docsSearchShortcut {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.docsSearchResults {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  z-index: 50;
+}
+
+.docsSearchResultItem {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.docsSearchResultLink {
+  display: block;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.docsSearchResultLink:hover,
+.docsSearchResultLinkFocused {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.docsHeaderLogoLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.docsHeaderLogoLink:hover {
+  opacity: 0.9;
+}
+
+.docsHeaderIcons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.docsHeaderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.docsHeaderIcon:hover {
+  color: #111;
+  background: #f3f4f6;
+}
+
+/* Body: left nav + main + right TOC */
+.docsBody {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left sidebar: white bg, active = light blue */
+.docsSidebarLeft {
+  width: 260px;
+  flex-shrink: 0;
+  padding: 1.25rem 0;
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+  overflow-y: auto;
+}
+
+.docsSidebarLeftTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  padding: 0 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.docsNavList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.docsNavItem {
+  margin: 0;
+}
+
+.docsNavLink {
+  font-size: 0.875rem;
+  color: #374151;
+  text-decoration: none;
+  display: block;
+  padding: 0.4rem 1.25rem;
+  border-left: 2px solid transparent;
+}
+
+.docsNavLink:hover {
+  color: #111;
+  background: #f9fafb;
+}
+
+.docsNavLinkActive {
+  color: #2563eb;
+  font-weight: 500;
+  border-left-color: #2563eb;
+  background: #eff6ff;
+}
+
+/* Main: subtle dotted bg, breadcrumbs */
+.docsMainWrap {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+  background: #fff;
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0;
+}
+
+.docsMain {
+  padding: 2rem 2.5rem 4rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.docsBreadcrumb {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.docsBreadcrumbSep {
+  margin: 0 0.35rem;
+  color: #9ca3af;
+}
+
+.docsBreadcrumbLink {
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.docsBreadcrumbLink:hover {
+  color: #2563eb;
+}
+
+.docsContent {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #374151;
+}
+
+.docsContent :global(h1) {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #111;
+  color: #111;
+  letter-spacing: -0.02em;
+}
+
+.docsContent :global(h2) {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111;
+  letter-spacing: -0.01em;
+}
+
+.docsContent :global(h3) {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+
+.docsContent :global(h4),
+.docsContent :global(h5),
+.docsContent :global(h6) {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+
+.docsContent :global(p) {
+  margin-bottom: 1rem;
+}
+
+.docsContent :global(ul),
+.docsContent :global(ol) {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.docsContent :global(li) {
+  margin-bottom: 0.35rem;
+}
+
+/* Code: darker gray box, rounded, readable */
+.docsContent :global(pre) {
+  background: #1f2937;
+  color: #e5e7f0;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.docsContent :global(code) {
+  font-family: ui-monospace, "SF Mono", Monaco, "Cascadia Mono", monospace;
+}
+
+.docsContent :global(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.docsContent :global(:not(pre) > code) {
+  background: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #374151;
+}
+
+.docsContent :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.docsContent :global(th),
+.docsContent :global(td) {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.docsContent :global(th) {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.docsContent :global(blockquote) {
+  border-left: 4px solid #e5e7eb;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+.docsContent :global(hr) {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 2rem 0;
+}
+
+.docsContent :global(a) {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.docsContent :global(a:hover) {
+  text-decoration: underline;
+}
+
+.docsContent :global(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Right sidebar: On This Page, white */
+.docsSidebarRight {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 1.5rem 1.25rem;
+  border-left: 1px solid #e5e7eb;
+  background: #fff;
+  overflow-y: auto;
+}
+
+.docsSidebarRightTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.docsToc {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.docsTocItem {
+  margin-bottom: 0.25rem;
+}
+
+.docsTocLink {
+  font-size: 0.8125rem;
+  color: #374151;
+  text-decoration: none;
+  display: block;
+  padding: 0.25rem 0;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.docsTocLink:hover {
+  color: #2563eb;
+}
+
+.docsTocLinkActive {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.docsFooterLinks {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.docsFooterLink {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.docsFooterLink:hover {
+  color: #2563eb;
+}
+
+@media (max-width: 1024px) {
+  .docsSidebarRight {
+    display: none;
+  }
+  .docsSearchWrap {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .docsSidebarLeft {
+    display: none;
+  }
+
+  .docsMain {
+    padding: 1.5rem 1.25rem 3rem;
+  }
+
+  .docsHeaderRight .docsHeaderNav,
+  .docsSearchWrap,
+  .docsHeaderIcons {
+    display: none;
+  }
+}
