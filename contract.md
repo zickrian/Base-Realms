@@ -17,3 +17,11 @@ merkleROOT (qrisMerkle.js)
 
 
 qris
+0x65823E53153D4257dF7616f0F767155412b27FD0
+
+---
+QRIS Claim by Hash (no Merkle) — qrisHash.sol
+0x544596e3EFE6F407B21aA6b3430Aa8F1024fcb2a
+- Deploy: constructor(bytes32 _claimSecretHash) dengan _claimSecretHash = keccak256(QRIS_CLAIM_SECRET).
+- Env: QRIS_CLAIM_SECRET (password), NEXT_PUBLIC_QRIS_CLAIM_HASH_CONTRACT_ADDRESS (alamat kontrak setelah deploy).
+- Panduan deploy lengkap: merkle/DEPLOY_QRIS_HASH.md

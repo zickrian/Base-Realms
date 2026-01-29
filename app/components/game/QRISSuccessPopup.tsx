@@ -8,6 +8,9 @@
 
 import React from 'react';
 import { Check } from 'lucide-react';
+import Image from 'next/image';
+import { getGameIconUrl } from '../../utils/supabaseStorage';
+import { useQRISClaim } from '@/app/hooks/useQRISClaim';
 import styles from './QRISSuccessPopup.module.css';
 
 interface QRISSuccessPopupProps {
@@ -15,6 +18,7 @@ interface QRISSuccessPopupProps {
   onClose: () => void;
   orderId: string;
   amount: number;
+  walletAddress?: string;
 }
 
 export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
@@ -23,6 +27,21 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
   orderId,
   amount,
 }) => {
+  const { claim, isLoadingProof, isPending, isConfirming, isSuccess, error } = useQRISClaim();
+
+  React.useEffect(() => {
+    if (isSuccess) {
+      alert('Successfully claimed 10 IDRX!');
+      onClose();
+    }
+  }, [isSuccess, onClose]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error('[QRIS Success] Claim error:', error);
+    }
+  }, [error]);
+
   if (!isOpen) return null;
 
   const formatAmount = (amt: number): string => {
@@ -70,11 +89,38 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
 
           <div className={styles.celebrationEmoji}>🎉</div>
 
+          {/* Claim Button */}
+          <button
+            className={styles.claimButton}
+            onClick={claim}
+            disabled={isLoadingProof || isPending || isConfirming}
+          >
+            <Image 
+              src={getGameIconUrl("IDRX.png")} 
+              alt="IDRX" 
+              width={24} 
+              height={24}
+              priority
+            />
+            <span className={styles.claimText}>
+              {isLoadingProof || isPending || isConfirming 
+                ? 'Claiming...' 
+                : 'Claim 10 IDRX'}
+            </span>
+          </button>
+
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
+
           <button
             className={styles.closeButton}
             onClick={onClose}
+            disabled={isLoadingProof || isPending || isConfirming}
           >
-            Continue
+            {isSuccess ? 'Close' : 'Continue'}
           </button>
         </div>
       </div>

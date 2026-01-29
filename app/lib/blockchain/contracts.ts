@@ -30,6 +30,13 @@ export const MERKLE_ROOT = "0xf92321255d63a7a9d08684e50479f5d9ca625dfd8c902319e2
 /** Battle fee amount (5 IDRX) */
 export const BATTLE_FEE_AMOUNT = "500" as const; // 5 IDRX (2 decimals - IDRX uses 2 decimals, not 18)
 
+/** QRIS Merkle Claim Contract - Distributor IDRX via Merkle proof */
+export const QRIS_CLAIM_CONTRACT_ADDRESS = "0x65823E53153D4257dF7616f0F767155412b27FD0" as const;
+
+/** QRIS Claim by Hash (no Merkle) - set di .env: NEXT_PUBLIC_QRIS_CLAIM_HASH_CONTRACT_ADDRESS */
+export const QRIS_CLAIM_HASH_CONTRACT_ADDRESS: string =
+  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_QRIS_CLAIM_HASH_CONTRACT_ADDRESS) || '';
+
 // ============================================================================
 // CONTRACT ABIs
 // ============================================================================
@@ -187,7 +194,121 @@ export const WINTOKEN_CONTRACT_ABI = [
 // TYPE EXPORTS
 // ============================================================================
 
+/**
+ * QRIS Claim Contract ABI
+ * Main functions:
+ * - claim(claimId, proof) - Claim IDRX reward with Merkle proof
+ * - claimedLeaf(leaf) - Check if leaf already claimed
+ */
+export const QRIS_CLAIM_CONTRACT_ABI = [
+  {
+    inputs: [
+      { name: "claimId", type: "bytes32" },
+      { name: "proof", type: "bytes32[]" }
+    ],
+    name: "claim",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "leaf", type: "bytes32" }],
+    name: "claimedLeaf",
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "merkleRoot",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "REWARD_AMOUNT",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "_newRoot", type: "bytes32" }],
+    name: "setMerkleRoot",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "user", type: "address" },
+      { indexed: true, name: "claimId", type: "bytes32" },
+      { indexed: false, name: "amount", type: "uint256" }
+    ],
+    name: "Claimed",
+    type: "event",
+  },
+] as const;
+
+/**
+ * QRIS Claim by Hash (no Merkle)
+ * claim(claimId, proofHash) - proofHash = keccak256(sender, claimId, claimSecretHash)
+ */
+export const QRIS_CLAIM_HASH_CONTRACT_ABI = [
+  {
+    inputs: [
+      { name: "claimId", type: "bytes32" },
+      { name: "proofHash", type: "bytes32" }
+    ],
+    name: "claim",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "claimId", type: "bytes32" }],
+    name: "claimed",
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "claimSecretHash",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "REWARD_AMOUNT",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "_newHash", type: "bytes32" }],
+    name: "setClaimSecretHash",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "user", type: "address" },
+      { indexed: true, name: "claimId", type: "bytes32" },
+      { indexed: false, name: "amount", type: "uint256" }
+    ],
+    name: "Claimed",
+    type: "event",
+  },
+] as const;
+
 export type BattleContractABI = typeof BATTLE_CONTRACT_ABI;
 export type IDRXContractABI = typeof IDRX_CONTRACT_ABI;
 export type NFTContractABI = typeof NFT_CONTRACT_ABI;
 export type WinTokenContractABI = typeof WINTOKEN_CONTRACT_ABI;
+export type QRISClaimContractABI = typeof QRIS_CLAIM_CONTRACT_ABI;
+export type QRISClaimHashContractABI = typeof QRIS_CLAIM_HASH_CONTRACT_ABI;

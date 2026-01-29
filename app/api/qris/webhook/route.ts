@@ -124,6 +124,10 @@ export async function POST(request: NextRequest) {
           });
         }
       }
+
+      // Root tetap sama, tidak perlu auto-update untuk menghemat gas
+      // Root yang digunakan: 0x8e463854dcd80a9d454b82661129571f1212d9b4ad48f40bd17b0f579c42c444
+      console.log('[QRIS Webhook] Payment processed. Root tetap sama, tidak perlu update.');
     }
 
     return NextResponse.json({
