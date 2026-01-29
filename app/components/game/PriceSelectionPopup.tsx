@@ -30,7 +30,13 @@ export const PriceSelectionPopup: React.FC<PriceSelectionPopupProps> = ({
   onClose,
   onSelectAmount,
 }) => {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {

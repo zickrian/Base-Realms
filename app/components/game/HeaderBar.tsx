@@ -66,39 +66,35 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
         onClick={onSettingsClick}
         aria-label="Open Settings"
       >
-        {/* SVG Background */}
         <Image
-          src="/game/icons/Untitled-1.svg"
+          src="/button/buttonatas.svg"
           alt="Menu"
           width={48}
           height={48}
           className={styles.menuBg}
         />
-
-        {/* Burger Overlay (Light & Thin to match SVG style) */}
-        <span className={styles.burgerOverlay}>
-          <span className={styles.burgerLine}></span>
-          <span className={styles.burgerLine}></span>
-          <span className={styles.burgerLine}></span>
-        </span>
       </button>
 
       <div className={styles.currencySection}>
+        {/* Combined ETH + IDRX in one box */}
         <div
           className={styles.currencyItem}
           onClick={() => setIsWalletPopupOpen(true)}
-          style={{ cursor: 'pointer' }}
         >
-          <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={20} height={20} />
-          <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
-        </div>
-        <div
-          className={styles.currencyItem}
-          onClick={() => setIsWalletPopupOpen(true)}
-          style={{ cursor: 'pointer' }}
-        >
-          <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={20} height={20} />
-          <span className={styles.currencyValue}>{formatIDRXBalance(idrxBalance)}</span>
+          {/* ETH Row */}
+          <div className={styles.currencyRow}>
+            <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={14} height={14} />
+            <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
+          </div>
+          
+          {/* Divider */}
+          <div className={styles.currencyDivider}></div>
+          
+          {/* IDRX Row */}
+          <div className={styles.currencyRow}>
+            <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={14} height={14} />
+            <span className={styles.currencyValue}>{formatIDRXBalance(idrxBalance)}</span>
+          </div>
         </div>
       </div>
 

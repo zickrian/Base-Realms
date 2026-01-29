@@ -42,21 +42,6 @@ export async function GET(
       );
     }
 
-    // If already settled or failed, return cached status
-    if (payment.status === 'success' || payment.status === 'failed') {
-      return NextResponse.json({
-        success: true,
-        payment: {
-          id: payment.id,
-          orderId: payment.order_id,
-          status: payment.status,
-          amount: payment.amount,
-          transactionId: payment.transaction_id,
-          updatedAt: payment.updated_at,
-        },
-      });
-    }
-
     // Check if expired
     const now = new Date();
     const expiresAt = new Date(payment.expires_at);
@@ -82,11 +67,13 @@ export async function GET(
     // Check status from Midtrans
     let midtransStatus;
     try {
+      console.log('[QRIS Status] Checking Midtrans for order:', orderId);
       midtransStatus = await midtransClient.getTransactionStatus(orderId);
       console.log('[QRIS Status] Midtrans response:', {
         orderId,
         transaction_status: midtransStatus.transaction_status,
-        fraud_status: midtransStatus.fraud_status
+        fraud_status: midtransStatus.fraud_status,
+        payment_type: midtransStatus.payment_type
       });
     } catch (error) {
       console.error('[QRIS Status] Midtrans check error:', error);
@@ -108,6 +95,7 @@ export async function GET(
     let newStatus = payment.status;
     if (midtransStatus.transaction_status === 'settlement') {
       newStatus = 'success';
+      console.log('[QRIS Status] ✅ Payment settled!');
     } else if (midtransStatus.transaction_status === 'expire') {
       newStatus = 'expired';
     } else if (midtransStatus.transaction_status === 'deny' || midtransStatus.transaction_status === 'cancel') {
@@ -123,10 +111,14 @@ export async function GET(
 
     // Update database if status changed
     if (newStatus !== payment.status) {
-      console.log('[QRIS Status] Updating DB status to:', newStatus);
+      console.log('[QRIS Status] Updating DB status from', payment.status, 'to:', newStatus);
       await supabase
         .from('qris_payments')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          transaction_id: midtransStatus.transaction_id,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', payment.id);
 
       // If successful, credit the user's IDRX balance
@@ -151,7 +143,7 @@ export async function GET(
           if (balanceError) {
             console.error('[QRIS Status] Failed to credit IDRX:', balanceError);
           } else {
-            console.log('[QRIS Status] IDRX credited successfully:', {
+            console.log('[QRIS Status] ✅ IDRX credited successfully:', {
               wallet: payment.user_wallet_address,
               amount: payment.amount,
               newBalance
@@ -159,6 +151,8 @@ export async function GET(
           }
         }
       }
+    } else {
+      console.log('[QRIS Status] Status unchanged:', newStatus);
     }
 
     return NextResponse.json({
@@ -168,7 +162,7 @@ export async function GET(
         orderId: payment.order_id,
         status: newStatus,
         amount: payment.amount,
-        transactionId: payment.transaction_id,
+        transactionId: midtransStatus.transaction_id,
         updatedAt: new Date().toISOString(),
       },
     });

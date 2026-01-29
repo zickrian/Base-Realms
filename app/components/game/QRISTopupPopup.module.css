@@ -4,13 +4,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(2px);
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   animation: fadeIn 0.2s ease-out;
+  pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -29,11 +31,18 @@
   padding: 0;
   max-width: 90%;
   width: 440px;
-  max-height: 650px; /* Fixed max height to prevent full-screen on Android */
+  max-height: 85vh; /* Use vh to adapt to screen height */
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  pointer-events: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.popup::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }
 
 @keyframes slideUp {
@@ -272,7 +281,7 @@
 @media (max-width: 480px) {
   .popup {
     width: 95%;
-    max-height: 700px; /* Fixed max height for mobile */
+    max-height: 80vh; /* Responsive height for mobile */
   }
 
   .title {
@@ -286,5 +295,19 @@
 
   .content {
     padding: 20px 16px;
+  }
+
+  .instructions {
+    font-size: 14px;
+  }
+
+  .balanceRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .value, .valueRequired {
+    font-size: 16px;
   }
 }

@@ -7,14 +7,14 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(2px);
+  background: transparent;
   z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   animation: fadeIn 0.2s ease-out;
+  pointer-events: none;
 }
 
 .menuBox {
@@ -179,13 +179,31 @@
   .menuBox {
     width: 95%;
     max-width: 350px;
+    max-height: 80vh;
   }
 
   .title {
     font-size: 1.75rem;
   }
 
+  .content {
+    padding: 0.75rem;
+    gap: 1.25rem;
+  }
+
+  .description {
+    font-size: 1.2rem;
+  }
+
   .optionLabel {
     font-size: 1.75rem;
+  }
+
+  .optionDescription {
+    font-size: 1.1rem;
+  }
+
+  .infoText {
+    font-size: 1rem;
   }
 }

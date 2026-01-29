@@ -7,14 +7,14 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(2px);
+  background: transparent;
   z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   animation: fadeIn 0.2s ease-out;
+  pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -29,7 +29,7 @@
 .menuBox {
   width: 90%;
   max-width: 400px;
-  max-height: 550px;
+  max-height: 85vh;
   overflow-y: auto;
   background-color: #e8be82;
   box-shadow: 
@@ -46,6 +46,12 @@
   pointer-events: auto;
   border: 4px solid #8b5a2b;
   border-radius: 12px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.menuBox::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }
 
 @keyframes popIn {
@@ -264,11 +270,16 @@
   .menuBox {
     width: 95%;
     max-width: 350px;
+    max-height: 80vh;
     padding: 1.5rem 1rem;
   }
 
   .title {
     font-size: 2rem;
+  }
+
+  .message {
+    font-size: 1.2rem;
   }
 
   .successIcon {
@@ -281,7 +292,24 @@
     height: 48px;
   }
 
-  .celebrationEmoji {
-    font-size: 3rem;
+  .detailLabel {
+    font-size: 1.1rem;
+  }
+
+  .detailValue {
+    font-size: 1.3rem;
+  }
+
+  .detailValueSmall {
+    font-size: 1rem;
+  }
+
+  .claimText {
+    font-size: 1.3rem;
+  }
+
+  .closeButton {
+    font-size: 1.5rem;
+    padding: 0.8rem 1.5rem;
   }
 }

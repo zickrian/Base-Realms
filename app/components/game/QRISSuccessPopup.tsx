@@ -11,6 +11,7 @@ import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { getGameIconUrl } from '../../utils/supabaseStorage';
 import { useQRISClaim } from '@/app/hooks/useQRISClaim';
+import { Toast } from './Toast';
 import styles from './QRISSuccessPopup.module.css';
 
 interface QRISSuccessPopupProps {
@@ -27,12 +28,20 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
   orderId,
   amount,
 }) => {
+  const [mounted, setMounted] = React.useState(false);
+  const [showToast, setShowToast] = React.useState(false);
   const { claim, isLoadingProof, isPending, isConfirming, isSuccess, error } = useQRISClaim();
 
   React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
     if (isSuccess) {
-      alert('Successfully claimed 10 IDRX!');
-      onClose();
+      setShowToast(true);
+      setTimeout(() => {
+        onClose();
+      }, 3500);
     }
   }, [isSuccess, onClose]);
 
@@ -42,7 +51,7 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
     }
   }, [error]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const formatAmount = (amt: number): string => {
     return new Intl.NumberFormat('id-ID', {
@@ -59,8 +68,19 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
   };
 
   return (
-    <div className={styles.container} onClick={handleOverlayClick}>
-      <div className={`${styles.menuBox} bit16-container`}>
+    <>
+      {showToast && (
+        <Toast
+          message="Successfully Claimed!"
+          type="success"
+          amount={10}
+          tokenIcon="IDRX.png"
+          onClose={() => setShowToast(false)}
+        />
+      )}
+      
+      <div className={styles.container} onClick={handleOverlayClick}>
+        <div className={`${styles.menuBox} bit16-container`}>
         {/* Success Icon */}
         <div className={styles.iconWrapper}>
           <div className={styles.successIcon}>
@@ -123,5 +143,6 @@ export const QRISSuccessPopup: React.FC<QRISSuccessPopupProps> = ({
         </div>
       </div>
     </div>
+    </>
   );
 };

@@ -883,19 +883,19 @@ export default function HomePage() {
             >
               ×
             </button>
-            <h3 className={styles.popupTitle}>PACK SUDAH DI-CLAIM</h3>
+            <h3 className={styles.popupTitle}>PACK ALREADY CLAIMED</h3>
             <p className={styles.popupDescription}>
-              Free daily pack hanya bisa di-claim <strong>1x sehari</strong>.
+              Free daily pack can only be claimed <strong>once per day</strong>.
             </p>
             <p className={styles.popupDescription}>
-              Silakan kembali besok untuk claim pack gratis Anda!
+              Please come back tomorrow to claim your free pack!
             </p>
             <div className={styles.popupActions}>
               <button
                 className={styles.popupOkButton}
                 onClick={() => setShowAlreadyClaimedPopup(false)}
               >
-                MENGERTI
+                UNDERSTOOD
               </button>
             </div>
           </div>

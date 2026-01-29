@@ -608,7 +608,7 @@ export function CardRevealModal({
             </div>
             <h3 className={styles.statusTitle}>Minting Successful!</h3>
             <p className={styles.statusMessage}>
-              NFT berhasil dimint! Card telah ditambahkan ke inventory Anda.
+              NFT minted successfully! Card has been added to your inventory.
             </p>
             <div className={styles.actionButtons}>
               <button className={`${styles.successCloseButton} bit16-button has-green-background`} onClick={handleSuccessPopupClose}>

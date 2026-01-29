@@ -13,7 +13,7 @@ interface LoadingScreenProps {
 // Default assets to preload
 const DEFAULT_ASSETS_TO_PRELOAD = [
   getStorageUrl('battle/gladiator.png'),
-  'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/battle/Pixel%20Monster%20No%20Background.png',
+  '/avatar/goblins.png', // Enemy sprite
 ];
 
 // Loading tips
@@ -45,6 +45,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, pl
       assetsToLoad.push(playerImageUrl);
     }
 
+    console.log('[LoadingScreen] Preloading assets:', assetsToLoad);
+
     const totalAssets = assetsToLoad.length;
     let loadedAssets = 0;
 
@@ -54,10 +56,12 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, pl
         img.onload = () => {
           loadedAssets++;
           setProgress(Math.round((loadedAssets / totalAssets) * 100));
+          console.log(`[LoadingScreen] Loaded ${loadedAssets}/${totalAssets}: ${url}`);
           resolve();
         };
-        img.onerror = () => {
+        img.onerror = (error) => {
           // Still count as loaded to prevent blocking
+          console.error(`[LoadingScreen] Failed to load image: ${url}`, error);
           loadedAssets++;
           setProgress(Math.round((loadedAssets / totalAssets) * 100));
           resolve();
@@ -67,6 +71,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadComplete, pl
     });
 
     await Promise.all(loadPromises);
+    console.log('[LoadingScreen] All assets loaded successfully');
   }, [playerImageUrl]);
 
   useEffect(() => {

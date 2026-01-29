@@ -14,8 +14,8 @@ interface CharacterSpriteProps {
   imageUrl?: string | null;
 }
 
-// Default enemy sprite URL from Supabase storage
-const ENEMY_SPRITE_URL = 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/battle/Pixel%20Monster%20No%20Background.png';
+// Default enemy sprite URL - using goblins.png
+const ENEMY_SPRITE_URL = '/avatar/goblins.png';
 
 /**
  * CharacterSprite Component
@@ -79,8 +79,8 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
             : ENEMY_SPRITE_URL
           }
           alt={position === 'left' ? 'Player' : 'Enemy'}
-          width={240}
-          height={240}
+          width={160}
+          height={160}
           className={spriteClasses}
           priority
         />

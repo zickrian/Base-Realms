@@ -32,7 +32,6 @@ export default function BattlePage() {
   const { profile, refreshProfile, refreshInventory, selectCard } = useGameStore();
   const [phase, setPhase] = useState<BattlePhase>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [isExiting, setIsExiting] = useState(false);
   const [showQRISPopup, setShowQRISPopup] = useState(false);
   const [battleResult, setBattleResult] = useState<{ won: boolean; txHash: string } | null>(null);
   const { initBattle, resetBattle } = useBattleStore();
@@ -207,21 +206,18 @@ export default function BattlePage() {
     const tokenId = profile.selectedCard.token_id;
     const battleTxHash = battleState.battleResult?.txHash || undefined;
     
-    // Mark as exiting immediately - this triggers navigation
-    setIsExiting(true);
-    
     console.log('[BattlePage] Visual battle ended, processing cleanup in background...', {
       tokenId,
       battleTxHash,
       won: battleResult?.won,
     });
     
-    // Cleanup and navigate home immediately (no processing screen)
+    // Navigate to home immediately (no processing screen)
+    router.replace('/home');
+    
+    // Cleanup battle state
     resetBattle();
     resetBattleHook();
-    
-    // Navigate to home first for instant feedback
-    router.replace('/home');
     
     // Process cleanup in background (non-blocking)
     try {
@@ -251,23 +247,8 @@ export default function BattlePage() {
     return () => {
       resetBattle();
       resetBattleHook();
-      setIsExiting(false);
     };
   }, [resetBattle, resetBattleHook]);
-
-  // Prevent render during exit or processing
-  if (isExiting || phase === 'processing') {
-    return (
-      <div className={styles.battlePageContainer}>
-        <div className={styles.mobileFrame}>
-          <div className={styles.processingScreen}>
-            <div className={styles.processingSpinner}>*</div>
-            <p className={styles.processingText}>Processing battle results...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Render based on phase
   const renderContent = () => {

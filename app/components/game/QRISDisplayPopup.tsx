@@ -34,7 +34,18 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
   const [isChecking, setIsChecking] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Mount tracking
+  useEffect(() => {
+    setMounted(true);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Calculate time remaining
   useEffect(() => {
@@ -59,14 +70,19 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
 
   // Poll for payment status
   const checkPaymentStatus = useCallback(async () => {
-    if (!orderId || isChecking) return;
+    if (!orderId || isChecking || !isMountedRef.current) return;
 
     setIsChecking(true);
     try {
       const response = await fetch(`/api/qris/status/${orderId}`);
       const data = await response.json();
 
+      console.log('[QRISDisplay] Payment status check:', data);
+
+      if (!isMountedRef.current) return; // Check again after async operation
+
       if (data.success && data.payment.status === 'success') {
+        console.log('[QRISDisplay] Payment successful! Triggering success callback');
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
@@ -76,11 +92,13 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
     } catch (error) {
       console.error('Failed to check payment status:', error);
     } finally {
-      setIsChecking(false);
+      if (isMountedRef.current) {
+        setIsChecking(false);
+      }
     }
   }, [orderId, isChecking, onPaymentSuccess]);
 
-  // Auto-poll every 3 seconds
+  // Auto-poll every 2 seconds with immediate check
   useEffect(() => {
     if (!isOpen || timeRemaining === 0) {
       if (pollIntervalRef.current) {
@@ -90,7 +108,11 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
       return;
     }
 
-    pollIntervalRef.current = setInterval(checkPaymentStatus, 3000);
+    // Immediate check when popup opens
+    checkPaymentStatus();
+
+    // Then poll every 2 seconds
+    pollIntervalRef.current = setInterval(checkPaymentStatus, 2000);
     
     return () => {
       if (pollIntervalRef.current) {
@@ -140,7 +162,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -216,15 +238,15 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
           <div className={styles.instructions}>
             <div className={styles.instructionItem}>
               <span className={styles.stepNumber}>1</span>
-              <span className={styles.stepText}>Buka aplikasi e-wallet</span>
+              <span className={styles.stepText}>Open your e-wallet app</span>
             </div>
             <div className={styles.instructionItem}>
               <span className={styles.stepNumber}>2</span>
-              <span className={styles.stepText}>Scan kode QRIS di atas</span>
+              <span className={styles.stepText}>Scan the QRIS code above</span>
             </div>
             <div className={styles.instructionItem}>
               <span className={styles.stepNumber}>3</span>
-              <span className={styles.stepText}>Selesaikan pembayaran</span>
+              <span className={styles.stepText}>Complete the payment</span>
             </div>
           </div>
 
@@ -232,7 +254,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
           <div className={styles.simulatorBox}>
             <div className={styles.simulatorTitle}>💻 Test Payment (Sandbox)</div>
             <div className={styles.simulatorText}>
-              Copy URL ini untuk Midtrans Simulator:
+              Copy this URL for Midtrans Simulator:
             </div>
             <div className={styles.urlBox} onClick={handleCopyUrl}>
               <div className={styles.urlText}>{qrisUrl}</div>
@@ -245,7 +267,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
                 rel="noopener noreferrer"
                 className={styles.linkText}
               >
-                → Buka Midtrans Simulator
+                → Open Midtrans Simulator
               </a>
             </div>
           </div>
@@ -255,12 +277,12 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
             {isChecking ? (
               <>
                 <RefreshCw size={20} className={styles.spinning} />
-                <span>Memeriksa status...</span>
+                <span>Checking status...</span>
               </>
             ) : (
               <>
                 <div className={styles.pulsingDot}></div>
-                <span>Menunggu pembayaran...</span>
+                <span>Waiting for payment...</span>
               </>
             )}
           </div>
@@ -276,7 +298,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
             onClick={handleCancel}
             disabled={isCancelling}
           >
-            {isCancelling ? 'Membatalkan...' : 'Batalkan Pembayaran'}
+            {isCancelling ? 'Cancelling...' : 'Cancel Payment'}
           </button>
         </div>
       </div>
