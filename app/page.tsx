@@ -145,7 +145,7 @@ export default function Landing() {
               Welcome to Base Realms - where strategy meets fortune. 
               Mint your hero and step into the arena.
               <br/><br/>
-              Whether you're here to fight or collect, the realm is open.
+              Whether you&apos;re here to fight or collect, the realm is open.
             </p>
           </div>
 
