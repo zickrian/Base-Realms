@@ -51,9 +51,6 @@ export default function HomePage() {
     Array.isArray(cardPacks);
 
   // Refs to prevent race conditions and multiple redirects
-  const hasEverBeenReady = useRef(
-    typeof window !== 'undefined' && sessionStorage.getItem('homeWasReady') === 'true'
-  );
   const redirectAttempted = useRef(false);
 
   const [_activeNav, _setActiveNav] = useState<"cards" | "arena" | "market">("arena");
@@ -405,33 +402,34 @@ export default function HomePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, address, isFullyReady, refreshInventory, refreshQuests]);
 
-  // Redirect if not connected - IMPROVED with isFullyReady check
+  // Redirect if not connected or not fully ready
   useEffect(() => {
-    // Don't redirect while connecting or loading
-    if (isConnecting || storeLoading) return;
-
-    // If user was ever ready, don't redirect (prevents flash on navigation)
-    if (hasEverBeenReady.current) return;
-
-    // If fully ready and connected, user is good
-    if (isFullyReady && isConnected) return;
-
-    // Prevent multiple redirects
-    if (redirectAttempted.current) return;
-
-    // Wait for state to settle before redirecting
-    const timer = setTimeout(() => {
-      if (!isConnected || !isFullyReady) {
-        // Only redirect if we haven't been ready before (prevents logout flash)
-        if (!hasEverBeenReady.current) {
-          redirectAttempted.current = true;
-          router.replace("/");
-        }
+    // Don't check until mounted
+    if (!mounted) return;
+    
+    // If disconnected, redirect immediately
+    if (!isConnected && !isConnecting) {
+      if (!redirectAttempted.current) {
+        console.log('[Home] Not connected, redirecting to landing...');
+        redirectAttempted.current = true;
+        router.replace('/');
       }
-    }, 500); // Increased delay for better stability
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [isConnected, isConnecting, isFullyReady, storeLoading, router]);
+    // If connected but data not ready, redirect after timeout
+    if (isConnected && !isFullyReady && !redirectAttempted.current) {
+      const timer = setTimeout(() => {
+        if (!isFullyReady && !redirectAttempted.current) {
+          console.log('[Home] Data not ready, redirecting to landing...');
+          redirectAttempted.current = true;
+          router.replace('/');
+        }
+      }, 2000); // Give time for data to load
+      
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, isConnected, isConnecting, isFullyReady, router]);
 
   // Define handlers BEFORE conditional returns (but after hooks)
   const _handleBattle = () => { };
@@ -727,13 +725,34 @@ export default function HomePage() {
     </>
   );
 
-  // Redirect if not connected - all data should be ready from landing page
+  // Redirect if not connected or not fully ready
   useEffect(() => {
-    if (mounted && !isConnected && !isConnecting) {
-      console.log('[Home] Not connected, redirecting to landing...');
-      router.replace('/');
+    // Don't check until mounted
+    if (!mounted) return;
+    
+    // If disconnected, redirect immediately
+    if (!isConnected && !isConnecting) {
+      if (!redirectAttempted.current) {
+        console.log('[Home] Not connected, redirecting to landing...');
+        redirectAttempted.current = true;
+        router.replace('/');
+      }
+      return;
     }
-  }, [mounted, isConnected, isConnecting, router]);
+
+    // If connected but data not ready, redirect after timeout
+    if (isConnected && !isFullyReady && !redirectAttempted.current) {
+      const timer = setTimeout(() => {
+        if (!isFullyReady && !redirectAttempted.current) {
+          console.log('[Home] Data not ready, redirecting to landing...');
+          redirectAttempted.current = true;
+          router.replace('/');
+        }
+      }, 2000); // Give time for data to load
+      
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, isConnected, isConnecting, isFullyReady, router]);
 
   // Render a stable tree until client-side hydration completes
   if (!mounted) {

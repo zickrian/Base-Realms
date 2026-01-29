@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./landing.module.css";
 
 export default function Landing() {
@@ -45,11 +46,11 @@ export default function Landing() {
 
         {/* Logo on Left (hidden on mobile, logo not in middle) */}
         <div className={styles.navLogo}>
-          <Image 
-            src="/logoke.png" 
-            alt="Base Realms" 
-            width={150} 
-            height={80} 
+          <Image
+            src="/logoke.png"
+            alt="Base Realms"
+            width={150}
+            height={80}
             style={{ width: '100%', height: 'auto' }}
             priority
           />
@@ -58,11 +59,11 @@ export default function Landing() {
         {/* Links Center (desktop only) */}
         <div className={styles.navLinks}>
           <a href="#" className={styles.navLink}>Home</a>
-          <a href="/docs" className={styles.navLink}>Docs</a>
+          <Link href="/docs" className={styles.navLink}>Docs</Link>
           <a href="#" className={styles.navLink}>Tutorial</a>
           <a href="#" className={styles.navLink}>Economy</a>
         </div>
-        
+
         {/* Play Button Right (desktop: visible, mobile: in drawer) */}
         <div className={styles.navRight}>
           <button
@@ -103,7 +104,7 @@ export default function Landing() {
         </div>
         <div className={styles.navDrawerLinks}>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Home</a>
-          <a href="/docs" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Docs</a>
+          <Link href="/docs" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Docs</Link>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Tutorial</a>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Economy</a>
         </div>
@@ -114,14 +115,14 @@ export default function Landing() {
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
           {/* NO LOGO HERE as requested "di hero jangan kasih logo base realms di kiri atas aja" interpreted as move logo to navbar only */}
-          
+
           <h1 className={styles.heroSubtitle}>
             Mint a Character for Free,<br />
             Enter Battles, and<br />
             Compete to Win Rewards!
           </h1>
         </div>
-        
+
         {/* NO Scroll Indicator as requested */}
       </header>
 
@@ -130,42 +131,42 @@ export default function Landing() {
         <div className={styles.cardGrid}>
           {/* Card 1 */}
           <div className={styles.pixelCard}>
-            <div style={{ 
-              width: 100, height: 100, 
-              background: '#000', 
+            <div style={{
+              width: 100, height: 100,
+              background: '#000',
               borderRadius: '50%',
               border: '4px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden'
             }}>
-               <Image src="/avatar/avatar1.svg" alt="Char" width={80} height={80} />
+              <Image src="/avatar/avatar1.svg" alt="Char" width={80} height={80} />
             </div>
             <h2 className={styles.cardTitle}>1. Connect and Start</h2>
             <p className={styles.cardText}>
-              Welcome to Base Realms - where strategy meets fortune. 
+              Welcome to Base Realms - where strategy meets fortune.
               Mint your hero and step into the arena.
-              <br/><br/>
+              <br /><br />
               Whether you&apos;re here to fight or collect, the realm is open.
             </p>
           </div>
 
           {/* Card 2 */}
           <div className={styles.pixelCard}>
-            <div style={{ 
-              width: 100, height: 100, 
-              background: '#000', 
+            <div style={{
+              width: 100, height: 100,
+              background: '#000',
               borderRadius: '50%',
               border: '4px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '1.5rem', color: '#fcd34d'
             }}>
-               IDRX
+              IDRX
             </div>
             <h2 className={styles.cardTitle}>2. Join the Economy</h2>
             <p className={styles.cardText}>
-              Earn IDRX through battles. Stake in the Battle Bank. 
+              Earn IDRX through battles. Stake in the Battle Bank.
               The more you play, the more you earn.
-              <br/><br/>
+              <br /><br />
               Transparent, onchain, and fair.
             </p>
           </div>
@@ -179,15 +180,15 @@ export default function Landing() {
             MEET THE WARRIORS
           </h2>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-             {['1000.png', '955.png', '819.png'].map((img, i) => (
-               <div key={i} style={{ 
-                 background: '#fff', padding: '10px 10px 40px 10px', 
-                 transform: `rotate(${i % 2 === 0 ? '-3deg' : '3deg'})`,
-                 boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-               }}>
-                 <Image src={`/${img}`} alt="Warrior" width={200} height={200} style={{ border: '1px solid #eee' }} />
-               </div>
-             ))}
+            {['1000.png', '955.png', '819.png'].map((img, i) => (
+              <div key={i} style={{
+                background: '#fff', padding: '10px 10px 40px 10px',
+                transform: `rotate(${i % 2 === 0 ? '-3deg' : '3deg'})`,
+                boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+              }}>
+                <Image src={`/${img}`} alt="Warrior" width={200} height={200} style={{ border: '1px solid #eee' }} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -213,7 +214,7 @@ export default function Landing() {
               <span className={styles.footerLegalDot}>·</span>
               <a href="#">Privacy Policy</a>
               <span className={styles.footerLegalDot}>·</span>
-              <a href="/docs">Docs</a>
+              <Link href="/docs">Docs</Link>
             </div>
           </div>
         </div>
