@@ -60,7 +60,7 @@ Players mint or acquire NFT characters, each with unique **HP (Health Points)** 
 ## ✨ Key Features
 
 ### 🎴 NFT Character Cards
-- **999 Unique Characters** with different stats
+- **1000 Unique Characters** with different stats
 - **4 Rarity Tiers**: Common, Rare, Epic, Legendary
 - Stats range: HP (100-250), ATK (8-40)
 - Higher rarity = better stats
