@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, RefreshCw, Copy, Smartphone } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import styles from './QRISDisplayPopup.module.css';
 
@@ -55,45 +55,18 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-    // handleCancel is defined with useCallback and includes all deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, expiresAt]);
 
   // Poll for payment status
   const checkPaymentStatus = useCallback(async () => {
-    if (!orderId) return;
-
-    // Use ref to check if already checking to prevent race condition
-    if (isChecking) return;
+    if (!orderId || isChecking) return;
 
     setIsChecking(true);
     try {
       const response = await fetch(`/api/qris/status/${orderId}`);
-      
-      // Check if response is OK before parsing JSON
-      if (!response.ok) {
-        console.error('[QRIS] Status check failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url
-        });
-        
-        // Try to get error message
-        const text = await response.text();
-        console.error('[QRIS] Response body:', text.substring(0, 200));
-        return;
-      }
-      
       const data = await response.json();
 
-      console.log('[QRIS] Polling status:', {
-        success: data.success,
-        status: data.payment?.status,
-        orderId: orderId
-      });
-
       if (data.success && data.payment.status === 'success') {
-        console.log('[QRIS] Payment SUCCESS detected! Triggering success callback...');
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
@@ -101,15 +74,11 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
         onPaymentSuccess();
       }
     } catch (error) {
-      console.error('[QRIS] Failed to check payment status:', error);
-      if (error instanceof SyntaxError) {
-        console.error('[QRIS] Received non-JSON response (likely HTML error page)');
-      }
+      console.error('Failed to check payment status:', error);
     } finally {
       setIsChecking(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, onPaymentSuccess]);
+  }, [orderId, isChecking, onPaymentSuccess]);
 
   // Auto-poll every 3 seconds
   useEffect(() => {
@@ -132,7 +101,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
   }, [isOpen, timeRemaining, checkPaymentStatus]);
 
   // Handle cancel/close - mark payment as failed
-  const handleCancel = useCallback(async () => {
+  const handleCancel = async () => {
     if (isCancelling) return;
     
     setIsCancelling(true);
@@ -158,7 +127,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
       }
       onClose();
     }
-  }, [orderId, isCancelling, onClose]);
+  };
 
   // Handle copy QRIS URL for simulator
   const handleCopyUrl = async () => {
@@ -236,7 +205,7 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
                 />
               ) : (
                 <div className={styles.qrisPlaceholder}>
-                  <Smartphone size={48} className={styles.qrisIcon} />
+                  <div className={styles.qrisIcon}>📱</div>
                   <p>Generating QRIS...</p>
                 </div>
               )}
@@ -261,16 +230,13 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
 
           {/* Simulator Instructions */}
           <div className={styles.simulatorBox}>
-            <div className={styles.simulatorTitle}>Test Payment (Sandbox)</div>
+            <div className={styles.simulatorTitle}>💻 Test Payment (Sandbox)</div>
             <div className={styles.simulatorText}>
               Copy URL ini untuk Midtrans Simulator:
             </div>
             <div className={styles.urlBox} onClick={handleCopyUrl}>
               <div className={styles.urlText}>{qrisUrl}</div>
-              <button className={styles.copyIcon} onClick={handleCopyUrl}>
-                <Copy size={16} />
-                <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
-              </button>
+              <div className={styles.copyIcon}>{copySuccess ? '✓ Copied!' : '📋 Copy'}</div>
             </div>
             <div className={styles.simulatorLink}>
               <a 
@@ -298,16 +264,6 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
               </>
             )}
           </div>
-
-          {/* Manual Check Button for Sandbox Testing */}
-          <button 
-            onClick={() => checkPaymentStatus()}
-            disabled={isChecking}
-            className={styles.checkButton}
-          >
-            <RefreshCw size={16} className={isChecking ? styles.spinning : ''} />
-            {isChecking ? 'Checking...' : 'Check Payment Status'}
-          </button>
 
           {/* Order ID */}
           <div className={styles.orderInfo}>
