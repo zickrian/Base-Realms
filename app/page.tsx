@@ -1,154 +1,84 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
-import { LandingContent } from "./components/LandingContent";
-import { useGameStore } from "./stores/gameStore";
 
-export default function Home() {
+export default function Landing() {
   const router = useRouter();
-  const { setMiniAppReady, isMiniAppReady } = useMiniKit();
-  const { isConnected, isConnecting, address } = useAccount();
-  const { isInitialized, isLoading, initializeGameData, reset, profile, quests, cardPacks, inventory, dailyPackCount, currentStage } = useGameStore();
-  const initRef = useRef(false);
-  const redirectedRef = useRef(false);
-  const wasConnectedRef = useRef(false);
-  const addressRef = useRef<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [initError, setInitError] = useState<string | null>(null);
-  const [loadingStep, setLoadingStep] = useState<'connecting' | 'initializing' | 'loading' | 'ready'>('connecting');
 
-  // Initialize MiniKit once
-  useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
-    }
-  }, [setMiniAppReady, isMiniAppReady]);
+  const handlePlayClick = () => {
+    router.push('/login');
+  };
 
-  // Memoized init function to prevent re-creation
-  const handleInitialize = useCallback(async (walletAddr: string) => {
-    // Prevent duplicate initialization
-    if (initRef.current) return;
-    initRef.current = true;
-    addressRef.current = walletAddr;
-    setInitError(null);
-
-    try {
-      // Login first
-      const loginRes = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: walletAddr }),
-      });
-
-      if (!loginRes.ok) {
-        throw new Error('Login failed');
-      }
-
-      // Then initialize game data
-      await initializeGameData(walletAddr);
-    } catch (err) {
-      console.error('Initialization failed:', err);
-      setInitError(err instanceof Error ? err.message : 'Failed to initialize');
-      initRef.current = false;
-      addressRef.current = null;
-    }
-  }, [initializeGameData]);
-
-  // Handle wallet disconnection - show logout screen then reset
-  useEffect(() => {
-    if (!isConnected && !isConnecting) {
-      if (wasConnectedRef.current) {
-        setIsLoggingOut(true);
-        setTimeout(() => {
-          reset();
-          initRef.current = false;
-          redirectedRef.current = false;
-          addressRef.current = null;
-          setInitError(null);
-          setIsLoggingOut(false);
-        }, 1500);
-      } else {
-        reset();
-        initRef.current = false;
-        redirectedRef.current = false;
-        addressRef.current = null;
-        setInitError(null);
-      }
-    }
-    if (isConnected) {
-      wasConnectedRef.current = true;
-    }
-  }, [isConnected, isConnecting, reset]);
-
-  // Update loading step based on data status
-  useEffect(() => {
-    if (!isConnected || !address) {
-      setLoadingStep('connecting');
-      return;
-    }
-
-    if (!isInitialized || isLoading) {
-      setLoadingStep('initializing');
-      return;
-    }
-
-    // Check if all critical data is loaded (including new preloaded data)
-    const allDataReady =
-      profile !== null &&
-      Array.isArray(quests) &&
-      Array.isArray(cardPacks) &&
-      Array.isArray(inventory) &&
-      dailyPackCount !== undefined &&
-      currentStage !== undefined; // Can be null but should be defined
-
-    if (allDataReady) {
-      setLoadingStep('ready');
-    } else {
-      setLoadingStep('loading');
-    }
-  }, [isConnected, address, isInitialized, isLoading, profile, quests, cardPacks, inventory, dailyPackCount, currentStage]);
-
-  // Redirect when all data is ready - only once
-  useEffect(() => {
-    if (loadingStep === 'ready' && !redirectedRef.current) {
-      redirectedRef.current = true;
-      console.log('[Landing] All data ready, redirecting to home...');
-      console.log('[Landing] - Profile:', profile);
-      console.log('[Landing] - Quests:', quests?.length);
-      console.log('[Landing] - Card Packs:', cardPacks?.length);
-      console.log('[Landing] - Inventory:', inventory?.length);
-      console.log('[Landing] - Daily Packs:', dailyPackCount);
-      console.log('[Landing] - Current Stage:', currentStage?.name);
-      // Small delay to ensure all state is settled
-      const timer = setTimeout(() => {
-        router.replace("/home");
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [loadingStep, profile, quests, cardPacks, inventory, dailyPackCount, currentStage, router]);
-
-  // Start fetching data when wallet is connected but not initialized
-  useEffect(() => {
-    // Only initialize if:
-    // 1. Connected with address
-    // 2. Not yet initialized
-    // 3. Not currently loading
-    // 4. Haven't started init yet
-    // 5. No error
-    if (
-      isConnected && 
-      address && 
-      !isInitialized && 
-      !isLoading && 
-      !initRef.current && 
-      !initError
-    ) {
-      handleInitialize(address);
-    }
-  }, [isConnected, address, isInitialized, isLoading, initError, handleInitialize]);
-
-  return <LandingContent isLoggingOut={isLoggingOut} initError={initError} loadingStep={loadingStep} />;
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #8b5a2b 0%, #e8be82 50%, #8b5a2b 100%)',
+      fontFamily: "'VT323', monospace",
+      color: '#3e1f08',
+    }}>
+      <h1 style={{
+        fontSize: '3rem',
+        marginBottom: '2rem',
+        textShadow: '2px 2px 0 rgba(0, 0, 0, 0.3)',
+        textAlign: 'center',
+      }}>
+        Base Realms
+      </h1>
+      <button
+        onClick={handlePlayClick}
+        style={{
+          backgroundColor: '#e8be82',
+          border: '2px solid #8b5a2b',
+          borderRadius: '4px',
+          padding: '12px 24px',
+          fontSize: '1.5rem',
+          fontFamily: 'inherit',
+          color: '#3e1f08',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          transition: 'transform 0.1s',
+          boxShadow: `
+            inset 0 0 8px rgba(139, 69, 19, 0.2),
+            0 2px 0 #8b5a2b,
+            0 3px 0 rgba(0, 0, 0, 0.3)
+          `,
+          textShadow: '0 1px 0 rgba(255, 255, 255, 0.4)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(1px)';
+          e.currentTarget.style.boxShadow = `
+            inset 0 0 8px rgba(139, 69, 19, 0.2),
+            0 1px 0 #8b5a2b,
+            0 2px 0 rgba(0, 0, 0, 0.3)
+          `;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = `
+            inset 0 0 8px rgba(139, 69, 19, 0.2),
+            0 2px 0 #8b5a2b,
+            0 3px 0 rgba(0, 0, 0, 0.3)
+          `;
+        }}
+        onMouseDown={(e) => {
+          e.currentTarget.style.transform = 'translateY(2px)';
+          e.currentTarget.style.boxShadow = 'inset 0 0 8px rgba(139, 69, 19, 0.2)';
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = `
+            inset 0 0 8px rgba(139, 69, 19, 0.2),
+            0 2px 0 #8b5a2b,
+            0 3px 0 rgba(0, 0, 0, 0.3)
+          `;
+        }}
+      >
+        Play
+      </button>
+    </div>
+  );
 }
