@@ -646,7 +646,7 @@ NEXT_PUBLIC_QRIS_CLAIM_HASH_CONTRACT_ADDRESS=contract_address
 4. Deploy!
 
 ```bash
-# Or use Vercel CLI
+# Or use Vercel CL
 npm i -g vercel
 vercel --prod
 ```
