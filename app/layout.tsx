@@ -3,6 +3,7 @@ import { Inter, Source_Code_Pro, Pixelify_Sans, Russo_One } from "next/font/goog
 import { SafeArea } from "@coinbase/onchainkit/minikit";
 import { minikitConfig } from "@/minikit.config";
 import { RootProvider } from "./rootProvider";
+import { CallReady } from "./CallReady";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -92,6 +93,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning translate="no">
       <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
         <RootProvider>
+          <CallReady />
           <SafeArea>{children}</SafeArea>
         </RootProvider>
       </body>
