@@ -8,11 +8,23 @@ import "@coinbase/onchainkit/styles.css";
 
 export function RootProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    try {
-      sdk.actions.ready();
-    } catch {
-      // Safe to ignore if not running inside Farcaster MiniApp
-    }
+    let cancelled = false;
+
+    const hideSplash = async () => {
+      try {
+        // Wait for first paint so content is visible before hiding splash
+        await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+        if (cancelled) return;
+        await sdk.actions.ready();
+      } catch {
+        // Safe to ignore if not running inside Farcaster MiniApp
+      }
+    };
+
+    hideSplash();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
