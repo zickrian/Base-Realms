@@ -19,7 +19,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
       }}
       miniKit={{
         enabled: true,
-        autoConnect: true,
+        autoConnect: false, // CRITICAL FIX: Prevent auto-reconnect after logout
         notificationProxyUrl: undefined,
       }}
     >

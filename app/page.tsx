@@ -15,7 +15,25 @@ export default function Landing() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    // CRITICAL FIX: Clear wagmi storage on landing page if not connected
+    // This prevents auto-reconnection issues on mobile when user returns to app
+    if (typeof window !== 'undefined' && !isConnected && !isConnecting) {
+      const keysToRemove = [
+        'wagmi.wallet',
+        'wagmi.connected',
+        'wagmi.recentConnectorId',
+        'wagmi.store',
+        'wagmi.cache',
+        'wagmi.injected.shimDisconnect',
+      ];
+
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      sessionStorage.clear();
+    }
+  }, [isConnected, isConnecting]);
 
   useEffect(() => {
     if (mounted && isConnected && !isConnecting) {

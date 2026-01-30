@@ -33,26 +33,38 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
     try {
       // Close settings menu first
       onClose();
-      
+
       // Clear game store (removes all cached data)
       reset();
-      
+
       // Disconnect wallet (wagmi will update isConnected to false)
       disconnect();
-      
-      // Clear any localStorage/sessionStorage that might cache connection state
-      // This ensures no stale data persists
+
+      // CRITICAL FIX: Clear ALL wagmi/wallet storage to prevent auto-reconnect
+      // This is especially important for mobile where autoConnect can cause "bouncing" issues
       if (typeof window !== 'undefined') {
-        // Clear wagmi connection cache
-        localStorage.removeItem('wagmi.wallet');
-        localStorage.removeItem('wagmi.connected');
+        // Clear all wagmi-related keys
+        const keysToRemove = [
+          'wagmi.wallet',
+          'wagmi.connected',
+          'wagmi.recentConnectorId', // CRITICAL: This causes auto-reconnect
+          'wagmi.store',
+          'wagmi.cache',
+          'wagmi.injected.shimDisconnect',
+        ];
+
+        keysToRemove.forEach(key => {
+          localStorage.removeItem(key);
+        });
+
+        // Clear all sessionStorage (character positions, settings cache, etc.)
         sessionStorage.clear();
       }
-      
+
       // Wait longer to ensure disconnect state is fully propagated
       // This prevents race condition where isConnected might still be true
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       // Force full page reload to root page
       // This ensures:
       // 1. Complete state reset (React components re-initialize)
@@ -66,8 +78,19 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
       reset();
       disconnect();
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('wagmi.wallet');
-        localStorage.removeItem('wagmi.connected');
+        // Same comprehensive cleanup on error
+        const keysToRemove = [
+          'wagmi.wallet',
+          'wagmi.connected',
+          'wagmi.recentConnectorId',
+          'wagmi.store',
+          'wagmi.cache',
+          'wagmi.injected.shimDisconnect',
+        ];
+
+        keysToRemove.forEach(key => {
+          localStorage.removeItem(key);
+        });
         sessionStorage.clear();
       }
       // Force redirect regardless of errors
@@ -90,7 +113,7 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('userSoundVolume', String(newVolume));
     }
-    
+
     // Debounce save
     const windowWithTimeout = window as Window & { volumeSaveTimeout?: ReturnType<typeof setTimeout> };
     clearTimeout(windowWithTimeout.volumeSaveTimeout);
