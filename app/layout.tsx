@@ -38,6 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
     },
     other: {
+      "base:app_id": "697cc71cc0622780c63f6691",
       "fc:miniapp": JSON.stringify({
         version: minikitConfig.miniapp.version,
         imageUrl: minikitConfig.miniapp.heroImageUrl,
