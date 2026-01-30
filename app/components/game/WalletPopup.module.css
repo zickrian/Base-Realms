@@ -221,6 +221,9 @@
 .qrisIcon {
   image-rendering: pixelated;
   filter: brightness(1.1);
+  width: 48px !important;
+  height: 48px !important;
+  object-fit: contain;
 }
 
 .topupText {

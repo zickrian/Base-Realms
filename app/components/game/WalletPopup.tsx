@@ -118,6 +118,8 @@ export const WalletPopup = ({
   };
 
   const handleTopup = () => {
+    // Tutup wallet popup saat membuka price selection
+    onClose();
     setIsPriceSelectionOpen(true);
   };
 
@@ -171,7 +173,11 @@ export const WalletPopup = ({
     setQrisData(null);
   };
 
-  if (!isOpen || !mounted) return null;
+  const handlePriceSelectionClose = () => {
+    setIsPriceSelectionOpen(false);
+    // Buka kembali wallet popup jika user cancel
+    // Tidak perlu panggil onClose karena sudah tertutup
+  };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Close popup if clicking on overlay (not on menuBox)
@@ -180,115 +186,121 @@ export const WalletPopup = ({
     }
   };
 
+  if (!mounted) return null;
+
+  // Render wallet popup hanya jika isOpen dan tidak ada popup lain yang terbuka
+  const showWalletPopup = isOpen && !isPriceSelectionOpen && !isQRISDisplayOpen && !isSuccessOpen;
+
   return (
-    <div className={styles.container} onClick={handleOverlayClick}>
-      <div className={`${styles.menuBox} bit16-container`}>
-        {/* Header with Close Button */}
-        <div className={styles.header}>
-          <div className={styles.title}>Wallet</div>
-          <button 
-            className={`${styles.closeButton} bit16-button has-red-background`} 
-            onClick={onClose}
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className={styles.content}>
-          {/* Balance Display */}
-          <div className={styles.balanceSection}>
-            <div className={styles.balanceItem}>
-              <Image 
-                src={getGameIconUrl("ethereum.png")} 
-                alt="ETH" 
-                width={24} 
-                height={24}
-                priority
-              />
-              <div className={styles.balanceValue}>{formatBalance(ethBalance)}</div>
-            </div>
-
-            <div className={styles.balanceItem}>
-              <Image 
-                src={getGameIconUrl("IDRX.png")} 
-                alt="IDRX" 
-                width={24} 
-                height={24}
-                priority
-              />
-              <div className={styles.balanceValue}>{formatIDRX(idrxBalance)}</div>
-            </div>
-          </div>
-
-          {/* Base Name Section */}
-          <div className={styles.baseNameSection}>
-            <div className={styles.sectionLabel}>Base Name</div>
-            {isLoadingName ? (
-              <div className={styles.baseName}>Loading...</div>
-            ) : baseName ? (
-              <div className={styles.baseName}>{baseName}</div>
-            ) : (
-              <a 
-                href="https://www.base.org/names" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={styles.getBaseNameLink}
+    <>
+      {showWalletPopup && (
+        <div className={styles.container} onClick={handleOverlayClick}>
+          <div className={`${styles.menuBox} bit16-container`}>
+            {/* Header with Close Button */}
+            <div className={styles.header}>
+              <div className={styles.title}>Wallet</div>
+              <button 
+                className={`${styles.closeButton} bit16-button has-red-background`} 
+                onClick={onClose}
               >
-                Didn&apos;t have Base Name Yet? Get One
-              </a>
-            )}
-          </div>
+                <X size={24} />
+              </button>
+            </div>
 
-          {/* Wallet Address */}
-          <div className={styles.addressSection}>
-            <div className={styles.sectionLabel}>Address</div>
-            <div className={styles.address} title={walletAddress}>
-              {shortenAddress(walletAddress)}
+            {/* Content */}
+            <div className={styles.content}>
+              {/* Balance Display */}
+              <div className={styles.balanceSection}>
+                <div className={styles.balanceItem}>
+                  <Image 
+                    src={getGameIconUrl("ethereum.png")} 
+                    alt="ETH" 
+                    width={24} 
+                    height={24}
+                    priority
+                  />
+                  <div className={styles.balanceValue}>{formatBalance(ethBalance)}</div>
+                </div>
+
+                <div className={styles.balanceItem}>
+                  <Image 
+                    src={getGameIconUrl("IDRX.png")} 
+                    alt="IDRX" 
+                    width={24} 
+                    height={24}
+                    priority
+                  />
+                  <div className={styles.balanceValue}>{formatIDRX(idrxBalance)}</div>
+                </div>
+              </div>
+
+              {/* Base Name Section */}
+              <div className={styles.baseNameSection}>
+                <div className={styles.sectionLabel}>Base Name</div>
+                {isLoadingName ? (
+                  <div className={styles.baseName}>Loading...</div>
+                ) : baseName ? (
+                  <div className={styles.baseName}>{baseName}</div>
+                ) : (
+                  <a 
+                    href="https://www.base.org/names" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={styles.getBaseNameLink}
+                  >
+                    Didn&apos;t have Base Name Yet? Get One
+                  </a>
+                )}
+              </div>
+
+              {/* Wallet Address */}
+              <div className={styles.addressSection}>
+                <div className={styles.sectionLabel}>Address</div>
+                <div className={styles.address} title={walletAddress}>
+                  {shortenAddress(walletAddress)}
+                </div>
+              </div>
+
+
+              {/* QRIS Topup Button */}
+              <button 
+                className={styles.topupButton}
+                onClick={handleTopup}
+              >
+                <img 
+                  src="/button/image.png" 
+                  alt="QRIS" 
+                  className={styles.qrisIcon}
+                />
+                <span className={styles.topupText}>IDRX TOPUP</span>
+              </button>
+
+              {/* Action Buttons */}
+              <div className={styles.actionButtons}>
+                <button 
+                  className={`${styles.actionButton} bit16-button`}
+                  onClick={handleCopy}
+                >
+                  <Copy size={20} />
+                  <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
+                </button>
+                <button 
+                  className={`${styles.actionButton} bit16-button`}
+                  onClick={handleShare}
+                >
+                  <Share2 size={20} />
+                  <span>Share</span>
+                </button>
+              </div>
             </div>
           </div>
-
-
-          {/* QRIS Topup Button */}
-          <button 
-            className={styles.topupButton}
-            onClick={handleTopup}
-          >
-            <Image 
-              src="/button/image.png" 
-              alt="QRIS" 
-              width={32} 
-              height={32}
-              className={styles.qrisIcon}
-              priority
-            />
-            <span className={styles.topupText}>IDRX QRIS Topup</span>
-          </button>
-
-          {/* Action Buttons */}
-          <div className={styles.actionButtons}>
-            <button 
-              className={`${styles.actionButton} bit16-button`}
-              onClick={handleCopy}
-            >
-              <Copy size={20} />
-              <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
-            </button>
-            <button 
-              className={`${styles.actionButton} bit16-button`}
-              onClick={handleShare}
-            >
-              <Share2 size={20} />
-              <span>Share</span>
-            </button>
-          </div>
         </div>
-      </div>
+      )}
 
-      {/* QRIS Popups */}
+      {/* QRIS Popups - Render independently */}
       <PriceSelectionPopup
         isOpen={isPriceSelectionOpen}
-        onClose={() => setIsPriceSelectionOpen(false)}
+        onClose={handlePriceSelectionClose}
         onSelectAmount={handleAmountSelect}
       />
 
@@ -312,6 +324,6 @@ export const WalletPopup = ({
           />
         </>
       )}
-    </div>
+    </>
   );
 };
