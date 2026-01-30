@@ -1,0 +1,199 @@
+/* VT323 font and fadeIn/popIn animations moved to globals.css */
+
+/* Container */
+.container {
+  font-family: 'VT323', monospace;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Settings Box - Pixel RPG Window (Parchment Style) */
+.menuBox {
+  width: 90%;
+  max-width: 400px;
+  /* Batasi tinggi supaya tidak nempel ke atas & bawah layar */
+  max-height: 550px; /* Fixed max height to prevent full-screen on Android */
+  background-color: #e8be82;
+  box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  color: #3e1f08;
+  padding: 6px;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
+}
+
+/* Header */
+.header {
+  background: transparent;
+  color: #3e1f08;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px dashed #8b5a2b;
+  /* Dashed line like sewn leather or ink */
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+  font-weight: bold;
+}
+
+.closeButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  font-size: 16px;
+  background-color: #f22561;
+  color: #ffffff;
+}
+
+/* Content */
+.settingsContent {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settingSection {
+  background: rgba(139, 69, 19, 0.05);
+  /* Slight darkening for sections */
+  border: 2px solid #8b5a2b;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.settingHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.settingIcon {
+  color: #3e1f08;
+}
+
+.settingLabel {
+  font-size: 1.4rem;
+  color: #3e1f08;
+  font-weight: bold;
+  text-shadow: none;
+  font-family: 'VT323', monospace;
+}
+
+/* Pixel Slider */
+.volumeControl {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.volumeSlider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  background: #cba985;
+  border: 2px solid #5e3312;
+  outline: none;
+  border-radius: 6px;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  background: #8b4513;
+  /* Darker knob */
+  border: 2px solid #f3e5c9;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.volumeValue {
+  font-size: 1.25rem;
+  color: #3e1f08;
+  width: 40px;
+  text-align: right;
+  font-weight: bold;
+  font-family: 'VT323', monospace;
+}
+
+/* Pixel Toggle */
+.toggleSwitch {
+  width: 60px;
+  height: 30px;
+  background: #cba985;
+  border: 2px solid #5e3312;
+  border-radius: 15px;
+  position: relative;
+  cursor: pointer;
+}
+
+.toggleSwitch.toggleActive {
+  background: #5e9c6f;
+  /* Muted green */
+}
+
+.toggleThumb {
+  width: 20px;
+  height: 20px;
+  background: #f3e5c9;
+  border: 2px solid #3e1f08;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: left 0.2s steps(2);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+}
+
+.toggleActive .toggleThumb {
+  left: 33px;
+  background: #fff;
+}
+
+/* Divider */
+.divider {
+  height: 2px;
+  background: #8b5a2b;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+  margin: 0.5rem 0;
+}
+
+/* Logout */
+.logoutButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 100%;
+  font-size: 1.2rem;
+  padding: 3px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #f22561;
+}
+
+@media (max-width: 480px) {
+  .menuBox {
+    width: 95%;
+  }
+}

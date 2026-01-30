@@ -1,0 +1,87 @@
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  background-color: transparent;
+  padding: var(--spacing-lg);
+  position: relative;
+  overflow: visible;
+  /* Changed from hidden to visible to show full cloud */
+  min-height: 280px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Ensure fully transparent - no background that could cut images */
+  opacity: 1;
+  /* Taruh di paling belakang, di atas background */
+  z-index: 0;
+}
+
+.stageTitle {
+  font-family: var(--font-pixelify);
+  font-size: var(--font-size-lg);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: var(--spacing-md);
+  z-index: 2;
+}
+
+.islandContainer {
+  position: absolute;
+  top: -180px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 0;
+  background: transparent;
+  min-height: 350px;
+  /* Increased from 259px to match canvas height */
+  box-sizing: border-box;
+  overflow: visible;
+  /* Changed from hidden to visible to show full cloud */
+}
+
+.cloudWrapper {
+  position: absolute;
+  top: 100px;
+  left: 0;
+  width: 100%;
+  max-width: 430px;
+  height: auto;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cloudContainer {
+  display: flex;
+  position: relative;
+  will-change: transform;
+}
+
+.cloudImage {
+  width: 1050px !important;
+  min-width: 1050px;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}

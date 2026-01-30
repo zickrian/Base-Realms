@@ -1,0 +1,218 @@
+"use client";
+
+import { create } from 'zustand';
+import {
+  BattleStore,
+  BattleStatus,
+  INITIAL_PLAYER_STATS,
+  INITIAL_ENEMY_STATS,
+  VALID_TRANSITIONS,
+  SelectedCardForBattle,
+} from '../types/battle';
+import { getBattleImageUrl } from '../utils/battleImage';
+
+/**
+ * Calculate damage result
+ * Returns the new HP after damage (minimum 0)
+ */
+export const calculateDamage = (atk: number, targetHp: number): number => {
+  return Math.max(0, targetHp - atk);
+};
+
+/**
+ * Initial battle state
+ */
+const initialBattleState = {
+  status: 'loading' as BattleStatus,
+  currentTurn: 'player' as const,
+  turnCount: 0,
+  player: { ...INITIAL_PLAYER_STATS },
+  enemy: { ...INITIAL_ENEMY_STATS },
+  lastDamage: null,
+  isHitEffectActive: false,
+  hitTarget: null,
+  playerImageUrl: null,
+  playerTokenId: null,
+};
+
+/**
+ * Battle Store using Zustand
+ * Manages all battle state and actions
+ */
+export const useBattleStore = create<BattleStore>((set, get) => ({
+  ...initialBattleState,
+
+  /**
+   * Initialize battle with selected card stats
+   * Sets player as first attacker
+   * Uses CharForBattle image based on NFT token_id
+   */
+  initBattle: (selectedCard?: SelectedCardForBattle) => {
+    const playerStats = selectedCard 
+      ? {
+          name: selectedCard.name || 'Player',
+          currentHp: selectedCard.health,
+          maxHp: selectedCard.health,
+          atk: selectedCard.atk,
+        }
+      : { ...INITIAL_PLAYER_STATS };
+
+    // Get battle character image URL based on token_id
+    const tokenId = selectedCard?.token_id || null;
+    const characterImageUrl = tokenId ? getBattleImageUrl(tokenId) : null;
+
+    // Cache image URL to sessionStorage for recovery if profile refresh clears it
+    if (characterImageUrl) {
+      try {
+        sessionStorage.setItem('cached_battle_image_url', characterImageUrl);
+        sessionStorage.setItem('cached_battle_token_id', String(tokenId));
+      } catch (e) {
+        console.warn('[BattleStore] Failed to cache battle image URL:', e);
+      }
+    }
+
+    set({
+      status: 'ready',
+      currentTurn: 'player',
+      turnCount: 0,
+      player: playerStats,
+      enemy: { ...INITIAL_ENEMY_STATS },
+      lastDamage: null,
+      isHitEffectActive: false,
+      hitTarget: null,
+      playerImageUrl: characterImageUrl,
+      playerTokenId: tokenId,
+    });
+  },
+
+  /**
+   * Execute attack for current turn
+   * Reduces target HP by attacker's ATK
+   * Checks for battle end conditions
+   */
+  executeAttack: () => {
+    const state = get();
+    
+    // Prevent attacks if battle is not in progress
+    if (state.status !== 'in_progress') {
+      return;
+    }
+
+    const { currentTurn, player, enemy } = state;
+
+    if (currentTurn === 'player') {
+      // Player attacks enemy
+      const newEnemyHp = calculateDamage(player.atk, enemy.currentHp);
+      
+      set({
+        enemy: { ...enemy, currentHp: newEnemyHp },
+        lastDamage: { target: 'enemy', amount: player.atk },
+        isHitEffectActive: true,
+        hitTarget: 'enemy',
+      });
+
+      // Check if enemy is defeated
+      if (newEnemyHp <= 0) {
+        set({ status: 'victory' });
+      }
+    } else {
+      // Enemy attacks player
+      const newPlayerHp = calculateDamage(enemy.atk, player.currentHp);
+      
+      set({
+        player: { ...player, currentHp: newPlayerHp },
+        lastDamage: { target: 'player', amount: enemy.atk },
+        isHitEffectActive: true,
+        hitTarget: 'player',
+      });
+
+      // Check if player is defeated
+      if (newPlayerHp <= 0) {
+        set({ status: 'defeat' });
+      }
+    }
+  },
+
+  /**
+   * Switch to next turn
+   * Alternates between player and enemy
+   */
+  nextTurn: () => {
+    const state = get();
+    
+    // Only switch turns if battle is in progress
+    if (state.status !== 'in_progress') {
+      return;
+    }
+
+    set({
+      currentTurn: state.currentTurn === 'player' ? 'enemy' : 'player',
+      turnCount: state.turnCount + 1,
+      isHitEffectActive: false,
+      hitTarget: null,
+    });
+  },
+
+  /**
+   * Set battle status with validation
+   */
+  setStatus: (status: BattleStatus) => {
+    const currentStatus = get().status;
+    const validNextStatuses = VALID_TRANSITIONS[currentStatus];
+
+    // Validate transition
+    if (!validNextStatuses.includes(status)) {
+      console.warn(`Invalid battle status transition: ${currentStatus} -> ${status}`);
+      return;
+    }
+
+    set({ status });
+  },
+
+  /**
+   * Reset battle state to initial values
+   */
+  resetBattle: () => {
+    set({
+      ...initialBattleState,
+      playerImageUrl: null,
+      playerTokenId: null,
+    });
+  },
+
+  /**
+   * Set hit effect state
+   */
+  setHitEffect: (target: 'player' | 'enemy' | null) => {
+    set({
+      isHitEffectActive: target !== null,
+      hitTarget: target,
+    });
+  },
+
+  /**
+   * Set player HP directly
+   */
+  setPlayerHp: (hp: number) => {
+    const state = get();
+    set({
+      player: {
+        ...state.player,
+        currentHp: Math.max(0, hp),
+      },
+    });
+  },
+
+  /**
+   * Set enemy HP directly
+   */
+  setEnemyHp: (hp: number) => {
+    const state = get();
+    set({
+      enemy: {
+        ...state.enemy,
+        currentHp: Math.max(0, hp),
+      },
+    });
+  },
+}));

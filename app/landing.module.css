@@ -1,0 +1,498 @@
+/* Color Palette */
+.container {
+  --bg-color: #1a1a2e;
+  --text-color: #ffffff;
+  --accent-color: #fcd34d; /* Yellow text */
+  
+  /* Button Colors */
+  --btn-green: #4bb244;
+  --btn-green-hover: #3a9633;
+  
+  font-family: 'VT323', monospace;
+  background-color: #000;
+  color: var(--text-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================
+   ROUNDED PIXEL BUTTON (Simple, like reference)
+   ========================================= */
+.roundedButton {
+  background-color: var(--btn-green);
+  color: #fff;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 8px 24px;
+  border-radius: 8px; /* Rounded corners */
+  border: none;
+  border-bottom: 4px solid #3a9633; /* 3D effect border */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: capitalize;
+  transition: transform 0.1s, border-bottom 0.1s;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+}
+
+.roundedButton:hover {
+  background-color: var(--btn-green-hover);
+  transform: translateY(1px);
+  border-bottom-width: 3px;
+}
+
+.roundedButton:active {
+  transform: translateY(4px);
+  border-bottom-width: 0px;
+}
+
+/* =========================================
+   NAVBAR
+   ========================================= */
+.navbar {
+  display: flex;
+  justify-content: space-between; /* Space between logo (left) and menu (center/right) */
+  align-items: center;
+  padding: 1rem 3rem;
+  background: rgba(0,0,0,0.7); /* Dark semi-transparent */
+  backdrop-filter: blur(4px);
+  position: fixed; /* Fixed to top */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  height: 80px;
+}
+
+.navLogo {
+  width: 150px;
+  height: auto;
+  cursor: pointer;
+  image-rendering: pixelated;
+  /* Keep logo on the left */
+  display: flex; 
+  align-items: center;
+}
+
+.navLinks {
+  display: flex;
+  gap: 2.5rem;
+  align-items: center;
+  /* Centered absolutely if possible, or just margin auto */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.navLink {
+  font-size: 1.5rem;
+  color: #fff;
+  text-decoration: none;
+  /* text-shadow removed */
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+
+.navLink:hover {
+  color: var(--accent-color);
+}
+
+.navLinkActive {
+  color: #fff;
+}
+
+.navRight {
+  /* Play button container */
+}
+
+/* Hamburger (strip tiga) - visible only on mobile */
+.navHamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #fff;
+}
+
+.navHamburger span {
+  display: block;
+  width: 24px;
+  height: 3px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+/* Mobile drawer */
+.navDrawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 199;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.navDrawerBackdropOpen {
+  opacity: 1;
+  visibility: visible;
+}
+
+.navDrawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100vh;
+  background: #0a0a0a;
+  z-index: 200;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #222;
+}
+
+.navDrawerOpen {
+  transform: translateX(0);
+}
+
+.navDrawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem 1.25rem;
+  background: #1a2a1a;
+  border-bottom: 1px solid #333;
+}
+
+.navDrawerClose {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.navDrawerLinks {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 0.5rem;
+}
+
+.navDrawerLink {
+  color: #fff;
+  font-size: 1.25rem;
+  text-decoration: none;
+  padding: 0.75rem;
+  border-radius: 4px;
+}
+
+.navDrawerLink:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Play button: image + "Play Now" text on top */
+.playButtonWrap {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.playButtonWrap:hover {
+  opacity: 0.9;
+}
+
+.playButtonWrap:active {
+  opacity: 0.85;
+}
+
+/* Text centered on top of the button image */
+.playNowLabel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1rem;
+  color: #000;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* SVG button image (playterbaru.svg) */
+.playButtonSvg {
+  display: block;
+  height: 48px;
+  width: auto;
+  min-width: 120px;
+  object-fit: contain;
+  background: transparent;
+}
+
+/* =========================================
+   HERO SECTION
+   ========================================= */
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-image: url("/bgmantap.png");
+  background-size: cover;
+  background-position: center bottom;
+  image-rendering: pixelated;
+  overflow: hidden;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: -20px;
+}
+
+.heroSubtitle {
+  font-size: 2.9rem;
+  color: #fff;
+  max-width: 800px;
+  line-height: 1.2;
+  /* stroke ke luar, hitam (lapis 1px + 2px) */
+  text-shadow:
+    1px 0 0 #000,
+    -1px 0 0 #000,
+    0 1px 0 #000,
+    0 -1px 0 #000,
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    2px 0 0 #000,
+    -2px 0 0 #000,
+    0 2px 0 #000,
+    0 -2px 0 #000,
+    2px 2px 0 #000,
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000;
+}
+
+/* =========================================
+   SECTIONS & CARDS
+   ========================================= */
+/* Section with two cards (Connect / Economy) - black background */
+.section {
+  padding: 6rem 2rem;
+  width: 100%;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  border-top: 4px solid #000;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.pixelCard {
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 3rem 2rem;
+  border: 4px solid #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 2.2rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  margin-top: 0.5rem;
+}
+
+.cardText {
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: #ddd;
+}
+
+/* MEET THE WARRIORS - keep masukrumah.png, no top border */
+.showcaseSection {
+  border-top: none;
+  background-color: #1a1a1a;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+    url("/masukrumah.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* =========================================
+   FOOTER (logo top, then one row: left copyright / right legal)
+   ========================================= */
+.footerSection {
+  background-color: #0a0a0a;
+  padding: 3rem 2rem 2rem;
+  color: #fff;
+  border-top: 1px solid #222;
+}
+
+.footerGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footerLogoWrap {
+  display: inline-block;
+}
+
+.footerLogoImg {
+  width: 200px;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* One row: copyright left, legal links right */
+.footerBottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footerCopyright {
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.footerLegal {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.footerLegal a {
+  font-size: 0.875rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.footerLegal a:hover {
+  text-decoration: underline;
+}
+
+.footerLegalDot {
+  color: #444;
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .footerBottomRow {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 1024px) {
+  .navLinks {
+    position: static;
+    transform: none;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Landing page: make container the scroll area so mobile can scroll */
+  .container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .navbar {
+    padding: 0.5rem 1rem;
+    height: 72px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+  .navHamburger {
+    display: flex;
+  }
+  .navLogo {
+    display: none; /* no logo in middle / top on mobile */
+  }
+  .navLinks {
+    display: none;
+  }
+  .navRight {
+    margin-left: auto; /* Play Now stays outside, right side */
+  }
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+  .heroSubtitle {
+    font-size: 1.8rem;
+    padding: 0 1rem;
+  }
+}

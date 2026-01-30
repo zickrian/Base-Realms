@@ -1,0 +1,738 @@
+/* Main Container - Restored to BG Image */
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
+  background: url(https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets/background.png) no-repeat center top;
+  background-size: 100% auto;
+  height: auto; /* Let flex handle height */
+  min-height: 500px; /* Minimum height */
+  max-height: 100%; /* Don't exceed parent */
+  /* Fixed height to prevent scrolling */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Allow scroll only inside cards menu content if needed */
+  box-sizing: border-box;
+}
+
+/* Titles */
+.title {
+  font-family: var(--font-pixelify);
+  font-size: 32px;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: 1px;
+}
+
+.sectionTitle {
+  font-family: var(--font-pixelify);
+  font-size: 16px;
+  color: #f1f5f9;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  text-align: center;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  border-bottom: none;
+  padding-bottom: 0;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Prevent text overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Shop Container - 16-bit style */
+.shopContainer {
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  padding: 12px;
+  margin: 0 auto 40px auto;
+  box-sizing: border-box;
+  background-color: rgba(15, 23, 42, 0.7);
+  position: relative;
+  z-index: 1;
+}
+
+.comingSoonBanner {
+  margin: 8px 0 16px 0;
+  padding: 10px 12px;
+  border: 2px dashed rgba(226, 232, 240, 0.6);
+  background: rgba(15, 23, 42, 0.65);
+  color: #e2e8f0;
+  text-align: center;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25);
+}
+
+.comingSoonTitle {
+  font-family: var(--font-pixelify);
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.comingSoonText {
+  margin-top: 4px;
+  font-family: var(--font-pixelify);
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Base Card Grid */
+.packsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .packsRow {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .packsRow {
+    gap: 8px;
+  }
+  
+  /* Mobile adjustments for inventory */
+  .inventoryContainer {
+    padding: 10px;
+  }
+  
+  .cardsGrid {
+    gap: 6px;
+  }
+  
+  .sectionTitle {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .useButton {
+    font-size: 9px;
+    padding: 5px 6px;
+  }
+  
+  .cardSlotWrapper {
+    gap: 4px;
+  }
+}
+
+/* Individual Card Styling - Pixelated 16-bit Style */
+.packCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  background: #0f172a;
+  border: 4px solid;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.packCardDisabled {
+  filter: grayscale(0.35) brightness(0.9);
+  transform: none !important;
+  cursor: not-allowed;
+}
+
+.packCardDisabled:hover {
+  transform: none;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+}
+
+.packCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.6);
+  z-index: 10;
+}
+
+/* Rarity Backgrounds - More Vivid Fantasy Gradients */
+.rare {
+  background: radial-gradient(circle at center, #60a5fa 0%, #172554 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.epic {
+  background: radial-gradient(circle at center, #c084fc 0%, #4c1d95 100%);
+  border-color: #9333ea;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+}
+
+.legendary {
+  background: radial-gradient(circle at center, #fbbf24 0%, #451a03 100%);
+  border-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+/* Card Content */
+.cardIllustration {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 8px;
+  min-height: 100px;
+}
+
+.disabledOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  color: #e2e8f0;
+  font-family: var(--font-pixelify);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* Glow behind items - Enhanced & Dynamic */
+/* Glow behind items - Sharp Starburst */
+.glowEffect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150%;
+  height: 150%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  /* Sharp Starburst Pattern */
+  background: repeating-conic-gradient(from 0deg,
+      transparent 0deg,
+      transparent 15deg,
+      white 15deg,
+      white 20deg);
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 70%);
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 70%);
+  animation: rotateGlow 30s linear infinite;
+  z-index: 1;
+}
+
+@keyframes rotateGlow {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Specific starburst colors */
+.rare .glowEffect {
+  background: repeating-conic-gradient(from 0deg,
+      rgba(59, 130, 246, 0) 0deg,
+      rgba(59, 130, 246, 0) 15deg,
+      /* Transparent Gap */
+      rgba(59, 130, 246, 1) 15deg,
+      /* Hard Start */
+      rgba(96, 165, 250, 0.8) 18deg,
+      rgba(59, 130, 246, 1) 20deg,
+      /* Hard End */
+      rgba(59, 130, 246, 0) 20deg);
+}
+
+.epic .glowEffect {
+  background: repeating-conic-gradient(from 0deg,
+      rgba(168, 85, 247, 0) 0deg,
+      rgba(168, 85, 247, 0) 15deg,
+      rgba(192, 132, 252, 1) 15deg,
+      rgba(232, 121, 249, 0.8) 18deg,
+      rgba(192, 132, 252, 1) 20deg,
+      rgba(168, 85, 247, 0) 20deg);
+}
+
+.legendary .glowEffect {
+  background: repeating-conic-gradient(from 0deg,
+      rgba(234, 179, 8, 0) 0deg,
+      rgba(234, 179, 8, 0) 15deg,
+      rgba(251, 191, 36, 1) 15deg,
+      rgba(253, 224, 71, 0.8) 18deg,
+      rgba(251, 191, 36, 1) 20deg,
+      rgba(234, 179, 8, 0) 20deg);
+}
+
+
+.packImage {
+  width: 85%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 2;
+}
+
+.packCard:hover .packImage {
+  transform: scale(1.1);
+}
+
+/* Footer - Seamless Integration */
+.cardFooter {
+  padding: 0;
+  background: transparent;
+  border-top: none;
+  margin-top: auto;
+}
+
+.priceButton {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 0;
+  padding: 8px 0;
+  font-family: var(--font-pixelify);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.priceButton:hover {
+  background: rgba(0, 0, 0, 0.8);
+  color: #fbbf24;
+  /* Gold text on hover */
+}
+
+.priceButton:active {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.priceButtonDisabled {
+  background: rgba(0, 0, 0, 0.75);
+  cursor: not-allowed;
+  color: #e2e8f0;
+}
+
+.priceButtonDisabled:hover,
+.priceButtonDisabled:active {
+  background: rgba(0, 0, 0, 0.75);
+  color: #e2e8f0;
+}
+
+@media (max-width: 480px) {
+  .priceButton {
+    font-size: 11px;
+    padding: 6px 0;
+  }
+}
+
+/* Inventory Section - Pixelated Style with 16-bit border */
+.inventoryContainer {
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  padding: 12px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Prevent grid from overflowing */
+  min-width: 0;
+}
+
+.cardSlotWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  /* Prevent wrapper from overflowing */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cardSlot {
+  aspect-ratio: 1/1;
+  background: #0f172a;
+  border-radius: 0;
+  border: 3px solid #334155;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 2px 0 rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s, border-color 0.1s;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.cardSlotSelected {
+  border: 4px solid #10b981;
+  box-shadow: 
+    inset 0 0 8px rgba(0, 0, 0, 0.8),
+    0 3px 0 rgba(16, 185, 129, 0.6);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+
+.cardSlot:hover {
+  transform: translateY(-1px);
+  border-color: #94a3b8;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.cardInner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.cardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
+  /* Ensure image doesn't change size when card is selected */
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+}
+
+.cardCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #fbbf24;
+  /* Gold badge */
+  color: #451a03;
+  font-family: var(--font-pixelify);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  border: 2px solid #78350f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  min-width: 16px;
+  text-align: center;
+  z-index: 5;
+}
+
+.cardEmpty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.3);
+  border: 2px dashed #475569;
+  border-radius: 0;
+  position: relative;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.cardEmptyLabel {
+  font-family: var(--font-pixelify);
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.useButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 100%;
+  font-size: 9px;
+  padding: 2px 8px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-color: #808080 !important; /* Gray for unused */
+}
+
+.useButtonSelected {
+  background-color: #4bb244 !important; /* Green for selected */
+}
+
+.emptyButtonPlaceholder {
+  width: 100%;
+  min-height: 24px;
+  /* Match useButton height with reduced size */
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.bottomSpacer {
+  height: 40px;
+}
+
+/* Modals */
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.popupContent {
+  position: relative;
+  background-color: #e8be82;
+  padding: 6px;
+  width: 90%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: #3e1f08;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+/* popIn animation moved to globals.css */
+
+.popupCloseButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  font-size: 16px;
+  z-index: 10;
+  background-color: #f22561;
+}
+
+.popupTitle {
+  font-family: 'VT323', monospace;
+  font-size: 2rem;
+  color: #3e1f08;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+  font-weight: bold;
+  padding: 0.75rem 1rem;
+  border-bottom: 3px dashed #8b5a2b;
+}
+
+.popupDescription {
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
+  color: #3e1f08;
+  line-height: 1.5;
+  margin: 0;
+  text-shadow: none;
+  padding: 1rem;
+}
+
+.popupActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.cancelButton,
+.confirmButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  flex: 1;
+  font-size: 1.2rem;
+  padding: 3px 12px;
+}
+
+.cancelButton {
+  background-color: #f22561;
+}
+
+.confirmButton {
+  background-color: #4bb244;
+}
+
+/* Toast Message */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 40px 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-family: var(--font-pixelify);
+  font-size: 14px;
+  z-index: 10000;
+  cursor: pointer;
+  animation: slideIn 0.3s ease-out;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toastCloseButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.2s ease;
+}
+
+.toastCloseButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.toast.success {
+  background: #22c55e;
+}
+
+.toast.error {
+  background: #ef4444;
+}
+
+.toast.info {
+  background: #3b82f6;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* fadeIn animation moved to globals.css */
+
+/* Sync Progress Overlay */
+.syncingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.syncingContent {
+  background: #1a1a2e;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 32px 48px;
+  text-align: center;
+  max-width: 400px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(59, 130, 246, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.syncingText {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: white;
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+}
+
+.syncingSubtext {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.6;
+}

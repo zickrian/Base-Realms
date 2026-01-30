@@ -1,0 +1,364 @@
+/* Main Wrapper */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 var(--spacing-sm) 24px var(--spacing-sm);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 20;
+}
+
+/* --- Unified Base Card (Layout Only) --- */
+.unifiedBaseCard {
+  display: grid;
+  /* Use grid for symmetric distribution */
+  grid-template-columns: 1fr auto 1fr;
+  /* Side buttons get equal space, Battle takes what it needs */
+  align-items: center;
+  gap: 4px;
+  /* Tight gap to pull elements together visually, space handles spread */
+
+  /* Visuals removed */
+  background: transparent;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
+  width: 100%;
+  /* Take full width to spread buttons */
+  box-sizing: border-box;
+}
+
+/* --- Shared 16-bit Button Styles --- */
+/* We use a mixin approach via shared classes or just repeat the props since CSS modules don't support mixins natively. */
+
+/* Base Button Structure */
+.pixelBtn {
+  position: relative;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+
+  /* "Total 3" Px Removed Corner (2-1 staircase) Unit size = 4px */
+  clip-path: polygon(0 8px, 4px 8px, 4px 4px, 8px 4px, 8px 0,
+      calc(100% - 8px) 0, calc(100% - 8px) 4px, calc(100% - 4px) 4px, calc(100% - 4px) 8px, 100% 8px,
+      100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px), calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%,
+      8px 100%, 8px calc(100% - 4px), 4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px));
+
+  box-shadow: none;
+  /* Shadow handled by pseudo-elements and colors */
+}
+
+/* Inner Face Structure (Pseudo-element) */
+.pixelBtn::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  z-index: 0;
+
+  /* Inner bevel (1 unit = 4px) to match outer 2-1 corner */
+  clip-path: polygon(0 4px, 4px 4px, 4px 0,
+      calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+      100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+      4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
+
+  /* Inner highlights */
+  box-shadow: inset 4px 4px 0 rgba(255, 255, 255, 0.4), inset -4px -4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.pixelBtn:active {
+  transform: translateY(2px);
+}
+
+.pixelBtn:active::before {
+  box-shadow: inset 4px 4px 0 rgba(0, 0, 0, 0.2);
+  /* Darker indent on press */
+}
+
+/* --- Specific Button Styles --- */
+
+/* 1. Board Button (Icon Only style) */
+.stageButton {
+  justify-self: center;
+  /* Center within its grid column (or use start/end if 'agak ke kiri' implies edge) */
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+
+  /* Reset pixel-btn props */
+  clip-path: none;
+  box-shadow: none;
+
+  /* Height match Battle Button */
+  height: 64px;
+  min-width: 70px;
+  /* Wider touch target */
+  width: auto;
+}
+
+/* No 3D face for side buttons */
+.stageButton::before {
+  display: none;
+}
+
+.stageButton:active {
+  transform: scale(0.95);
+}
+
+/* 2. Battle Button (Redesigned 16-bit) */
+.battleButton {
+  /* Layout */
+  position: relative;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+
+  /* Size */
+  width: 160px;
+  /* Default Desktop */
+  height: 64px;
+
+  /* Structure */
+  background-color: #5a4000;
+  /* Darker Gold/Brown */
+
+  /* "Total 3" Px Removed Corner */
+  clip-path: polygon(0 8px, 4px 8px, 4px 4px, 8px 4px, 8px 0,
+      calc(100% - 8px) 0, calc(100% - 8px) 4px, calc(100% - 4px) 4px, calc(100% - 4px) 8px, 100% 8px,
+      100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px), calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%,
+      8px 100%, 8px calc(100% - 4px), 4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px));
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Inner Face (Orange Gradient) */
+.battleButton::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  z-index: 0;
+
+  clip-path: polygon(0 4px, 4px 4px, 4px 0,
+      calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+      100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+      4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
+
+  background: linear-gradient(180deg, #FFB800 0%, #FF8800 100%);
+
+  box-shadow:
+    inset 0 4px 0 rgba(255, 255, 255, 0.4),
+    /* Top shine */
+    inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.battleButton:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.battleButton:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+/* 3. Swap Button (Icon Only style) */
+.swapButton {
+  justify-self: center;
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+
+  /* Reset pixel-btn props */
+  clip-path: none;
+  box-shadow: none;
+  width: auto;
+  min-width: 70px;
+  height: 64px;
+}
+
+/* No 3D face */
+.swapButton::before {
+  display: none;
+}
+
+.swapButton:active {
+  transform: scale(0.95);
+}
+
+/* Locked State */
+.battleButtonLocked {
+  opacity: 0.8;
+}
+
+.battleButtonLocked::before {
+  background-color: #cca300;
+  /* Dimmed Yellow */
+  box-shadow: none;
+}
+
+/* --- Content Styling (Icons & Text) --- */
+/* Must be z-index: 1 to sit above ::before */
+.cardInner,
+.battleContent,
+.cardInnerSwap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
+}
+
+.battleContent {
+  flex-direction: row;
+}
+
+.pannelIcon {
+  width: 44px;
+  /* Larger base size */
+  height: 44px;
+  object-fit: contain;
+  /* Soft, subtle shadow */
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4));
+}
+
+.buttonLabel {
+  display: block;
+  /* Always show */
+  font-family: var(--font-pixelify), monospace;
+  font-size: 14px;
+  /* Larger text */
+  color: #FFFFFF;
+  /* Heavy black stroke effect */
+  text-shadow:
+    -1.5px -1.5px 0 #000,
+    1.5px -1.5px 0 #000,
+    -1.5px 1.5px 0 #000,
+    1.5px 1.5px 0 #000,
+    0 2px 0 #000;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.battleLabel {
+  font-family: var(--font-russo), sans-serif;
+  font-size: 26px;
+  /* Larger battle text */
+  color: #FFFFFF;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 #884400,
+    -1px -1px 0 #884400,
+    1px 1px 0 #884400;
+  white-space: nowrap;
+}
+
+.lockEmoji {
+  font-size: 28px;
+}
+
+/* --- Responsive Adjustments (Mobile Priority) --- */
+
+/* Base sizes are already decent, but let's ensure they stay BIG on mobile */
+
+@media (max-width: 600px) {
+  .unifiedBaseCard {
+    gap: 8px;
+    /* Slightly tighter gap to fit width */
+    width: 100%;
+    padding: 0 4px;
+  }
+
+  /* 1. Enlarge Side Icons */
+  .pannelIcon {
+    width: 42px;
+    /* Significantly larger */
+    height: 42px;
+  }
+
+  /* 2. Enlarge Text */
+  .buttonLabel {
+    font-size: 11px;
+    /* Slightly smaller if needed on narrow phones, but still big */
+  }
+
+  /* 3. Adjust Side Button Containers */
+  .stageButton,
+  .swapButton {
+    height: auto;
+    /* Let content dictate height */
+    min-width: 68px;
+    /* Ensure wide enough touch target */
+    width: auto;
+  }
+
+  /* 4. Enlarge Battle Button Width */
+  .battleButton {
+    width: 100%;
+    /* Fill available grid cell */
+    min-width: 160px;
+    max-width: 200px;
+    /* Cap width */
+  }
+
+  .battleLabel {
+    font-size: 22px;
+  }
+}
+
+/* Very small screens adjustment (iPhone SE / Fold) */
+@media (max-width: 360px) {
+  .unifiedBaseCard {
+    gap: 2px;
+  }
+
+  .pannelIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .buttonLabel {
+    font-size: 10px;
+  }
+
+  .battleLabel {
+    font-size: 20px;
+  }
+}

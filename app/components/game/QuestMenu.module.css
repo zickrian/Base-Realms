@@ -1,0 +1,270 @@
+/* VT323 font and fadeIn/popIn animations moved to globals.css */
+
+/* Container - Overlay */
+.container {
+  font-family: 'VT323', monospace;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Main Box - Same style as SettingsMenu */
+.menuBox {
+  width: 90%;
+  max-width: 380px;
+  /* Let the popup breathe vertically; cap height instead of filling screen */
+  max-height: 550px; /* Fixed max height to prevent full-screen on Android */
+  background-color: #e8be82;
+  box-shadow: inset 0 0 40px rgba(139, 69, 19, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  color: #3e1f08;
+  padding: 6px;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
+  image-rendering: pixelated;
+}
+
+/* Desktop - Constrain to 430px phone container */
+@media (min-width: 431px) {
+  .container {
+    /* Constrain overlay to 430px phone container in center */
+    left: 50%;
+    right: auto;
+    width: 430px;
+    transform: translateX(-50%);
+  }
+}
+
+/* Header */
+.header {
+  background: transparent;
+  color: #3e1f08;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 3px dashed #8b5a2b;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+  flex: 1;
+  text-align: center;
+}
+
+.closeButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  font-size: 16px;
+  background-color: #f22561;
+  color: #ffffff;
+}
+
+/* Quest List */
+.questList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  padding-right: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Custom Scrollbar styled for "paper" feel */
+.questList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.questList::-webkit-scrollbar-track {
+  background: rgba(62, 31, 8, 0.05);
+}
+
+.questList::-webkit-scrollbar-thumb {
+  background: rgba(62, 31, 8, 0.3);
+  border-radius: 3px;
+}
+
+/* Quest Card - Text on Paper style */
+.questCard {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(62, 31, 8, 0.1);
+  padding: 0 0 1rem 0;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.questCard:hover {
+  transform: translateX(2px);
+}
+
+.questCard:last-child {
+  border-bottom: none;
+}
+
+/* Quest Header within Card */
+.questHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.questIcon {
+  /* Hand-drawn look circle circle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #3e1f08;
+  border-radius: 50%;
+  color: #3e1f08;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.questTitleSection {
+  flex: 1;
+}
+
+.questTitle {
+  font-size: 1.5rem;
+  color: #2c1810;
+  margin: 0;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.questDescription {
+  font-size: 1.1rem;
+  color: #5d4037;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.2;
+}
+
+/* Progress Section */
+.progressContainer {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  margin: 0.5rem 0;
+  border: 2px solid #3e1f08;
+  background: #dacca0;
+  /* Slightly darker parchment for empty bar */
+  border-radius: 0;
+  /* Pixel sharp */
+}
+
+.progressBarFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #5e9c6f;
+  /* Muted green ink style */
+  border-right: 2px solid #3e1f08;
+  transition: width 0.5s ease-out;
+}
+
+.progressBarComplete {
+  background: #4a8a5a;
+}
+
+.progressText {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 18px;
+  color: #3e1f08;
+  font-weight: bold;
+  z-index: 2;
+}
+
+/* Rewards */
+.rewardInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  color: #854d0e;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Claim Button - 16-bit style */
+.claimButton {
+  /* 16-bit button style - inherits from globals.css .bit16-button */
+  width: 100%;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  padding: 3px 12px;
+  background-color: #f22561;
+}
+
+/* Status Badges */
+.completedBadge {
+  color: #15803d;
+  animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.claimedBadge {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #6b7280;
+  border: 2px dashed #9ca3af;
+  padding: 0.25rem;
+  margin-top: 0.5rem;
+  transform: rotate(2deg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .menuBox {
+    width: 95%;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .questTitle {
+    font-size: 1.25rem;
+  }
+}

@@ -1,0 +1,421 @@
+/* Shop Page Styles - Consistent pixel scaling with home (3.6px per unit) */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for Android/iOS */
+  max-height: 100vh;
+  max-height: 100dvh;
+  max-width: 430px;
+  width: 100%;
+  margin: 0 auto;
+  background: url(/building/shop/bgshop.svg) no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+  position: relative;
+  padding-bottom: 0;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.worldContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 720px;
+  /* 200 units * 3.6 px/unit = 720px (matches grassshop.svg viewBox) */
+  height: 100%;
+  /* Removed transition - using JavaScript lerp for smooth movement */
+  will-change: transform;
+  /* Force hardware acceleration for Safari */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  z-index: 105;
+  pointer-events: none;
+}
+
+.grassContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  /* Full world width */
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.grassImage {
+  height: 180px;
+  /* 50 units * 3.6 px/unit = 180px (base scale) */
+  width: 720px;
+  /* 200 units * 3.6 px/unit = 720px - full world width */
+  min-width: 720px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin-bottom: -1px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  object-fit: cover;
+}
+
+.buildingShop {
+  position: absolute !important;
+  bottom: 179px !important;
+  left: 0 !important;
+  width: 720px !important;
+  /* 200 units * 3.6px/unit = 720px - EXACT same as grass width */
+  height: 216px !important;
+  /* 60 units * 3.6px/unit = 216px - same pixel scale as grass (grass: 50 unit * 3.6 = 180px) */
+  min-width: 720px !important;
+  max-width: 720px !important;
+  min-height: 216px !important;
+  max-height: 216px !important;
+  image-rendering: pixelated !important;
+  image-rendering: -moz-crisp-edges !important;
+  image-rendering: crisp-edges !important;
+  transform-origin: left bottom !important;
+  /* Anchor from left bottom */
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  z-index: 15 !important;
+  pointer-events: none !important;
+  /* Building doesn't block clicks - character can walk through */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+  box-sizing: border-box !important;
+}
+
+.characterContainer {
+  position: absolute;
+  bottom: 179px;
+  /* Same as home: on top of grass */
+  transform: translateX(-50%) translateZ(0);
+  -webkit-transform: translateX(-50%) translateZ(0);
+  width: 108px;
+  /* 30 units * 3.6 px/unit = 108px */
+  height: 140px;
+  /* 39 units * 3.6 px/unit = 140.4px ≈ 140px */
+  z-index: 20;
+  /* Above building but below click overlay */
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 0;
+  font-size: 0;
+  /* Force hardware acceleration for Safari */
+  will-change: transform, left;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.clickOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.shopButton {
+  position: absolute;
+  bottom: 230px;
+  /* 10px above grass (179px bottom + 10px gap = 189px) */
+  left: 30px;
+  /* Left corner, on top of grass */
+  /* Left corner, on top of grass */
+  z-index: 110;
+  /* Above worldContainer (105) and clickOverlay (100) */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px (same pixel scale as grass) */
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.shopButton:hover {
+  transform: scale(1.1);
+}
+
+.shopButton:active {
+  transform: scale(0.95);
+}
+
+.shopButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.cashier {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as building */
+  left: 560px;
+  /* Right corner of world container */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 90px;
+  /* 25 units * 3.6px/unit = 90px */
+  height: 90px;
+  /* 25 units * 3.6px/unit = 90px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: right bottom;
+  /* Anchor from right bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.box {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as ATM */
+  left: 350px;
+  /* Left side of ATM (250px - 76px box width - 4px spacing = 170px) */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 76px;
+  /* 21 units * 3.6px/unit = 75.6px ≈ 76px */
+  height: 58px;
+  /* 16 units * 3.6px/unit = 57.6px ≈ 58px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: left bottom;
+  /* Anchor from left bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.boxButton {
+  position: absolute;
+  bottom: 247px;
+  /* 10px above box (179px bottom + 58px box height + 10px gap = 247px) */
+  left: 364.5px;
+  /* Centered above box (350px + (76px - 47px)/2 = 364.5px) */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.boxButton:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.boxButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.boxButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boxButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.cashierButton {
+  position: absolute;
+  bottom: 279px;
+  /* 10px above cashier (179px bottom + 90px cashier height + 10px gap = 279px) */
+  left: 581.5px;
+  /* Centered above cashier (560px + (90px - 47px)/2 = 581.5px) */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.cashierButton:hover {
+  transform: scale(1.1);
+}
+
+.cashierButton:active {
+  transform: scale(0.95);
+}
+
+.cashierButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.pots1 {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as cashier */
+  left: 460px;
+  /* Left side of cashier (560px - 68px pots width - 2px spacing = 490px) */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 68px;
+  /* 19 units * 3.6px/unit = 68.4px ≈ 68px */
+  height: 115px;
+  /* 32 units * 3.6px/unit = 115.2px ≈ 115px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: left bottom;
+  /* Anchor from left bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.atm {
+  position: absolute;
+  bottom: 179px;
+  /* On top of grass, same as other elements */
+  left: 250px;
+  /* Left side of pots1 (460px - 79px atm width - 11px spacing = 370px) */
+  z-index: 16;
+  /* Above building (15) but below character (20) */
+  pointer-events: none;
+  width: 79px;
+  /* 22 units * 3.6px/unit = 79.2px ≈ 79px */
+  height: 130px;
+  /* 36 units * 3.6px/unit = 129.6px ≈ 130px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: left bottom;
+  /* Anchor from left bottom */
+  margin: 0;
+  padding: 0;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  box-sizing: border-box;
+}
+
+.atmButton {
+  position: absolute;
+  bottom: 319px;
+  /* 10px above ATM (179px bottom + 130px ATM height + 10px gap = 319px) */
+  left: 266px;
+  /* Centered above ATM (250px + (79px - 47px)/2 = 266px) */
+  z-index: 101;
+  /* Above clickOverlay (z-index: 100) so button can be clicked */
+  pointer-events: auto;
+  height: 47px;
+  width: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.atmButton:hover {
+  transform: scale(1.1);
+}
+
+.atmButton:active {
+  transform: scale(0.95);
+}
+
+.atmButton img {
+  width: 47px;
+  height: 47px;
+  /* 13 units * 3.6px/unit = 46.8px ≈ 47px */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+}

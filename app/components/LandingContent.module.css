@@ -1,0 +1,249 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  height: auto; /* Don't force 100% height */
+  padding: 1rem;
+  background-color: transparent;
+  transition: opacity 0.3s ease-out;
+  overflow-y: auto;
+  /* Allow scroll only inside landing page if needed */
+  overflow-x: hidden;
+  /* Ensure container fills the viewport properly on mobile */
+  position: relative;
+}
+
+.fadeOut {
+  opacity: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem 1.5rem;
+  background-color: rgba(10, 30, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.logoSection {
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  width: 150px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.welcomeSection {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.welcomeText {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-cream);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.buttonSection {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.connectButton {
+  /* Layout Dasar */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 200px;
+  padding: 12px 28px;
+  
+  /* Typography */
+  font-family: var(--font-pixelify), cursive;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  
+  /* Background & Border */
+  background-color: #2b59ff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  
+  /* Efek 3D (Shadow) */
+  box-shadow: 
+    inset -4px -4px 0px 0px #1a3ab1,
+    inset 2px 2px 0px 0px #6a8dff,
+    0px 4px 0px 0px #152d8a;
+  
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.connectButton:hover {
+  background-color: #3a68ff;
+  box-shadow: 
+    inset -4px -4px 0px 0px #1a3ab1,
+    inset 2px 2px 0px 0px #7a9dff,
+    0px 4px 0px 0px #152d8a;
+}
+
+/* Efek Klik (Tombol Tertekan) */
+.connectButton:active {
+  transform: translateY(2px);
+  box-shadow: 
+    inset -2px -2px 0px 0px #1a3ab1,
+    0px 2px 0px 0px #152d8a;
+}
+
+.alternativeSection {
+  margin-bottom: 2rem;
+}
+
+.alternativeLink {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.875rem;
+  color: var(--color-link-yellow);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.alternativeLink:hover {
+  opacity: 0.8;
+}
+
+.recommendationSection {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+}
+
+.recommendationTitle {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.recommendationText {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.coinbaseLink {
+  color: var(--color-link-blue);
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+}
+
+.coinbaseLink:hover {
+  opacity: 0.8;
+}
+
+.benefitsText {
+  font-family: var(--font-pixelify), cursive;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
+/* Mobile-first responsive adjustments */
+@media (min-width: 480px) {
+  .card {
+    padding: 2.5rem 2rem;
+  }
+
+  .logo {
+    width: 180px;
+  }
+
+  .welcomeText {
+    font-size: 1.5rem;
+  }
+}
+
+/* Tablet and larger screens */
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem;
+  }
+
+  .card {
+    max-width: 450px;
+    padding: 3rem 2.5rem;
+  }
+
+  .logo {
+    width: 200px;
+  }
+
+  .welcomeText {
+    font-size: 1.75rem;
+  }
+}
+
+
+/* Loading dots animation */
+.loadingDots {
+  display: flex;
+  gap: 8px;
+  margin-top: 1.5rem;
+}
+
+.loadingDots span {
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-link-yellow);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loadingDots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loadingDots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loadingDots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
