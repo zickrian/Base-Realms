@@ -7,17 +7,9 @@ import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { WalletPopup } from "./WalletPopup";
 import { IDRX_TOKEN_ADDRESS, BASE_CHAIN_ID, formatIDRXBalance } from "@/app/lib/blockchain/tokenConfig";
+import { useAppContext } from "@/app/hooks/useAppContext";
 
 import styles from "./HeaderBar.module.css";
-
-/** True when running inside Farcaster/Base app iframe (balance doesn't auto-update on focus) */
-function useIsEmbedded() {
-  const [embedded, setEmbedded] = useState(false);
-  useEffect(() => {
-    setEmbedded(typeof window !== "undefined" && window.self !== window.top);
-  }, []);
-  return embedded;
-}
 
 interface HeaderBarProps {
   onSettingsClick?: () => void;
@@ -27,7 +19,7 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
   const { address, isConnected } = useAccount();
   const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const isEmbedded = useIsEmbedded();
+  const { isInMiniApp: isEmbedded } = useAppContext();
 
   // Force initial mount detection
   useEffect(() => {

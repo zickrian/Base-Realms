@@ -6,19 +6,12 @@ import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { LandingContent } from "../components/LandingContent";
 import { useGameStore } from "../stores/gameStore";
-
-/** Detect if running in embedded context (Base Mini App, Farcaster) */
-function useIsEmbedded() {
-  const [embedded, setEmbedded] = useState(false);
-  useEffect(() => {
-    setEmbedded(typeof window !== "undefined" && window.self !== window.top);
-  }, []);
-  return embedded;
-}
+import { useAppContext } from "../hooks/useAppContext";
 
 export default function Login() {
   const router = useRouter();
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
+  const { isInMiniApp: isEmbedded } = useAppContext();
   const { isConnected, isConnecting, address } = useAccount();
   const { isInitialized, isLoading, initializeGameData, reset, profile, quests, cardPacks, inventory, dailyPackCount, currentStage } = useGameStore();
   const initRef = useRef(false);
@@ -29,7 +22,6 @@ export default function Login() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [loadingStep, setLoadingStep] = useState<'connecting' | 'initializing' | 'loading' | 'ready'>('connecting');
-  const isEmbedded = useIsEmbedded();
 
   // Clear wallet state on mount with enhanced embedded context handling
   useEffect(() => {

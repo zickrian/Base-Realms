@@ -632,6 +632,9 @@ NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=your_midtrans_client_key
 # QRIS Claim (Optional)
 QRIS_CLAIM_SECRET=your_claim_secret
 NEXT_PUBLIC_QRIS_CLAIM_HASH_CONTRACT_ADDRESS=contract_address
+
+# Neynar (Farcaster / Base app context, optional)
+NEYNAR_API_KEY=your_neynar_api_key
 ```
 
 ---

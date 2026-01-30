@@ -33,8 +33,8 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
     try {
       console.log('[Settings] Logout initiated');
 
-      // Detect if in embedded context (Base Mini App, Farcaster)
-      const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
+      // Detect if in Mini App (Base or Farcaster) via window check; useAppContext not used here to avoid provider dependency in modal
+      const isEmbedded = typeof window !== "undefined" && window.self !== window.top;
       console.log('[Settings] Embedded context:', isEmbedded);
 
       // Close settings menu IMMEDIATELY to give user feedback
