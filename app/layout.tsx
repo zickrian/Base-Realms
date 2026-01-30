@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Inter, Source_Code_Pro, Pixelify_Sans, Russo_One } from "next/font/google";
 import { SafeArea } from "@coinbase/onchainkit/minikit";
 import { minikitConfig } from "@/minikit.config";
 import { RootProvider } from "./rootProvider";
-import { MiniAppInit } from "./components/MiniAppInit";
 import "./globals.css";
 
 export const viewport: Viewport = {
