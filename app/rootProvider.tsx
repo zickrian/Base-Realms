@@ -2,50 +2,62 @@
 
 import { ReactNode, useEffect } from "react";
 import { base } from "wagmi/chains";
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { wagmiConfig } from "./lib/wagmi";
 import "@coinbase/onchainkit/styles.css";
 
+// Create QueryClient instance
+const queryClient = new QueryClient();
+
 export function RootProvider({ children }: { children: ReactNode }) {
+  // Initialize Farcaster SDK - call ready() to hide splash screen
   useEffect(() => {
     let cancelled = false;
 
-    const hideSplash = async () => {
+    const initializeSdk = async () => {
       try {
         // Wait for first paint so content is visible before hiding splash
         await new Promise((r) => requestAnimationFrame(() => r(undefined)));
         if (cancelled) return;
+        
+        // CRITICAL: Call ready() to hide splash screen and display content
         await sdk.actions.ready();
-      } catch {
+        console.log('[RootProvider] Farcaster SDK ready');
+      } catch (error) {
+        console.log('[RootProvider] Not in Farcaster context:', error);
         // Safe to ignore if not running inside Farcaster MiniApp
       }
     };
 
-    hideSplash();
+    initializeSdk();
+    
     return () => {
       cancelled = true;
     };
   }, []);
 
   return (
-    <OnchainKitProvider
-      apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-      chain={base}
-      config={{
-        appearance: {
-          mode: "dark",
-          theme: "default",
-        },
-        // Wallet configuration removed to prevent popup dialogs
-        // Transactions will use native wallet UI instead of modal popups
-      }}
-      miniKit={{
-        enabled: true,
-        autoConnect: false, // CRITICAL FIX: Prevent auto-reconnect after logout
-        notificationProxyUrl: undefined,
-      }}
-    >
-      {children}
-    </OnchainKitProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <OnchainKitProvider
+          apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+          chain={base}
+          config={{
+            appearance: {
+              mode: "dark",
+              theme: "default",
+            },
+          }}
+          miniKit={{
+            enabled: true,
+          }}
+        >
+          {children}
+        </OnchainKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

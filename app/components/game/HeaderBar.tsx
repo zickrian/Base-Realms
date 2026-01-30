@@ -7,7 +7,6 @@ import Image from "next/image";
 import { getGameIconUrl } from "../../utils/supabaseStorage";
 import { WalletPopup } from "./WalletPopup";
 import { IDRX_TOKEN_ADDRESS, BASE_CHAIN_ID, formatIDRXBalance } from "@/app/lib/blockchain/tokenConfig";
-import { useAppContext } from "@/app/hooks/useAppContext";
 
 import styles from "./HeaderBar.module.css";
 
@@ -16,54 +15,67 @@ interface HeaderBarProps {
 }
 
 export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status, connector } = useAccount();
   const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { isInMiniApp: isEmbedded } = useAppContext();
+
+  // Detect if in miniapp (iframe)
+  const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
 
   // Force initial mount detection
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Only fetch balance when fully connected (not connecting)
+  const shouldFetchBalance = isConnected && !!address && status === 'connected';
+
   // Enhanced query options for embedded contexts
   const balanceQuery = useMemo(
     () => {
-      if (!isEmbedded) return undefined;
+      if (!isEmbedded) {
+        return {
+          enabled: shouldFetchBalance,
+        };
+      }
       
       return {
-        refetchInterval: 12_000,
-        // Force refetch on mount in embedded contexts to prevent stale cache
+        enabled: shouldFetchBalance,
+        refetchInterval: 12_000, // Poll every 12s in miniapp
         refetchOnMount: true,
-        // Don't use cached data in embedded contexts
         staleTime: 0,
         gcTime: 0,
       };
     },
-    [isEmbedded]
+    [isEmbedded, shouldFetchBalance]
   );
 
   const { data: ethBalanceData, refetch: refetchEth } = useBalance({
-    address: address,
+    address,
     chainId: BASE_CHAIN_ID,
     query: balanceQuery,
   });
 
   const { data: idrxBalanceData, refetch: refetchIdrx } = useBalance({
-    address: address,
+    address,
     token: IDRX_TOKEN_ADDRESS,
     chainId: BASE_CHAIN_ID,
     query: balanceQuery,
   });
 
-  // Force refetch on mount in embedded contexts
+  // Force refetch on mount in embedded contexts - ONLY ONCE
   useEffect(() => {
-    if (mounted && isEmbedded && isConnected && address) {
-      console.log('[HeaderBar] Embedded context - forcing balance refetch on mount');
+    if (mounted && isEmbedded && shouldFetchBalance) {
+      console.log('[HeaderBar] Miniapp - initial balance fetch', {
+        address: address?.slice(0, 6) + '...' + address?.slice(-4),
+        connector: connector?.name,
+        status,
+      });
       refetchEth();
       refetchIdrx();
     }
-  }, [mounted, isEmbedded, isConnected, address, refetchEth, refetchIdrx]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]); // ONLY run once on mount
 
   const idrxBalance = useMemo(() => {
     if (!idrxBalanceData || !isConnected) return 0;
@@ -106,7 +118,6 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
       </button>
 
       <div className={styles.currencySection}>
-        {/* Two boxes: balancenew.svg per box (3.6px per unit) */}
         <div
           className={styles.currencyItem}
           onClick={() => setIsWalletPopupOpen(true)}
