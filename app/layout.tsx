@@ -93,13 +93,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning translate="no">
       <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
-        {/* Load standalone init script from public folder */}
-        <Script
-          src="/miniapp-init.js"
-          strategy="beforeInteractive"
-        />
         <RootProvider>
-          <MiniAppInit />
           <SafeArea>{children}</SafeArea>
         </RootProvider>
       </body>

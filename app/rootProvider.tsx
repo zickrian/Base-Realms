@@ -1,10 +1,11 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { base } from "wagmi/chains";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
+import { sdk } from "@farcaster/miniapp-sdk";
 import { wagmiConfig } from "./lib/wagmi";
 import "@coinbase/onchainkit/styles.css";
 
@@ -12,6 +13,15 @@ import "@coinbase/onchainkit/styles.css";
 const queryClient = new QueryClient();
 
 export function RootProvider({ children }: { children: ReactNode }) {
+  // SIMPLE: Just call ready() directly in useEffect
+  useEffect(() => {
+    console.log('[RootProvider] Mounted');
+    console.log('[RootProvider] SDK:', sdk);
+    
+    sdk.actions.ready()
+      .then(() => console.log('[RootProvider] ✅ ready() SUCCESS'))
+      .catch((err) => console.error('[RootProvider] ❌ ready() FAILED:', err));
+  }, []);
 
   return (
     <WagmiProvider config={wagmiConfig}>
