@@ -112,13 +112,12 @@ export default function Landing() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/playterbaru.svg"
+              src="/button/lagilagi.svg"
               alt=""
               className={styles.playButtonSvg}
               width={200}
               height={52}
             />
-            <span className={styles.playNowLabel}>Play Now</span>
           </button>
         </div>
       </nav>
