@@ -93,13 +93,40 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning translate="no">
       <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
+        {/* Load SDK from CDN and call ready() - guaranteed to work */}
         <Script
-          id="miniapp-init"
+          id="miniapp-sdk-cdn"
+          src="https://esm.sh/@farcaster/miniapp-sdk@0.2.2"
           strategy="beforeInteractive"
+          onLoad={() => {
+            console.log('[CDN] SDK loaded from esm.sh');
+          }}
+        />
+        <Script
+          id="miniapp-ready"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              console.log('[SCRIPT-INIT] Loading...');
-              window.__MINIAPP_INIT__ = true;
+              (async function() {
+                console.log('[READY] Attempting to call ready()...');
+                try {
+                  // Wait for SDK to be available
+                  let attempts = 0;
+                  while (attempts < 50) {
+                    if (typeof window.sdk !== 'undefined') {
+                      console.log('[READY] SDK found, calling ready()...');
+                      await window.sdk.actions.ready();
+                      console.log('[READY] ✅ SUCCESS');
+                      return;
+                    }
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 100));
+                  }
+                  console.error('[READY] ❌ SDK not found after 5 seconds');
+                } catch (error) {
+                  console.error('[READY] ❌ Error:', error);
+                }
+              })();
             `,
           }}
         />
