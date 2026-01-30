@@ -33,6 +33,10 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
     try {
       console.log('[Settings] Logout initiated');
 
+      // Detect if in embedded context (Base Mini App, Farcaster)
+      const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
+      console.log('[Settings] Embedded context:', isEmbedded);
+
       // Close settings menu IMMEDIATELY to give user feedback
       onClose();
 
@@ -42,48 +46,72 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
       // Disconnect wallet
       disconnect();
 
-      // Clear ALL wallet storage to prevent "dapp wants to continue" on next login
+      // Clear ALL wallet and session storage
       if (typeof window !== 'undefined') {
-        const keysToRemove = [
-          'wagmi.recentConnectorId',
-          'wagmi.connected',
-          'wagmi.wallet',
-          'wagmi.store',
-          'wagmi.cache',
-        ];
+        // In embedded contexts, be more aggressive with clearing
+        if (isEmbedded) {
+          console.log('[Logout] Embedded context - aggressive cache clearing');
+          
+          // Clear ALL localStorage except wallet SDK internal keys
+          Object.keys(localStorage).forEach(key => {
+            if (!key.startsWith('coinbase') && !key.startsWith('cbw')) {
+              localStorage.removeItem(key);
+              console.log(`[Logout] Cleared embedded: ${key}`);
+            }
+          });
+        } else {
+          // Standard browser: targeted clearing
+          const keysToRemove = [
+            'wagmi.recentConnectorId',
+            'wagmi.connected',
+            'wagmi.wallet',
+            'wagmi.store',
+            'wagmi.cache',
+          ];
 
-        keysToRemove.forEach(key => {
-          localStorage.removeItem(key);
-        });
-
-        // Clear any other wagmi-specific keys, but NOT general "coinbase" or "wallet" keys
-        // as that might break the embedded wallet's internal session
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('wagmi.')) {
+          keysToRemove.forEach(key => {
             localStorage.removeItem(key);
-            console.log(`[Logout] Cleared: ${key}`);
+          });
+
+          // Clear any wagmi-specific keys
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('wagmi.')) {
+              localStorage.removeItem(key);
+              console.log(`[Logout] Cleared: ${key}`);
+            }
+          });
+        }
+
+        // Clear session data (always)
+        sessionStorage.clear();
+        
+        // Clear game-related storage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('game-')) {
+            localStorage.removeItem(key);
           }
         });
-
-        // Clear session data
-        sessionStorage.clear();
       }
 
-      // Redirect to login page (not landing) for clean login experience
+      // Redirect to login page with cache-busting query param for embedded contexts
       console.log('[Settings] Logout complete - redirecting to login');
-      window.location.href = "/login";
+      const redirectUrl = isEmbedded 
+        ? `/login?t=${Date.now()}` // Cache-busting timestamp for embedded
+        : "/login";
+      window.location.href = redirectUrl;
     } catch (error) {
       console.error("Error during logout:", error);
       // Even on error, force clean redirect
       if (typeof window !== 'undefined') {
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('wagmi.')) {
+          if (key.startsWith('wagmi.') || key.startsWith('game-')) {
             localStorage.removeItem(key);
           }
         });
         sessionStorage.clear();
       }
-      window.location.href = "/login";
+      const isEmbedded = typeof window !== 'undefined' && window.self !== window.top;
+      window.location.href = isEmbedded ? `/login?t=${Date.now()}` : "/login";
     }
   };
 

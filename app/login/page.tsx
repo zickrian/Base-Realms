@@ -7,6 +7,15 @@ import { useRouter } from "next/navigation";
 import { LandingContent } from "../components/LandingContent";
 import { useGameStore } from "../stores/gameStore";
 
+/** Detect if running in embedded context (Base Mini App, Farcaster) */
+function useIsEmbedded() {
+  const [embedded, setEmbedded] = useState(false);
+  useEffect(() => {
+    setEmbedded(typeof window !== "undefined" && window.self !== window.top);
+  }, []);
+  return embedded;
+}
+
 export default function Login() {
   const router = useRouter();
   const { setMiniAppReady, isMiniAppReady } = useMiniKit();
@@ -16,13 +25,15 @@ export default function Login() {
   const redirectedRef = useRef(false);
   const wasConnectedRef = useRef(false);
   const addressRef = useRef<string | null>(null);
+  const sessionVerifiedRef = useRef(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [loadingStep, setLoadingStep] = useState<'connecting' | 'initializing' | 'loading' | 'ready'>('connecting');
+  const isEmbedded = useIsEmbedded();
 
-  // Clear wallet state on mount to prevent "dapp wants to continue" popup
+  // Clear wallet state on mount with enhanced embedded context handling
   useEffect(() => {
-    console.log('[Login] Clearing wallet state to prevent auto-reconnect popup');
+    console.log('[Login] Initializing - Embedded:', isEmbedded);
 
     if (typeof window !== 'undefined') {
       // Check if user properly navigated from landing page
@@ -33,28 +44,45 @@ export default function Login() {
         sessionStorage.removeItem('fromLandingPage');
       }
 
-      // Clear specific wagmi keys to prevent auto-connect
-      // We ONLY target wagmi keys to avoid breaking the wallet SDK's internal state
-      const keysToRemove = [
-        'wagmi.recentConnectorId',
-        'wagmi.connected',
-        'wagmi.wallet',
-        'wagmi.store',
-        'wagmi.cache',
-      ];
+      // In embedded contexts, aggressively clear cache to prevent stale state
+      if (isEmbedded) {
+        console.log('[Login] Embedded context detected - clearing all cached state');
+        
+        // Clear ALL localStorage (except wallet SDK internal keys)
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('wagmi.') || key.startsWith('game-')) {
+            localStorage.removeItem(key);
+            console.log(`[Login] Cleared embedded cache: ${key}`);
+          }
+        });
+        
+        // Clear session storage completely
+        sessionStorage.clear();
+        
+        // Reset game store to ensure clean state
+        reset();
+        initRef.current = false;
+        sessionVerifiedRef.current = false;
+      } else {
+        // Standard browser: only clear wagmi keys
+        const keysToRemove = [
+          'wagmi.recentConnectorId',
+          'wagmi.connected',
+          'wagmi.wallet',
+          'wagmi.store',
+          'wagmi.cache',
+        ];
 
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-      });
-
-      // Clear any other wagmi-specific keys, but NOT general "coinbase" or "wallet" keys
-      // as that might break the embedded wallet's internal session
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('wagmi.')) {
+        keysToRemove.forEach(key => {
           localStorage.removeItem(key);
-          console.log(`[Login] Cleared: ${key}`);
-        }
-      });
+        });
+
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('wagmi.')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
@@ -66,7 +94,7 @@ export default function Login() {
     }
   }, [setMiniAppReady, isMiniAppReady]);
 
-  // Memoized init function to prevent re-creation
+  // Memoized init function with session verification for embedded contexts
   const handleInitialize = useCallback(async (walletAddr: string) => {
     // CRITICAL: Prevent initialization if logout is in progress
     if (isLoggingOut) {
@@ -84,7 +112,43 @@ export default function Login() {
     setInitError(null);
 
     try {
-      // Login first
+      // In embedded contexts, verify session first to prevent stale cached state
+      if (isEmbedded && !sessionVerifiedRef.current) {
+        console.log('[Login] Embedded context - verifying session validity');
+        
+        const verifyRes = await fetch('/api/auth/verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress: normalizedAddress }),
+        });
+
+        if (verifyRes.ok) {
+          const { valid, isRecent } = await verifyRes.json();
+          
+          if (!valid || !isRecent) {
+            console.log('[Login] Session invalid or stale - forcing fresh login');
+            // Session is stale, force full re-authentication
+            sessionVerifiedRef.current = false;
+            
+            // Clear all cached state
+            reset();
+            if (typeof window !== 'undefined') {
+              sessionStorage.clear();
+              Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('wagmi.') || key.startsWith('game-')) {
+                  localStorage.removeItem(key);
+                }
+              });
+            }
+          } else {
+            console.log('[Login] Session verified as valid');
+            sessionVerifiedRef.current = true;
+          }
+        }
+      }
+
+      // Login (creates or updates session)
+      console.log('[Login] Calling login endpoint');
       const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,18 +156,26 @@ export default function Login() {
       });
 
       if (!loginRes.ok) {
-        throw new Error('Login failed');
+        const errorData = await loginRes.json().catch(() => ({ error: 'Login failed' }));
+        throw new Error(errorData.error || 'Login failed');
       }
 
+      // Mark session as verified after successful login
+      sessionVerifiedRef.current = true;
+
       // Then initialize game data with normalized address
+      console.log('[Login] Initializing game data');
       await initializeGameData(normalizedAddress);
+      
+      console.log('[Login] Initialization complete');
     } catch (err) {
       console.error('Initialization failed:', err);
       setInitError(err instanceof Error ? err.message : 'Failed to initialize');
       initRef.current = false;
       addressRef.current = null;
+      sessionVerifiedRef.current = false;
     }
-  }, [initializeGameData, isLoggingOut]);
+  }, [initializeGameData, isLoggingOut, isEmbedded, reset]);
 
   // Handle wallet disconnection - minimal cleanup, let wagmi handle it
   useEffect(() => {

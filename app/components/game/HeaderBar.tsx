@@ -26,25 +26,52 @@ interface HeaderBarProps {
 export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
   const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const isEmbedded = useIsEmbedded();
 
+  // Force initial mount detection
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Enhanced query options for embedded contexts
   const balanceQuery = useMemo(
-    () => (isEmbedded ? { refetchInterval: 12_000 } : undefined),
+    () => {
+      if (!isEmbedded) return undefined;
+      
+      return {
+        refetchInterval: 12_000,
+        // Force refetch on mount in embedded contexts to prevent stale cache
+        refetchOnMount: true,
+        // Don't use cached data in embedded contexts
+        staleTime: 0,
+        gcTime: 0,
+      };
+    },
     [isEmbedded]
   );
 
-  const { data: ethBalanceData } = useBalance({
+  const { data: ethBalanceData, refetch: refetchEth } = useBalance({
     address: address,
     chainId: BASE_CHAIN_ID,
     query: balanceQuery,
   });
 
-  const { data: idrxBalanceData } = useBalance({
+  const { data: idrxBalanceData, refetch: refetchIdrx } = useBalance({
     address: address,
     token: IDRX_TOKEN_ADDRESS,
     chainId: BASE_CHAIN_ID,
     query: balanceQuery,
   });
+
+  // Force refetch on mount in embedded contexts
+  useEffect(() => {
+    if (mounted && isEmbedded && isConnected && address) {
+      console.log('[HeaderBar] Embedded context - forcing balance refetch on mount');
+      refetchEth();
+      refetchIdrx();
+    }
+  }, [mounted, isEmbedded, isConnected, address, refetchEth, refetchIdrx]);
 
   const idrxBalance = useMemo(() => {
     if (!idrxBalanceData || !isConnected) return 0;
@@ -61,12 +88,6 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
     if (value < 0.000001) return value.toExponential(2);
     return value.toFixed(6);
   };
-
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   if (!mounted) {
     return (
