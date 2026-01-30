@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Inter, Source_Code_Pro, Pixelify_Sans, Russo_One } from "next/font/google";
 import { SafeArea } from "@coinbase/onchainkit/minikit";
 import { minikitConfig } from "@/minikit.config";
@@ -91,36 +92,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning translate="no">
-      <head>
-        <script
+      <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
+        <Script
+          id="miniapp-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              console.log('[DEBUG] Script tag loaded - checking for SDK...');
-              
-              // Poll for SDK to be available (loaded by React)
-              var checkCount = 0;
-              var checkInterval = setInterval(function() {
-                checkCount++;
-                console.log('[DEBUG] Check #' + checkCount + ' - Looking for SDK...');
-                
-                // Check if window.miniappSdk exists (from CDN) or try global scope
-                if (typeof window.miniappSdk !== 'undefined') {
-                  clearInterval(checkInterval);
-                  console.log('[DEBUG] Found miniappSdk, calling ready()...');
-                  window.miniappSdk.actions.ready()
-                    .then(function() { console.log('[DEBUG] ✅ Ready SUCCESS'); })
-                    .catch(function(e) { console.error('[DEBUG] ❌ Ready FAILED:', e); });
-                } else if (checkCount > 20) {
-                  // Stop after 20 attempts (4 seconds)
-                  clearInterval(checkInterval);
-                  console.error('[DEBUG] ❌ SDK not found after 4 seconds');
-                }
-              }, 200);
+              console.log('[SCRIPT-INIT] Loading...');
+              window.__MINIAPP_INIT__ = true;
             `,
           }}
         />
-      </head>
-      <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
         <RootProvider>
           <MiniAppInit />
           <SafeArea>{children}</SafeArea>
