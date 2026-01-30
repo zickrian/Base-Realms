@@ -13,11 +13,44 @@ import "@coinbase/onchainkit/styles.css";
 const queryClient = new QueryClient();
 
 export function RootProvider({ children }: { children: ReactNode }) {
-  // Trigger App Display: call ready() to hide splash and show app (docs.base.org/mini-apps/quickstart/migrate-existing-apps)
-  // React: call ready() inside useEffect; call as soon as possible and avoid jitter and content reflows.
+  // Farcaster miniapp: call ready() when interface is loaded to hide splash (miniapps.farcaster.xyz/docs/guides/loading)
+  // "Don't call ready until your interface has loaded" - wait for fonts & first paint to avoid jitter
   useEffect(() => {
-    // Once app is ready to be displayed
-    void sdk.actions.ready();
+    let cancelled = false;
+
+    const initializeMiniApp = async () => {
+      try {
+        console.log('[MiniApp] Waiting for interface to load...');
+        
+        // Wait for fonts to prevent layout shift (critical for avoiding jitter)
+        if (document.fonts) {
+          await document.fonts.ready;
+          console.log('[MiniApp] Fonts loaded');
+        }
+        
+        // Wait for first paint (ensure content is visible)
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        if (cancelled) return;
+        
+        // Wait one more frame to ensure no content reflow
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        if (cancelled) return;
+        
+        // Interface is ready - call ready() to hide splash and display app
+        await sdk.actions.ready();
+        console.log('[MiniApp] ✅ Ready called successfully - splash hidden');
+      } catch (error) {
+        // Log error but don't crash - app should still work in browser
+        console.error('[MiniApp] ❌ Failed to call ready():', error);
+        console.log('[MiniApp] App will continue (not in Farcaster context or SDK error)');
+      }
+    };
+
+    initializeMiniApp();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
