@@ -30,8 +30,7 @@ export const minikitConfig = {
     ogImageUrl: "https://baserealms.app/bgmantap.png",
     description:
       "Base Realms is a Web3 pixel-art battle game on the Base network.",
-    subtitle:
-      "Mint characters, enter battles, and compete for on-chain rewards on Base.",
+    subtitle: "RPG Game on Base",
     primaryCategory: "games",
     tags: ["base", "nft", "arena", "game", "battle"],
     ogDescription:
