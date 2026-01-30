@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getGameIconUrl } from "@/app/utils/supabaseStorage";
 import styles from "./landing.module.css";
+
+const CARD_ICON_SIZE = 100;
 
 export default function Landing() {
   const router = useRouter();
@@ -148,15 +151,7 @@ export default function Landing() {
       {/* Hero Section */}
       <header className={styles.hero}>
         <div className={styles.heroOverlay} />
-        <div className={styles.heroContent}>
-          {/* NO LOGO HERE as requested "di hero jangan kasih logo base realms di kiri atas aja" interpreted as move logo to navbar only */}
-
-          <h1 className={styles.heroSubtitle}>
-            Mint a Character for Free,<br />
-            Enter Battles, and<br />
-            Compete to Win Rewards!
-          </h1>
-        </div>
+        <div className={styles.heroContent} />
 
         {/* NO Scroll Indicator as requested */}
       </header>
@@ -164,10 +159,10 @@ export default function Landing() {
       {/* Main Content (Connect & Economy) - Ensure visible for scrolling test */}
       <section className={styles.section}>
         <div className={styles.cardGrid}>
-          {/* Card 1 - base app image, centered, no circle */}
+          {/* Card 1 - ETH logo from Supabase, centered, no circle */}
           <div className={styles.pixelCard}>
             <div className={styles.cardIconWrap}>
-              <Image src="/base.png" alt="Base Realms" width={100} height={100} />
+              <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={CARD_ICON_SIZE} height={CARD_ICON_SIZE} />
             </div>
             <h2 className={styles.cardTitle}>1. Connect and Start</h2>
             <p className={styles.cardText}>
@@ -178,10 +173,10 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Card 2 - IDRX centered, no circle */}
+          {/* Card 2 - IDRX logo from Supabase, centered, no circle */}
           <div className={styles.pixelCard}>
             <div className={styles.cardIconWrap}>
-              <span className={styles.cardIconText}>IDRX</span>
+              <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={CARD_ICON_SIZE} height={CARD_ICON_SIZE} />
             </div>
             <h2 className={styles.cardTitle}>2. Join the Economy</h2>
             <p className={styles.cardText}>

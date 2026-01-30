@@ -44,7 +44,7 @@ describe('Home Page (Landing)', () => {
     });
 
     render(<Home />);
-    expect(screen.getByText(/Mint a Character for Free/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connect and Start/i)).toBeInTheDocument();
   });
 
   /**
