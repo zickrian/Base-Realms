@@ -164,17 +164,10 @@ export default function Landing() {
       {/* Main Content (Connect & Economy) - Ensure visible for scrolling test */}
       <section className={styles.section}>
         <div className={styles.cardGrid}>
-          {/* Card 1 */}
+          {/* Card 1 - base app image, centered, no circle */}
           <div className={styles.pixelCard}>
-            <div style={{
-              width: 100, height: 100,
-              background: '#000',
-              borderRadius: '50%',
-              border: '4px solid #fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              overflow: 'hidden'
-            }}>
-              <Image src="/avatar/avatar1.svg" alt="Char" width={80} height={80} />
+            <div className={styles.cardIconWrap}>
+              <Image src="/base.png" alt="Base Realms" width={100} height={100} />
             </div>
             <h2 className={styles.cardTitle}>1. Connect and Start</h2>
             <p className={styles.cardText}>
@@ -185,17 +178,10 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Card 2 */}
+          {/* Card 2 - IDRX centered, no circle */}
           <div className={styles.pixelCard}>
-            <div style={{
-              width: 100, height: 100,
-              background: '#000',
-              borderRadius: '50%',
-              border: '4px solid #fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.5rem', color: '#fcd34d'
-            }}>
-              IDRX
+            <div className={styles.cardIconWrap}>
+              <span className={styles.cardIconText}>IDRX</span>
             </div>
             <h2 className={styles.cardTitle}>2. Join the Economy</h2>
             <p className={styles.cardText}>

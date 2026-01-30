@@ -350,6 +350,18 @@
   gap: 1.5rem;
 }
 
+.cardIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.cardIconText {
+  font-size: 1.5rem;
+  color: #fcd34d;
+}
+
 .cardTitle {
   font-size: 2.2rem;
   color: #fff;
