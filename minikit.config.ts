@@ -19,7 +19,7 @@ export const minikitConfig = {
   miniapp: {
     version: "1",
     name: "Base Realms",
-    iconUrl: "https://baserealms.app/game/icons/pedang.svg",
+    iconUrl: "https://baserealms.app/BR.png",
     homeUrl: "https://baserealms.app",
     imageUrl: "https://baserealms.app/bgmantap.png",
     buttonTitle: "Play Now",
