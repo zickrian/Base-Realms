@@ -118,6 +118,7 @@ export default function Landing() {
               width={200}
               height={52}
             />
+            <span className={styles.playNowLabel}>Play Now</span>
           </button>
         </div>
       </nav>
