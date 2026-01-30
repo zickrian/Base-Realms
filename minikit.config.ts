@@ -1,11 +1,7 @@
-const ROOT_URL =
-  process.env.NEXT_PUBLIC_URL ||
-  (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-  "http://localhost:3000";
-
 /**
  * MiniApp configuration object. Must follow the mini app manifest specification.
  * Served at /.well-known/farcaster.json (withValidManifest normalizes to "miniapp" in response).
+ * All URLs are exact (https://baserealms.app) — no ROOT_URL template.
  *
  * @see {@link https://docs.base.org/mini-apps/features/manifest}
  */
@@ -23,17 +19,17 @@ export const minikitConfig = {
   miniapp: {
     version: "1",
     name: "Base Realms",
-    iconUrl: `${ROOT_URL}/game/icons/pedang.svg`,
-    homeUrl: ROOT_URL,
-    imageUrl: `${ROOT_URL}/bgmantap.png`,
+    iconUrl: "https://baserealms.app/game/icons/pedang.svg",
+    homeUrl: "https://baserealms.app",
+    imageUrl: "https://baserealms.app/bgmantap.png",
     buttonTitle: "Play Now",
-    splashImageUrl: `${ROOT_URL}/bgmantap.png`,
+    splashImageUrl: "https://baserealms.app/bgmantap.png",
     splashBackgroundColor: "#000000",
-    webhookUrl: `${ROOT_URL}/api/webhook`,
-    heroImageUrl: `${ROOT_URL}/bgmantap.png`,
-    ogImageUrl: `${ROOT_URL}/bgmantap.png`,
+    webhookUrl: "https://baserealms.app/api/webhook",
+    heroImageUrl: "https://baserealms.app/bgmantap.png",
+    ogImageUrl: "https://baserealms.app/bgmantap.png",
     description:
-      "Base Realms is a Web3 pixel-art battle game on the Base network. Players mint or acquire NFT characters, fight AI enemies in turn-based combat, and earn on-chain rewards.",
+      "Base Realms is a Web3 pixel-art battle game on the Base network.",
     subtitle:
       "Mint characters, enter battles, and compete for on-chain rewards on Base.",
     primaryCategory: "games",
