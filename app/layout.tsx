@@ -91,6 +91,30 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning translate="no">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                console.log('[SCRIPT] Inline script loaded');
+                if (typeof window !== 'undefined') {
+                  window.addEventListener('load', async function() {
+                    try {
+                      console.log('[SCRIPT] Window loaded, importing SDK...');
+                      const { sdk } = await import('@farcaster/miniapp-sdk');
+                      console.log('[SCRIPT] SDK imported, calling ready()...');
+                      await sdk.actions.ready();
+                      console.log('[SCRIPT] ✅ Ready called successfully');
+                    } catch (error) {
+                      console.error('[SCRIPT] ❌ Error:', error);
+                    }
+                  });
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} ${sourceCodePro.variable} ${pixelifySans.variable} ${russoOne.variable}`} suppressHydrationWarning>
         <RootProvider>
           <MiniAppInit />
