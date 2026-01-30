@@ -486,6 +486,150 @@
   }
 }
 
+/* Mobile: hamburger + drawer (sidebar from right) */
+.docsMobileMenuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.docsMobileMenuBtn:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.docsMobileBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 40;
+}
+
+.docsMobileDrawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 100vw - 2rem);
+  background: #fff;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.docsMobileDrawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.docsMobileLogoLink {
+  display: block;
+}
+
+.docsMobileLogo {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+
+.docsMobileClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.docsMobileClose:hover {
+  background: #f3f4f6;
+}
+
+.docsMobileSearch {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.docsMobileSearch .docsSearchWrap {
+  display: block;
+  width: 100%;
+}
+
+.docsMobileSearch .docsSearchInput {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.docsMobileNavLinks {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.docsMobileNavLink {
+  font-size: 0.9375rem;
+  color: #374151;
+  text-decoration: none;
+}
+
+.docsMobileNavLink:hover {
+  color: #111;
+}
+
+.docsMobileSidebarTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  padding: 1rem 1.25rem 0 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.docsMobileNavList {
+  list-style: none;
+  padding: 0 0 1rem 1.25rem;
+  margin: 0;
+}
+
+.docsMobileGitHub {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.9375rem;
+  color: #374151;
+  text-decoration: none;
+}
+
+.docsMobileGitHub:hover {
+  color: #111;
+}
+
 @media (max-width: 768px) {
   .docsSidebarLeft {
     display: none;
@@ -496,8 +640,46 @@
   }
 
   .docsHeaderRight .docsHeaderNav,
-  .docsSearchWrap,
-  .docsHeaderIcons {
+  .docsHeaderRight .docsSearchWrap,
+  .docsHeaderRight .docsHeaderIcons {
     display: none;
+  }
+
+  .docsMobileMenuBtn {
+    display: flex;
+  }
+
+  .docsMobileBackdrop {
+    display: block;
+  }
+
+  .docsMobileDrawer {
+    display: flex;
+  }
+
+  /* Mobile: page bisa di-scroll (globals.css blocks body scroll; ini container yang scroll) */
+  .docsOuter {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .docsCard {
+    min-height: auto;
+    flex: none;
+  }
+
+  .docsBody {
+    overflow: visible;
+    flex: none;
+    display: block;
+  }
+
+  .docsMainWrap {
+    overflow: visible;
+    min-height: 0;
   }
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Github, Sun } from "lucide-react";
 import { DocsSearch, GITHUB_REPO } from "./DocsSearch";
+import { DocsMobileNav } from "./DocsMobileNav";
 import type { DocSection } from "./lib/sections";
 import styles from "./docs.module.css";
 
@@ -20,7 +21,7 @@ export function DocsShell({
   rightToc: React.ReactNode;
 }) {
   return (
-    <div className={styles.docsOuter}>
+    <div className={styles.docsOuter} data-allow-scroll="true">
       <div className={styles.docsCard}>
         <header className={styles.docsHeader}>
           <div className={styles.docsHeaderLeft}>
@@ -62,6 +63,7 @@ export function DocsShell({
                 <Sun size={20} />
               </button>
             </div>
+            <DocsMobileNav sections={sections} currentSection={currentSection} />
           </div>
         </header>
 
