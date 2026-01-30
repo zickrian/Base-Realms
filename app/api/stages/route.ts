@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
           .single();
 
         if (!profileError && profile?.stages) {
-          return NextResponse.json({ stage: profile.stages });
+          return NextResponse.json({ stage: profile.stages }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.stages) });
         }
       }
     }
@@ -42,11 +43,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { stages: stages || [] },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
-        },
-      }
+      { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.stages) }
     );
   } catch (error: unknown) {
     console.error('Get stages error:', error);

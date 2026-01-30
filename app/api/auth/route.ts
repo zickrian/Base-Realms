@@ -1,6 +1,10 @@
 import { Errors, createClient } from "@farcaster/quick-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { devLog, sanitizeErrorMessage } from '@/app/lib/validation';
+import { 
+  detectWalletType, 
+  type FarcasterJwtPayload 
+} from '@/types/auth';
 
 const client = createClient();
 
@@ -15,11 +19,20 @@ export async function GET(request: NextRequest) {
     const payload = await client.verifyJwt({
       token: authorization.split(" ")[1] as string,
       domain: getUrlHost(request),
-    });
+    }) as FarcasterJwtPayload;
 
     const userFid = payload.sub;
+    const walletType = detectWalletType(payload);
 
-    return NextResponse.json({ userFid });
+    // Log wallet type for debugging (remove in production if not needed)
+    devLog.info(`Auth verified - FID: ${userFid}, Wallet Type: ${walletType}`);
+
+    return NextResponse.json({ 
+      userFid, 
+      walletType,
+      // Include payload in development for debugging
+      ...(process.env.NODE_ENV === 'development' && { payload })
+    });
   } catch (e) {
     if (e instanceof Errors.InvalidTokenError) {
       return NextResponse.json({ message: "Invalid token" }, { status: 401 });

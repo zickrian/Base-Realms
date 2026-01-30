@@ -6,6 +6,7 @@ import {
   sanitizeErrorMessage, 
   devLog 
 } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       battle,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.battles) });
   } catch (error: unknown) {
     devLog.error('Start battle error:', error);
     return NextResponse.json(

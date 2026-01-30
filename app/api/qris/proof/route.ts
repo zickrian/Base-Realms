@@ -3,6 +3,7 @@ import { validateWalletHeader } from '@/app/lib/validation';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { getAddress, keccak256, encodePacked, toBytes } from 'viem';
 import { normalizeClaimId } from '../merkle-utils';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
       claimId,
       proofHash,
       amount: '1000',
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.qris) });
   } catch (error) {
     console.error('Proof generation error:', error);
     return NextResponse.json(

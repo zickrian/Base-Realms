@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { validateWalletHeader, isValidUUID, isInWhitelist, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
           success: true,
           purchase: existingPurchase,
           message: 'Purchase already recorded for this transaction',
-        });
+        }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
       }
     }
 
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
       success: true,
       purchase,
       revealedCard: reveal,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
   } catch (error: unknown) {
     devLog.error('Purchase card error:', error);
     return NextResponse.json(

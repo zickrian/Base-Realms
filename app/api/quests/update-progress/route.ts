@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { updateQuestProgress } from '@/app/lib/db/quest-progress';
 import { validateWalletHeader, isInWhitelist, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const VALID_QUEST_TYPES = ['play_games', 'win_games', 'open_packs', 'daily_login', 'mint_nft'] as const;
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       questCompleted: result.completedQuestIds.length > 0,
       xpAwarded: result.xpAwarded,
       completedQuestIds: result.completedQuestIds,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.quests) });
   } catch (error: unknown) {
     devLog.error('Update quest progress error:', error);
     return NextResponse.json(

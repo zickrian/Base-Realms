@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,10 +53,10 @@ export async function GET(request: NextRequest) {
         throw createError;
       }
 
-      return NextResponse.json({ settings: newSettings });
+      return NextResponse.json({ settings: newSettings }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.settings) });
     }
 
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.settings) });
   } catch (error: unknown) {
     devLog.error('Get settings error:', error);
     return NextResponse.json(
@@ -127,7 +128,7 @@ export async function PATCH(request: NextRequest) {
       throw updateError;
     }
 
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.settings) });
   } catch (error: unknown) {
     devLog.error('Update settings error:', error);
     return NextResponse.json(

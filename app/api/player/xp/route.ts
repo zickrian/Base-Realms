@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { awardXp } from '@/app/lib/db/xp-award';
 import { validateWalletHeader, isPositiveInteger, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -53,6 +54,8 @@ export async function GET(request: NextRequest) {
       currentXp: profile.current_xp,
       maxXp: profile.max_xp,
       xpPercentage: Math.round(xpPercentage * 100) / 100,
+    }, {
+      headers: createCacheHeaders(ROUTE_CACHE_POLICIES.player),
     });
   } catch (error: unknown) {
     devLog.error('Get XP error:', error);
@@ -112,6 +115,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       ...result,
+    }, {
+      headers: createCacheHeaders(ROUTE_CACHE_POLICIES.player),
     });
   } catch (error: unknown) {
     devLog.error('Add XP error:', error);

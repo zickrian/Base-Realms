@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { midtransClient } from '@/app/lib/midtrans/client';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
         expiresAt: payment.expires_at,
         status: payment.status,
       },
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.qris) });
   } catch (error) {
     console.error('QRIS creation error:', error);
     return NextResponse.json(

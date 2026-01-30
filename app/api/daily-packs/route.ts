@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       packCount: finalPackCount,
       nextResetAt: currentDailyPacks?.next_reset_at,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.dailyPacks) });
   } catch (error: unknown) {
     devLog.error('Get daily packs error:', error);
     return NextResponse.json(
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       packCount: updated.pack_count,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.dailyPacks) });
   } catch (error: unknown) {
     devLog.error('Claim daily pack error:', error);
     return NextResponse.json(

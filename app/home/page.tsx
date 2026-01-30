@@ -85,6 +85,8 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true);
+    // NO storage clearing here - let user work normally
+    // Only clear on logout or landing page
   }, []);
 
   // World Constants
@@ -402,30 +404,32 @@ export default function HomePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, address, isFullyReady, refreshInventory, refreshQuests]);
 
-  // Redirect if not connected or not fully ready
+  // CRITICAL: Immediate protection against invalid state
+  // Redirect if not properly connected with loaded data
   useEffect(() => {
-    // Don't check until mounted
     if (!mounted) return;
     
-    // If disconnected, redirect immediately
+    // INSTANT redirect if not connected - don't render anything
     if (!isConnected && !isConnecting) {
       if (!redirectAttempted.current) {
-        console.log('[Home] Not connected, redirecting to landing...');
+        console.log('[Home] ❌ Not connected - redirecting to landing immediately');
         redirectAttempted.current = true;
         router.replace('/');
       }
       return;
     }
 
-    // If connected but data not ready, redirect after timeout
+    // If "connected" but data not loading, give MINIMAL time then kick back to login
+    // This prevents the "ETH/IDRX 0" issue on mobile
     if (isConnected && !isFullyReady && !redirectAttempted.current) {
       const timer = setTimeout(() => {
         if (!isFullyReady && !redirectAttempted.current) {
-          console.log('[Home] Data not ready, redirecting to landing...');
+          console.log('[Home] ⚠️ Connected but data failed to load - retry login');
           redirectAttempted.current = true;
-          router.replace('/');
+          // Go to login page to retry initialization, not landing
+          router.replace('/login');
         }
-      }, 2000); // Give time for data to load
+      }, 1000); // Only 1 second - fast fail
       
       return () => clearTimeout(timer);
     }
@@ -724,35 +728,6 @@ export default function HomePage() {
       </div>
     </>
   );
-
-  // Redirect if not connected or not fully ready
-  useEffect(() => {
-    // Don't check until mounted
-    if (!mounted) return;
-    
-    // If disconnected, redirect immediately
-    if (!isConnected && !isConnecting) {
-      if (!redirectAttempted.current) {
-        console.log('[Home] Not connected, redirecting to landing...');
-        redirectAttempted.current = true;
-        router.replace('/');
-      }
-      return;
-    }
-
-    // If connected but data not ready, redirect after timeout
-    if (isConnected && !isFullyReady && !redirectAttempted.current) {
-      const timer = setTimeout(() => {
-        if (!isFullyReady && !redirectAttempted.current) {
-          console.log('[Home] Data not ready, redirecting to landing...');
-          redirectAttempted.current = true;
-          router.replace('/');
-        }
-      }, 2000); // Give time for data to load
-      
-      return () => clearTimeout(timer);
-    }
-  }, [mounted, isConnected, isConnecting, isFullyReady, router]);
 
   // Render a stable tree until client-side hydration completes
   if (!mounted) {

@@ -16,6 +16,10 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
+  // Note: For truly dynamic user-specific previews, apps should fetch from
+  // /api/og-metadata?wallet=XXX or ?fid=XXX and render custom OG images
+  // This provides default metadata for the main app
+  
   return {
     title: minikitConfig.miniapp.name,
     description: minikitConfig.miniapp.description,
@@ -24,6 +28,14 @@ export async function generateMetadata(): Promise<Metadata> {
       capable: true,
       statusBarStyle: "black-translucent",
       title: minikitConfig.miniapp.name,
+    },
+    // Dynamic Open Graph metadata
+    // Apps can override this by passing ?wallet= or ?fid= query params
+    openGraph: {
+      title: minikitConfig.miniapp.name,
+      description: minikitConfig.miniapp.description,
+      images: [minikitConfig.miniapp.heroImageUrl],
+      type: 'website',
     },
     other: {
       "fc:miniapp": JSON.stringify({

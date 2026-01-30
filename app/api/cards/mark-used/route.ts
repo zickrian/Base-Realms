@@ -13,6 +13,7 @@ import {
   sanitizeErrorMessage, 
   devLog 
 } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function POST(request: NextRequest) {
   try {
@@ -104,7 +105,8 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'NFT already marked as used',
           alreadyUsed: true,
-        }
+        }, 
+        { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) }
       );
     }
 
@@ -141,7 +143,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'NFT marked as used',
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
 
   } catch (error: unknown) {
     devLog.error('[mark-used] Fatal error:', error);

@@ -31,70 +31,58 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
   const handleLogout = async () => {
     try {
-      // Close settings menu first
+      console.log('[Settings] Logout initiated');
+      
+      // Close settings menu IMMEDIATELY to give user feedback
       onClose();
 
-      // Clear game store (removes all cached data)
+      // Clear game store
       reset();
 
-      // Disconnect wallet (wagmi will update isConnected to false)
+      // Disconnect wallet
       disconnect();
 
-      // CRITICAL FIX: Clear ALL wagmi/wallet storage to prevent auto-reconnect
-      // This is especially important for mobile where autoConnect can cause "bouncing" issues
+      // Clear ALL wallet storage to prevent "dapp wants to continue" on next login
       if (typeof window !== 'undefined') {
-        // Clear all wagmi-related keys
         const keysToRemove = [
-          'wagmi.wallet',
+          'wagmi.recentConnectorId',
           'wagmi.connected',
-          'wagmi.recentConnectorId', // CRITICAL: This causes auto-reconnect
+          'wagmi.wallet',
           'wagmi.store',
           'wagmi.cache',
-          'wagmi.injected.shimDisconnect',
         ];
 
         keysToRemove.forEach(key => {
           localStorage.removeItem(key);
         });
 
-        // Clear all sessionStorage (character positions, settings cache, etc.)
+        // Clear ALL wagmi and wallet-related keys
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+            localStorage.removeItem(key);
+            console.log(`[Logout] Cleared: ${key}`);
+          }
+        });
+
+        // Clear session data
         sessionStorage.clear();
       }
 
-      // Wait longer to ensure disconnect state is fully propagated
-      // This prevents race condition where isConnected might still be true
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Force full page reload to root page
-      // This ensures:
-      // 1. Complete state reset (React components re-initialize)
-      // 2. Wagmi state is re-checked from scratch
-      // 3. No cached navigation state
-      // 4. User sees login form (LandingContent) since isConnected will be false
-      window.location.href = "/";
+      // Redirect to login page (not landing) for clean login experience
+      console.log('[Settings] Logout complete - redirecting to login');
+      window.location.href = "/login";
     } catch (error) {
       console.error("Error during logout:", error);
-      // Ensure cleanup and redirect even on error
-      reset();
-      disconnect();
+      // Even on error, force clean redirect
       if (typeof window !== 'undefined') {
-        // Same comprehensive cleanup on error
-        const keysToRemove = [
-          'wagmi.wallet',
-          'wagmi.connected',
-          'wagmi.recentConnectorId',
-          'wagmi.store',
-          'wagmi.cache',
-          'wagmi.injected.shimDisconnect',
-        ];
-
-        keysToRemove.forEach(key => {
-          localStorage.removeItem(key);
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+            localStorage.removeItem(key);
+          }
         });
         sessionStorage.clear();
       }
-      // Force redirect regardless of errors
-      window.location.href = "/";
+      window.location.href = "/login";
     }
   };
 

@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,7 +55,7 @@ export async function GET(
         step3: 'Paste the URL and click Submit',
         step4: 'Click Pay to complete the payment simulation',
       },
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.qris) });
   } catch (error) {
     console.error('Get QR URL error:', error);
     return NextResponse.json(

@@ -16,33 +16,50 @@ export default function Landing() {
   useEffect(() => {
     setMounted(true);
 
-    // CRITICAL FIX: Clear wagmi storage on landing page if not connected
-    // This prevents auto-reconnection issues on mobile when user returns to app
-    if (typeof window !== 'undefined' && !isConnected && !isConnecting) {
+    // CRITICAL FIX: Clear wallet storage ONLY on landing page mount
+    // This prevents auto-reconnection popup for returning users
+    // DO NOT use beforeunload - it interferes with wallet connection!
+    console.log('[Landing] Clearing wallet storage on mount to prevent auto-connect');
+    
+    if (typeof window !== 'undefined') {
+      // Clear ALL wallet-related keys to prevent "dapp wants to continue"
       const keysToRemove = [
-        'wagmi.wallet',
+        'wagmi.recentConnectorId', // Main culprit for auto-connect
         'wagmi.connected',
-        'wagmi.recentConnectorId',
+        'wagmi.wallet',
         'wagmi.store',
         'wagmi.cache',
-        'wagmi.injected.shimDisconnect',
       ];
 
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
+        console.log(`[Landing] Removed: ${key}`);
       });
+
+      // Clear ALL wagmi keys with wildcard pattern
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+          localStorage.removeItem(key);
+          console.log(`[Landing] Removed wildcard: ${key}`);
+        }
+      });
+
+      // Clear session storage to reset any temporary state
       sessionStorage.clear();
     }
-  }, [isConnected, isConnecting]);
+  }, []);
 
-  useEffect(() => {
-    if (mounted && isConnected && !isConnecting) {
-      router.replace('/home');
-    }
-  }, [mounted, isConnected, isConnecting, router]);
+  // REMOVED: Auto-redirect to /home when connected
+  // Users must manually click "Play Now" to proceed to /login
+  // This prevents unwanted auto-login when returning to site
 
   const handlePlayClick = () => {
     setMobileMenuOpen(false);
+    // Set flag to indicate user properly navigated from landing page
+    // This prevents auto-reconnect on login page
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('fromLandingPage', 'true');
+    }
     router.push('/login');
   };
 

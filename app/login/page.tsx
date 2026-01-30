@@ -20,6 +20,43 @@ export default function Login() {
   const [initError, setInitError] = useState<string | null>(null);
   const [loadingStep, setLoadingStep] = useState<'connecting' | 'initializing' | 'loading' | 'ready'>('connecting');
 
+  // Clear wallet state on mount to prevent "dapp wants to continue" popup
+  useEffect(() => {
+    console.log('[Login] Clearing wallet state to prevent auto-reconnect popup');
+    
+    if (typeof window !== 'undefined') {
+      // Check if user properly navigated from landing page
+      const fromLanding = sessionStorage.getItem('fromLandingPage');
+      
+      if (fromLanding) {
+        console.log('[Login] Fresh navigation from landing - ready for clean connect');
+        sessionStorage.removeItem('fromLandingPage');
+      }
+
+      // Clear ALL wallet-related storage to prevent "dapp wants to continue"
+      const keysToRemove = [
+        'wagmi.recentConnectorId',
+        'wagmi.connected',
+        'wagmi.wallet',
+        'wagmi.store',
+        'wagmi.cache',
+      ];
+
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+
+      // Clear ALL wagmi and wallet-related keys
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+          localStorage.removeItem(key);
+          console.log(`[Login] Cleared: ${key}`);
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
   // Initialize MiniKit once
   useEffect(() => {
     if (!isMiniAppReady) {
@@ -57,30 +94,21 @@ export default function Login() {
     }
   }, [initializeGameData]);
 
-  // Handle wallet disconnection - show logout screen then reset
+  // Handle wallet disconnection - minimal cleanup, let wagmi handle it
   useEffect(() => {
     if (!isConnected && !isConnecting) {
       if (wasConnectedRef.current) {
+        console.log('[Login] Wallet disconnected - showing logout screen');
         setIsLoggingOut(true);
 
-        // CRITICAL FIX: Clear all storage when disconnecting
-        // This prevents stale data from causing "bouncing" issues on mobile
+        // MINIMAL cleanup - only critical keys
         if (typeof window !== 'undefined') {
-          const keysToRemove = [
-            'wagmi.wallet',
-            'wagmi.connected',
-            'wagmi.recentConnectorId',
-            'wagmi.store',
-            'wagmi.cache',
-            'wagmi.injected.shimDisconnect',
-          ];
-
-          keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
-          });
+          localStorage.removeItem('wagmi.recentConnectorId');
+          localStorage.removeItem('wagmi.connected');
           sessionStorage.clear();
         }
 
+        // Shorter timeout to reduce lag
         setTimeout(() => {
           reset();
           initRef.current = false;
@@ -88,24 +116,9 @@ export default function Login() {
           addressRef.current = null;
           setInitError(null);
           setIsLoggingOut(false);
-        }, 1500);
+        }, 800); // Reduced from 1500ms
       } else {
-        // Also clear storage even if never connected (cleanup)
-        if (typeof window !== 'undefined') {
-          const keysToRemove = [
-            'wagmi.wallet',
-            'wagmi.connected',
-            'wagmi.recentConnectorId',
-            'wagmi.store',
-            'wagmi.cache',
-            'wagmi.injected.shimDisconnect',
-          ];
-
-          keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
-          });
-          sessionStorage.clear();
-        }
+        // Quick cleanup if never connected
         reset();
         initRef.current = false;
         redirectedRef.current = false;

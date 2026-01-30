@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { FREE_PACK_CONTRACT_ADDRESS } from '@/app/lib/blockchain/nftService';
 import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const CONTRACT_ADDRESS = FREE_PACK_CONTRACT_ADDRESS.toLowerCase();
 
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
       inventory: inventory || [],
       count: inventory?.length || 0,
       fetchedAt: new Date().toISOString()
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
   } catch (error: unknown) {
     devLog.error('Get inventory error:', error);
     return NextResponse.json(

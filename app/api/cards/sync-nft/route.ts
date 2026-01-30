@@ -4,6 +4,7 @@ import { createPublicClient, fallback, http, parseAbiItem } from 'viem';
 import { base } from 'viem/chains';
 import { FREE_PACK_CONTRACT_ADDRESS, NFT_CONTRACT_ABI_VIEM } from '@/app/lib/blockchain/nftService';
 import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const CONTRACT_ADDRESS = FREE_PACK_CONTRACT_ADDRESS.toLowerCase();
 const IMAGE_BASE_URL = process.env.NFT_IMAGE_BASE_URL
@@ -327,7 +328,7 @@ export async function POST(request: NextRequest) {
           inventory: fallbackInventory || [],
           source: tokenResolution.source,
           warning: 'Token resolution failed, returning existing inventory'
-        });
+        }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
       }
       
       // IMPROVED: If we got some tokens even with partial failure, continue with sync
@@ -663,7 +664,7 @@ export async function POST(request: NextRequest) {
       inventory: inventory || [],
       syncedAt: new Date().toISOString(),
       totalItems: inventory?.length || 0,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
   } catch (error: unknown) {
     devLog.error('Sync NFT error:', error);
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET() {
   try {
@@ -20,11 +21,7 @@ export async function GET() {
     // Add cache headers for better performance
     return NextResponse.json(
       { packs: packs || [] },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        },
-      }
+      { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.cardPacks) }
     );
   } catch (error: unknown) {
     console.error('Get card packs error:', error);

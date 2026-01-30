@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 /**
  * Record NFT mint transaction to user_purchases
@@ -74,7 +75,10 @@ export async function POST(request: NextRequest) {
         isDuplicate: true,
         purchase: existingPurchase,
         message: 'Transaction already recorded',
-      }, { status: 409 });
+      }, { 
+        headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory), 
+        status: 409 
+      });
     }
 
     // Create purchase record for mint transaction
@@ -160,7 +164,7 @@ export async function POST(request: NextRequest) {
       success: true,
       isDuplicate: false,
       purchase,
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.inventory) });
   } catch (error: unknown) {
     console.error('[record-mint] Unexpected error:', error);
     

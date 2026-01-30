@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 interface QuestData {
   id: string;
@@ -185,7 +186,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ quests: formattedQuests });
+    return NextResponse.json({ quests: formattedQuests }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.quests) });
   } catch (error: unknown) {
     devLog.error('Get quests error:', error);
     return NextResponse.json(

@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { midtransClient } from '@/app/lib/midtrans/client';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +62,7 @@ export async function GET(
           amount: payment.amount,
           updatedAt: new Date().toISOString(),
         },
-      });
+      }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.qris) });
     }
 
     // Check status from Midtrans
@@ -88,7 +89,7 @@ export async function GET(
           transactionId: payment.transaction_id,
           updatedAt: payment.updated_at,
         },
-      });
+      }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.qris) });
     }
 
     // Map Midtrans status to our status
@@ -165,7 +166,7 @@ export async function GET(
         transactionId: midtransStatus.transaction_id,
         updatedAt: new Date().toISOString(),
       },
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.qris) });
   } catch (error) {
     console.error('Status check error:', error);
     return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { isInWhitelist, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 interface LeaderboardEntry {
   rank: number;
@@ -55,13 +56,13 @@ export async function GET(request: NextRequest) {
       // Return empty leaderboard instead of error for better UX
       return NextResponse.json({
         leaderboard: [],
-      });
+      }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.leaderboard) });
     }
 
     if (!profiles || profiles.length === 0) {
       return NextResponse.json({
         leaderboard: [],
-      });
+      }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.leaderboard) });
     }
 
     // Get user wallet addresses for each profile
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       // Return empty leaderboard instead of error
       return NextResponse.json({
         leaderboard: [],
-      });
+      }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.leaderboard) });
     }
 
     // Create a map of user_id to wallet_address
@@ -149,17 +150,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { leaderboard: leaderboardWithRank },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
-        },
-      }
+      { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.leaderboard) }
     );
   } catch (error: unknown) {
     devLog.error('Leaderboard error:', error);
     // Return empty leaderboard instead of error for better UX
     return NextResponse.json({
       leaderboard: [],
-    });
+    }, { headers: createCacheHeaders(ROUTE_CACHE_POLICIES.leaderboard) });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase/server';
 import { getStorageUrl } from '@/app/utils/supabaseStorage';
 import { validateWalletHeader, sanitizeErrorMessage, devLog } from '@/app/lib/validation';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -96,6 +97,8 @@ export async function GET(request: NextRequest) {
         selectedCardId: profile.selected_card_id || null,
         selectedCard: selectedCard,
       },
+    }, {
+      headers: createCacheHeaders(ROUTE_CACHE_POLICIES.player),
     });
   } catch (error: unknown) {
     devLog.error('Get profile error:', error);

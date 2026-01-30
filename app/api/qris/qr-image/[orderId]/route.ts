@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createCacheHeaders, ROUTE_CACHE_POLICIES } from '@/app/lib/cache-policy';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,6 +70,7 @@ export async function GET(
         headers: {
           'Content-Type': 'image/png',
           'Cache-Control': 'public, max-age=300',
+          ...createCacheHeaders(ROUTE_CACHE_POLICIES.qris),
         },
       });
     }
