@@ -61,6 +61,16 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     const tokenId = selectedCard?.token_id || null;
     const characterImageUrl = tokenId ? getBattleImageUrl(tokenId) : null;
 
+    // Cache image URL to sessionStorage for recovery if profile refresh clears it
+    if (characterImageUrl) {
+      try {
+        sessionStorage.setItem('cached_battle_image_url', characterImageUrl);
+        sessionStorage.setItem('cached_battle_token_id', String(tokenId));
+      } catch (e) {
+        console.warn('[BattleStore] Failed to cache battle image URL:', e);
+      }
+    }
+
     set({
       status: 'ready',
       currentTurn: 'player',

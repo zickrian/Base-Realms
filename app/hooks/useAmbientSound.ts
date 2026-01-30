@@ -17,7 +17,18 @@ export function useAmbientSound(enabled: boolean = true) {
   // Helper function to safely update volume
   const updateAudioVolume = (volume: number) => {
     if (audioRef.current) {
-      audioRef.current.volume = Math.min(1, Math.max(0, volume / 100));
+      const normalizedVolume = Math.min(1, Math.max(0, volume / 100));
+      audioRef.current.volume = normalizedVolume;
+
+      if (normalizedVolume === 0) {
+        if (!audioRef.current.paused) {
+          audioRef.current.pause();
+        }
+      } else if (userInteracted && audioRef.current.paused) {
+        audioRef.current.play().catch((error) => {
+          console.warn('Failed to resume audio:', error);
+        });
+      }
     }
   };
 
@@ -28,7 +39,7 @@ export function useAmbientSound(enabled: boolean = true) {
     const handleUserInteraction = () => {
       setUserInteracted(true);
       // Try to play audio if it exists and user just interacted
-      if (audioRef.current && audioRef.current.paused) {
+      if (audioRef.current && audioRef.current.paused && audioRef.current.volume > 0) {
         audioRef.current.play().catch((error) => {
           console.warn('Failed to play audio after user interaction:', error);
         });
@@ -76,7 +87,7 @@ export function useAmbientSound(enabled: boolean = true) {
 
     // Handle audio load
     const handleCanPlay = async () => {
-      if (userInteracted) {
+      if (userInteracted && audio.volume > 0) {
         try {
           await audio.play();
         } catch (error) {
@@ -86,7 +97,7 @@ export function useAmbientSound(enabled: boolean = true) {
     };
 
     audio.addEventListener('canplaythrough', handleCanPlay);
-    
+
     const handleError = (error: Event) => {
       console.error('Failed to load ambient sound:', error);
     };
@@ -135,7 +146,7 @@ export function useAmbientSound(enabled: boolean = true) {
 
   // Try to play when user interacts
   useEffect(() => {
-    if (userInteracted && audioRef.current && audioRef.current.paused) {
+    if (userInteracted && audioRef.current && audioRef.current.paused && audioRef.current.volume > 0) {
       audioRef.current.play().catch((error) => {
         console.warn('Failed to play audio:', error);
       });

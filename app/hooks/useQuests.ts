@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 
 interface Quest {
@@ -21,6 +21,9 @@ export function useQuests() {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
 
   const fetchQuests = useCallback(async (forceRefresh = false) => {
     if (!isConnected || !address) {
@@ -42,7 +45,7 @@ export function useQuests() {
             'x-wallet-address': address,
           },
         }).then(res => res.json()).then(data => {
-          if (data.quests) {
+          if (data.quests && isMountedRef.current) {
             questsCache.set(address, { quests: data.quests, time: Date.now() });
             setQuests(data.quests);
           }
@@ -67,17 +70,24 @@ export function useQuests() {
 
       const data = await response.json();
       
-      // Update cache
-      questsCache.set(address, { quests: data.quests, time: Date.now() });
-      
-      setQuests(data.quests);
-      setError(null);
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        // Update cache
+        questsCache.set(address, { quests: data.quests, time: Date.now() });
+        
+        setQuests(data.quests);
+        setError(null);
+      }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      setQuests([]);
+      if (isMountedRef.current) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        setQuests([]);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [address, isConnected]);
 
@@ -85,22 +95,36 @@ export function useQuests() {
     fetchQuests();
   }, [fetchQuests]);
 
-  // Listen for refresh events
+  // Listen for refresh events with proper cleanup
   useEffect(() => {
     const handleRefresh = () => {
-      if (address && isConnected) {
+      // Only refresh if component is mounted and user is connected
+      if (address && isConnected && isMountedRef.current) {
+        console.log('[useQuests] Refresh event received, fetching quests...');
         fetchQuests(true);
       }
     };
 
     window.addEventListener('refresh-quests-inventory', handleRefresh);
+    
+    // CRITICAL: Cleanup event listener on unmount
     return () => {
       window.removeEventListener('refresh-quests-inventory', handleRefresh);
     };
   }, [address, isConnected, fetchQuests]);
 
+  // Track mount status
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const claimQuest = async (questId: string) => {
-    if (!address || !isConnected) return;
+    if (!address || !isConnected) {
+      throw new Error('Wallet not connected');
+    }
 
     try {
       const response = await fetch('/api/quests/claim', {
@@ -113,24 +137,39 @@ export function useQuests() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to claim quest');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to claim quest');
       }
 
-      // Refetch quests and update cache
+      const claimData = await response.json();
+      console.log('[useQuests] Quest claimed successfully:', claimData);
+
+      // Verify quest was claimed by refetching
       const questsResponse = await fetch('/api/quests', {
         headers: {
           'x-wallet-address': address,
         },
       });
 
-      if (questsResponse.ok) {
+      if (questsResponse.ok && isMountedRef.current) {
         const data = await questsResponse.json();
         questsCache.set(address, { quests: data.quests, time: Date.now() });
         setQuests(data.quests);
+        
+        // Verify the specific quest was actually claimed
+        const claimedQuest = data.quests.find((q: Quest) => q.id === questId);
+        if (claimedQuest?.status !== 'claimed') {
+          console.warn('[useQuests] Quest claim verification failed - status is not "claimed"');
+        }
       }
+      
+      return claimData;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
+      console.error('[useQuests] Claim quest error:', errorMessage);
+      if (isMountedRef.current) {
+        setError(errorMessage);
+      }
       throw err;
     }
   };

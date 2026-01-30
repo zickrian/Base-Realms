@@ -66,10 +66,19 @@ export default function Login() {
 
   // Memoized init function to prevent re-creation
   const handleInitialize = useCallback(async (walletAddr: string) => {
+    // CRITICAL: Prevent initialization if logout is in progress
+    if (isLoggingOut) {
+      console.log('[Login] Blocked initialization - logout in progress');
+      return;
+    }
+    
     // Prevent duplicate initialization
     if (initRef.current) return;
     initRef.current = true;
-    addressRef.current = walletAddr;
+    
+    // Normalize wallet address to lowercase for consistent comparison
+    const normalizedAddress = walletAddr.toLowerCase();
+    addressRef.current = normalizedAddress;
     setInitError(null);
 
     try {
@@ -77,22 +86,22 @@ export default function Login() {
       const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: walletAddr }),
+        body: JSON.stringify({ walletAddress: normalizedAddress }),
       });
 
       if (!loginRes.ok) {
         throw new Error('Login failed');
       }
 
-      // Then initialize game data
-      await initializeGameData(walletAddr);
+      // Then initialize game data with normalized address
+      await initializeGameData(normalizedAddress);
     } catch (err) {
       console.error('Initialization failed:', err);
       setInitError(err instanceof Error ? err.message : 'Failed to initialize');
       initRef.current = false;
       addressRef.current = null;
     }
-  }, [initializeGameData]);
+  }, [initializeGameData, isLoggingOut]);
 
   // Handle wallet disconnection - minimal cleanup, let wagmi handle it
   useEffect(() => {
@@ -108,7 +117,8 @@ export default function Login() {
           sessionStorage.clear();
         }
 
-        // Shorter timeout to reduce lag
+        // REDUCED timeout from 800ms to 400ms for better mobile UX
+        // Prevents race condition with rapid reconnect
         setTimeout(() => {
           reset();
           initRef.current = false;
@@ -116,7 +126,7 @@ export default function Login() {
           addressRef.current = null;
           setInitError(null);
           setIsLoggingOut(false);
-        }, 800); // Reduced from 1500ms
+        }, 400); // Reduced from 800ms for faster mobile experience
       } else {
         // Quick cleanup if never connected
         reset();
@@ -180,6 +190,11 @@ export default function Login() {
 
   // Start fetching data when wallet is connected but not initialized
   useEffect(() => {
+    // CRITICAL: Block initialization if logout is in progress or already redirected
+    if (redirectedRef.current || isLoggingOut) {
+      return;
+    }
+    
     // Only initialize if:
     // 1. Connected with address
     // 2. Not yet initialized
@@ -194,9 +209,11 @@ export default function Login() {
       !initRef.current &&
       !initError
     ) {
-      handleInitialize(address);
+      // Normalize address before initialization
+      const normalizedAddress = address.toLowerCase();
+      handleInitialize(normalizedAddress);
     }
-  }, [isConnected, address, isInitialized, isLoading, initError, handleInitialize]);
+  }, [isConnected, address, isInitialized, isLoading, initError, handleInitialize, isLoggingOut]);
 
   return <LandingContent isLoggingOut={isLoggingOut} initError={initError} loadingStep={loadingStep} />;
 }

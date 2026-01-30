@@ -492,7 +492,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
       if (response.ok) {
         const data = await response.json();
-        set({ profile: data.profile, profileLoading: false });
+        
+        // CRITICAL: Preserve character image URL during profile refresh
+        // This prevents image reset when opening menus or during transitions
+        const preservedImageUrl = currentProfile?.selectedCard?.image_url;
+        const newProfile = data.profile;
+        
+        // If we have a valid cached image URL and new profile doesn't have one,
+        // preserve the cached URL to prevent image loss
+        if (preservedImageUrl && newProfile?.selectedCard && !newProfile.selectedCard.image_url) {
+          newProfile.selectedCard.image_url = preservedImageUrl;
+        }
+        
+        set({ profile: newProfile, profileLoading: false });
       } else {
         set({ profileLoading: false });
       }
@@ -779,6 +791,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
 
       const result = await response.json();
+      
+      // Cache character image URL to sessionStorage for recovery
+      if (result.card?.image_url) {
+        try {
+          sessionStorage.setItem('cached_character_image_url', result.card.image_url);
+        } catch (e) {
+          console.warn('[GameStore] Failed to cache character image URL:', e);
+        }
+      }
       
       // Update profile with selected card (or null if deselected)
       const currentProfile = get().profile;

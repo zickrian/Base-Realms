@@ -9,6 +9,24 @@ const SUPABASE_STORAGE_URL =
     : 'https://htdiytcpgyawxzpitlll.supabase.co/storage/v1/object/public/assets';
 
 /**
+ * Validate if a URL is valid and accessible
+ * @param url - URL to validate
+ * @returns True if URL is valid format
+ */
+export function isValidImageUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  
+  // Check if it's a valid URL format
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    // Not a valid full URL, check if it's a valid path
+    return url.length > 0 && !url.includes('null') && !url.includes('undefined');
+  }
+}
+
+/**
  * Get full Supabase Storage URL for an asset
  * @param path - Path to the asset (e.g., 'game/icons/level-badge.png' or 'logos_demo.png')
  * @returns Full URL to the asset in Supabase Storage
@@ -22,6 +40,20 @@ export function getStorageUrl(path: string): string {
   // Remove leading slash if present
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   return `${SUPABASE_STORAGE_URL}/${cleanPath}`;
+}
+
+/**
+ * Get storage URL with validation and fallback
+ * @param path - Path to the asset
+ * @param fallback - Fallback path if primary fails validation
+ * @returns Validated URL or fallback
+ */
+export function getValidatedStorageUrl(path: string | null | undefined, fallback: string = 'battle/human.png'): string {
+  if (!isValidImageUrl(path)) {
+    console.warn(`[Storage] Invalid image path "${path}", using fallback: ${fallback}`);
+    return getStorageUrl(fallback);
+  }
+  return getStorageUrl(path as string);
 }
 
 /**

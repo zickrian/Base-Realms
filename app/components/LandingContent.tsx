@@ -16,7 +16,7 @@ interface LandingContentProps {
 }
 
 export function LandingContent({ isLoggingOut = false, initError = null, loadingStep = 'connecting' }: LandingContentProps) {
-  const { isConnected, isConnecting, address } = useAccount();
+  const { isConnected, address } = useAccount();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
 
   // Update loading message based on loadingStep
@@ -66,8 +66,8 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
     );
   }
 
-  // Show loading screen when connecting or connected
-  if (isConnecting || (isConnected && address)) {
+  // Show loading screen only when fully connected
+  if (isConnected && address) {
     return (
       <div className={styles.container}>
         <div className={styles.card}>

@@ -163,8 +163,24 @@ export default function HomePage() {
   }, [isMoving]);
 
   // Animation loop for character movement and camera
+  // CRITICAL: Pause animation when any menu is open to prevent invisible movement
   useEffect(() => {
     let animationFrameId: number;
+
+    // Check if any menu is open
+    const isAnyMenuOpen = isQuestMenuOpen || isHomeDeckMenuOpen || isCardModalOpen || 
+                           isSettingsOpen || isLeaderboardMenuOpen || isSwapMenuOpen ||
+                           showBattleConfirmPopup || showAlreadyClaimedPopup;
+
+    // If menu is open, pause animation loop
+    if (isAnyMenuOpen) {
+      // Stop current movement
+      if (isMovingRef.current) {
+        setIsMoving(false);
+        setTargetX(null);
+      }
+      return; // Exit early, don't start animation loop
+    }
 
     const animate = () => {
       // 1. Move Character
@@ -217,11 +233,16 @@ export default function HomePage() {
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Always run animation loop for smooth camera movement
-      animationFrameId = requestAnimationFrame(animate);
+    // Start animation loop only when no menu is open
+    animationFrameId = requestAnimationFrame(animate);
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, []); // Empty dependency array - animation runs continuously
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isQuestMenuOpen, isHomeDeckMenuOpen, isCardModalOpen, isSettingsOpen, 
+      isLeaderboardMenuOpen, isSwapMenuOpen, showBattleConfirmPopup, showAlreadyClaimedPopup]); // Re-run when menu state changes
 
   // Handle screen click for movement
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {

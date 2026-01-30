@@ -37,10 +37,17 @@ export const QuestMenu = ({ isOpen, onClose }: QuestMenuProps) => {
     try {
       setClaimingId(questId);
       await claimQuest(address, questId);
-      // XP bar will update automatically via store
+      
+      // Success! XP bar will update automatically via store
+      console.log(`[QuestMenu] Successfully claimed quest: ${questId}`);
     } catch (error) {
-      console.error('Failed to claim quest:', error);
+      console.error('[QuestMenu] Failed to claim quest:', error);
+      
+      // Show error to user (you can add a toast notification here if needed)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to claim quest';
+      alert(`Quest claim failed: ${errorMessage}`);
     } finally {
+      // Always reset claiming state, even on error
       setClaimingId(null);
     }
   };

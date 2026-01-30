@@ -6,6 +6,24 @@
  */
 
 /**
+ * Normalizes an Ethereum wallet address to lowercase
+ * This ensures consistent address comparison across the application
+ * @param address - The wallet address to normalize
+ * @returns Normalized lowercase address, or null if invalid
+ */
+export function normalizeWalletAddress(address: string | null | undefined): string | null {
+  if (!address || typeof address !== 'string') return null;
+  
+  // Validate format first
+  if (!isValidEthAddress(address)) {
+    console.warn('[Validation] Invalid wallet address format:', address);
+    return null;
+  }
+  
+  return address.toLowerCase();
+}
+
+/**
  * Validates Ethereum address format
  * @param address - The address to validate
  * @returns true if valid Ethereum address (0x + 40 hex chars)
