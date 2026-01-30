@@ -1,4 +1,4 @@
-import { http, createConfig } from 'wagmi';
+import { http, createConfig, createStorage, cookieStorage } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import { coinbaseWallet, injected } from 'wagmi/connectors';
@@ -36,6 +36,9 @@ export const wagmiConfig = createConfig({
   transports: {
     [base.id]: http(),
   },
+  storage: createStorage({
+    storage: typeof window !== 'undefined' ? cookieStorage : undefined,
+  }),
   // Enable SSR for Next.js
   ssr: true,
 });

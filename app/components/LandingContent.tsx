@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import styles from "./LandingContent.module.css";
 
 // Direct Supabase URL for logo
@@ -17,7 +16,15 @@ interface LandingContentProps {
 
 export function LandingContent({ isLoggingOut = false, initError = null, loadingStep = 'connecting' }: LandingContentProps) {
   const { isConnected, address } = useAccount();
+  const { connectors, connect, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
   const [loadingMessage, setLoadingMessage] = useState("Connecting...");
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
+
+  // Debug: Log available connectors
+  useEffect(() => {
+    console.log('[LandingContent] Available connectors:', connectors.map(c => ({ name: c.name, id: c.id })));
+  }, [connectors]);
 
   // Update loading message based on loadingStep
   useEffect(() => {
@@ -35,6 +42,16 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
       setLoadingMessage("Ready! Entering game...");
     }
   }, [isLoggingOut, initError, loadingStep]);
+
+  // Handle wallet connection
+  const handleConnect = (connectorId: string) => {
+    const connector = connectors.find(c => c.id === connectorId);
+    if (connector) {
+      console.log('[LandingContent] Connecting with:', connector.name);
+      connect({ connector });
+      setShowWalletOptions(false);
+    }
+  };
 
   // Show logout screen
   if (isLoggingOut) {
@@ -90,12 +107,12 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
           </div>
           {initError ? (
             <div className={styles.buttonSection}>
-              <Wallet>
-                <ConnectWallet
-                  className={styles.connectButton}
-                  disconnectedLabel="Try Again"
-                />
-              </Wallet>
+              <button
+                className={styles.connectButton}
+                onClick={() => disconnect()}
+              >
+                Try Again
+              </button>
             </div>
           ) : (
             <div className={styles.loadingDots}>
@@ -131,18 +148,56 @@ export function LandingContent({ isLoggingOut = false, initError = null, loading
         </div>
 
         <div className={styles.buttonSection}>
-          <Wallet>
-            <ConnectWallet
+          {!showWalletOptions ? (
+            <button
               className={styles.connectButton}
-              disconnectedLabel="Connect & Play"
-            />
-          </Wallet>
+              onClick={() => {
+                // Try to connect with first available non-Farcaster connector for browser
+                const browserConnector = connectors.find(c => 
+                  c.id === 'coinbaseWalletSDK' || c.id === 'io.metamask'
+                );
+                if (browserConnector) {
+                  handleConnect(browserConnector.id);
+                } else {
+                  // Fallback: show all options
+                  setShowWalletOptions(true);
+                }
+              }}
+              disabled={isPending}
+            >
+              {isPending ? 'Connecting...' : 'Connect & Play'}
+            </button>
+          ) : (
+            <div className={styles.walletOptions}>
+              {connectors
+                .filter(connector => connector.id !== 'farcasterMiniApp') // Hide Farcaster connector in browser
+                .map((connector) => (
+                  <button
+                    key={connector.id}
+                    className={styles.walletOption}
+                    onClick={() => handleConnect(connector.id)}
+                    disabled={isPending}
+                  >
+                    {connector.name}
+                  </button>
+                ))}
+              <button
+                className={styles.walletOptionCancel}
+                onClick={() => setShowWalletOptions(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
 
         <div className={styles.alternativeSection}>
-          <a href="#" className={styles.alternativeLink}>
-            use another wallet
-          </a>
+          <button
+            className={styles.alternativeLink}
+            onClick={() => setShowWalletOptions(!showWalletOptions)}
+          >
+            {showWalletOptions ? 'hide options' : 'use another wallet'}
+          </button>
         </div>
 
         <div className={styles.recommendationSection}>
