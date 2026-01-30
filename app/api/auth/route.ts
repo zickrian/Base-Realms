@@ -1,9 +1,9 @@
 import { Errors, createClient } from "@farcaster/quick-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { devLog, sanitizeErrorMessage } from '@/app/lib/validation';
-import { 
-  detectWalletType, 
-  type FarcasterJwtPayload 
+import {
+  detectWalletType,
+  type FarcasterJwtPayload
 } from '@/types/auth';
 
 const client = createClient();
@@ -16,19 +16,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const payload = await client.verifyJwt({
+    const rawPayload = await client.verifyJwt({
       token: authorization.split(" ")[1] as string,
       domain: getUrlHost(request),
-    }) as FarcasterJwtPayload;
+    });
+
+    // Convert JWTPayload to FarcasterJwtPayload (sub is number in JWTPayload, string in our type)
+    const payload: FarcasterJwtPayload = {
+      ...(rawPayload as unknown as FarcasterJwtPayload),
+      sub: String(rawPayload.sub), // Convert number to string
+    };
 
     const userFid = payload.sub;
     const walletType = detectWalletType(payload);
 
     // Log wallet type for debugging (remove in production if not needed)
-    devLog.info(`Auth verified - FID: ${userFid}, Wallet Type: ${walletType}`);
+    devLog.log(`Auth verified - FID: ${userFid}, Wallet Type: ${walletType}`);
 
-    return NextResponse.json({ 
-      userFid, 
+    return NextResponse.json({
+      userFid,
       walletType,
       // Include payload in development for debugging
       ...(process.env.NODE_ENV === 'development' && { payload })

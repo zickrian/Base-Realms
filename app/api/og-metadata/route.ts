@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     } else if (fidParam) {
       // Future: Add FID lookup if you store FIDs in users table
       // For now, return default metadata
-      devLog.info(`FID lookup not yet implemented: ${fidParam}`);
+      devLog.log(`FID lookup not yet implemented: ${fidParam}`);
     }
 
     // Get user stats if user exists

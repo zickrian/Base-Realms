@@ -2,14 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./landing.module.css";
 
 export default function Landing() {
   const router = useRouter();
-  const { isConnected, isConnecting } = useAccount();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -20,7 +18,7 @@ export default function Landing() {
     // This prevents auto-reconnection popup for returning users
     // DO NOT use beforeunload - it interferes with wallet connection!
     console.log('[Landing] Clearing wallet storage on mount to prevent auto-connect');
-    
+
     if (typeof window !== 'undefined') {
       // Clear ALL wallet-related keys to prevent "dapp wants to continue"
       const keysToRemove = [
