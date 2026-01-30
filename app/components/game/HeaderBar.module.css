@@ -49,7 +49,7 @@
   transform: translateY(2px);
 }
 
-/* Currency Section */
+/* Currency Section - 3.6px per unit (balancenew.svg viewBox 30×7) */
 .currencySection {
   display: flex;
   align-items: flex-start;
@@ -58,73 +58,48 @@
   pointer-events: auto;
 }
 
+/* Wrapper: two boxes stacked (ETH + IDRX), each box = balancenew.svg at 3.6px/unit */
 .currencyItem {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  background-color: #e8be82;
-  border: 3px solid #3e1f08;
+  gap: 2px;
   cursor: pointer;
   image-rendering: pixelated;
-  min-width: 85px;
-  padding: 5px 0;
   transition: transform 0.1s;
-  
-  /* Pixel art border with angled corners */
-  clip-path: polygon(
-    0 3px,           
-    3px 0,           
-    calc(100% - 3px) 0,   
-    100% 3px,        
-    100% calc(100% - 3px), 
-    calc(100% - 3px) 100%, 
-    3px 100%,        
-    0 calc(100% - 3px)     
-  );
-  
-  /* Inner glow + 3D shadow */
-  box-shadow: 
-    inset 0 0 8px rgba(139, 69, 19, 0.2),
-    0 2px 0 #3e1f08,
-    0 3px 0 rgba(0, 0, 0, 0.3);
 }
 
 .currencyItem:hover {
   transform: translateY(1px);
-  box-shadow: 
-    inset 0 0 8px rgba(139, 69, 19, 0.2),
-    0 1px 0 #3e1f08,
-    0 2px 0 rgba(0, 0, 0, 0.3);
 }
 
 .currencyItem:active {
   transform: translateY(2px);
-  box-shadow: inset 0 0 8px rgba(139, 69, 19, 0.2);
 }
 
-.currencyBg {
-  display: none;
-}
-
-.balanceSvg {
-  display: none;
-}
-
-.currencyContent {
-  position: relative;
-  z-index: 1;
+/* Single balance box: balancenew.svg frame. viewBox 30×7 → 108px × 25.2px (3.6px per unit) */
+.balanceBox {
+  width: 108px;
+  height: 25.2px;
+  background: url("/button/balancenew.svg") no-repeat center;
+  background-size: 108px 25.2px;
   display: flex;
-  flex-direction: column;
-  width: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 .currencyRow {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
-  padding: 0 6px;
+  gap: 6px;
+  padding: 0 8px;
+  width: 108px;
+  height: 25.2px;
+  box-sizing: border-box;
 }
 
 .currencyRow img {
@@ -132,10 +107,7 @@
 }
 
 .currencyDivider {
-  width: 100%;
-  height: 2px;
-  background-color: #3e1f08;
-  margin: 2px 0;
+  display: none;
 }
 
 .currencyValue {
@@ -146,6 +118,9 @@
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
   white-space: nowrap;
   letter-spacing: 0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 /* Responsive Breakpoints */

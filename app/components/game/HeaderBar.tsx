@@ -10,6 +10,15 @@ import { IDRX_TOKEN_ADDRESS, BASE_CHAIN_ID, formatIDRXBalance } from "@/app/lib/
 
 import styles from "./HeaderBar.module.css";
 
+/** True when running inside Farcaster/Base app iframe (balance doesn't auto-update on focus) */
+function useIsEmbedded() {
+  const [embedded, setEmbedded] = useState(false);
+  useEffect(() => {
+    setEmbedded(typeof window !== "undefined" && window.self !== window.top);
+  }, []);
+  return embedded;
+}
+
 interface HeaderBarProps {
   onSettingsClick?: () => void;
 }
@@ -17,16 +26,24 @@ interface HeaderBarProps {
 export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarProps) {
   const { address, isConnected } = useAccount();
   const [isWalletPopupOpen, setIsWalletPopupOpen] = useState(false);
+  const isEmbedded = useIsEmbedded();
+
+  const balanceQuery = useMemo(
+    () => (isEmbedded ? { refetchInterval: 12_000 } : undefined),
+    [isEmbedded]
+  );
 
   const { data: ethBalanceData } = useBalance({
     address: address,
     chainId: BASE_CHAIN_ID,
+    query: balanceQuery,
   });
 
   const { data: idrxBalanceData } = useBalance({
     address: address,
     token: IDRX_TOKEN_ADDRESS,
     chainId: BASE_CHAIN_ID,
+    query: balanceQuery,
   });
 
   const idrxBalance = useMemo(() => {
@@ -76,22 +93,16 @@ export const HeaderBar = memo(function HeaderBar({ onSettingsClick }: HeaderBarP
       </button>
 
       <div className={styles.currencySection}>
-        {/* Combined ETH + IDRX in one box */}
+        {/* Two boxes: balancenew.svg per box (3.6px per unit) */}
         <div
           className={styles.currencyItem}
           onClick={() => setIsWalletPopupOpen(true)}
         >
-          {/* ETH Row */}
-          <div className={styles.currencyRow}>
+          <div className={styles.balanceBox}>
             <Image src={getGameIconUrl("ethereum.png")} alt="ETH" width={14} height={14} />
             <span className={styles.currencyValue}>{formatETH(ethBalance)}</span>
           </div>
-          
-          {/* Divider */}
-          <div className={styles.currencyDivider}></div>
-          
-          {/* IDRX Row */}
-          <div className={styles.currencyRow}>
+          <div className={styles.balanceBox}>
             <Image src={getGameIconUrl("IDRX.png")} alt="IDRX" width={14} height={14} />
             <span className={styles.currencyValue}>{formatIDRXBalance(idrxBalance)}</span>
           </div>
