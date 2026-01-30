@@ -411,6 +411,275 @@
   height: auto;
 }
 
+/* Glossarium dark mode: dark bg, white text (docs only) */
+.docsOuter[data-docs-theme="dark"] {
+  background: #1a1a1a;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsCard {
+  background: #1a1a1a;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsHeader {
+  background: #1a1a1a;
+  border-bottom-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsHeaderLink {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsHeaderLink:hover {
+  color: #fff;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsHeaderLinkActive {
+  color: #93c5fd;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchInput {
+  background: #374151;
+  border-color: #4b5563;
+  color: #fff;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchInput::placeholder {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchInput:focus {
+  background: #374151;
+  border-color: #60a5fa;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchShortcut {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchResults {
+  background: #262626;
+  border-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchResultItem {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchResultLink {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSearchResultLink:hover,
+.docsOuter[data-docs-theme="dark"] .docsSearchResultLinkFocused {
+  background: #374151;
+  color: #fff;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsHeaderIcon {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsHeaderIcon:hover {
+  color: #fff;
+  background: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSidebarLeft {
+  background: #1a1a1a;
+  border-right-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSidebarLeftTitle {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsNavLink {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsNavLink:hover {
+  color: #fff;
+  background: #262626;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsNavLinkActive {
+  color: #93c5fd;
+  border-left-color: #93c5fd;
+  background: #1e3a5f;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMainWrap {
+  background: #1a1a1a;
+  background-image: radial-gradient(#374151 1px, transparent 1px);
+}
+
+.docsOuter[data-docs-theme="dark"] .docsBreadcrumb {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsBreadcrumbSep {
+  color: #6b7280;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsBreadcrumbLink {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsBreadcrumbLink:hover {
+  color: #93c5fd;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h1),
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h2),
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h3),
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h4),
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h5),
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h6) {
+  color: #fff;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h1) {
+  border-bottom-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(h2) {
+  border-bottom-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(:not(pre) > code) {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(pre) {
+  background: #111;
+  color: #e5e7f0;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(table th),
+.docsOuter[data-docs-theme="dark"] .docsContent :global(table td) {
+  border-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(th) {
+  background: #262626;
+  color: #fff;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(td) {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(blockquote) {
+  border-left-color: #4b5563;
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(hr) {
+  border-top-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsContent :global(a) {
+  color: #93c5fd;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSidebarRight {
+  background: #1a1a1a;
+  border-left-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsSidebarRightTitle {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsTocLink {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsTocLink:hover {
+  color: #93c5fd;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsTocLinkActive {
+  color: #93c5fd;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsFooterLinks {
+  border-top-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsFooterLink {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsFooterLink:hover {
+  color: #93c5fd;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileMenuBtn {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileMenuBtn:hover {
+  color: #fff;
+  background: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileDrawer {
+  background: #1a1a1a;
+  border-left: 1px solid #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileDrawerHeader {
+  border-bottom-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileClose {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileClose:hover {
+  color: #fff;
+  background: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileSearch {
+  border-bottom-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileNavLinks {
+  border-bottom-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileNavLink {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileNavLink:hover {
+  color: #fff;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileSidebarTitle {
+  color: #9ca3af;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileNavList .docsNavLink {
+  color: #e5e7eb;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileGitHub {
+  color: #e5e7eb;
+  border-top-color: #374151;
+}
+
+.docsOuter[data-docs-theme="dark"] .docsMobileGitHub:hover {
+  color: #fff;
+}
+
 /* Right sidebar: On This Page, white */
 .docsSidebarRight {
   width: 220px;

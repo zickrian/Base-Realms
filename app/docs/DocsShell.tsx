@@ -1,11 +1,15 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Sun } from "lucide-react";
+import { Github, Sun, Moon } from "lucide-react";
 import { DocsSearch, GITHUB_REPO } from "./DocsSearch";
 import { DocsMobileNav } from "./DocsMobileNav";
 import type { DocSection } from "./lib/sections";
 import styles from "./docs.module.css";
+
+const STORAGE_KEY = "docs-glossarium-dark";
 
 export function DocsShell({
   sections,
@@ -20,8 +24,26 @@ export function DocsShell({
   children: React.ReactNode;
   rightToc: React.ReactNode;
 }) {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    setDark(stored === "1");
+  }, []);
+
+  const toggleDark = () => {
+    const next = !dark;
+    setDark(next);
+    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
+  };
+
   return (
-    <div className={styles.docsOuter} data-allow-scroll="true">
+    <div
+      className={styles.docsOuter}
+      data-allow-scroll="true"
+      data-docs-theme={dark ? "dark" : undefined}
+    >
       <div className={styles.docsCard}>
         <header className={styles.docsHeader}>
           <div className={styles.docsHeaderLeft}>
@@ -58,9 +80,10 @@ export function DocsShell({
               <button
                 type="button"
                 className={styles.docsHeaderIcon}
-                aria-label="Toggle theme"
+                aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+                onClick={toggleDark}
               >
-                <Sun size={20} />
+                {dark ? <Moon size={20} /> : <Sun size={20} />}
               </button>
             </div>
             <DocsMobileNav sections={sections} currentSection={currentSection} />
