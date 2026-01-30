@@ -62,6 +62,25 @@ export default function Login() {
     if (!isConnected && !isConnecting) {
       if (wasConnectedRef.current) {
         setIsLoggingOut(true);
+
+        // CRITICAL FIX: Clear all storage when disconnecting
+        // This prevents stale data from causing "bouncing" issues on mobile
+        if (typeof window !== 'undefined') {
+          const keysToRemove = [
+            'wagmi.wallet',
+            'wagmi.connected',
+            'wagmi.recentConnectorId',
+            'wagmi.store',
+            'wagmi.cache',
+            'wagmi.injected.shimDisconnect',
+          ];
+
+          keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+          });
+          sessionStorage.clear();
+        }
+
         setTimeout(() => {
           reset();
           initRef.current = false;
@@ -71,6 +90,22 @@ export default function Login() {
           setIsLoggingOut(false);
         }, 1500);
       } else {
+        // Also clear storage even if never connected (cleanup)
+        if (typeof window !== 'undefined') {
+          const keysToRemove = [
+            'wagmi.wallet',
+            'wagmi.connected',
+            'wagmi.recentConnectorId',
+            'wagmi.store',
+            'wagmi.cache',
+            'wagmi.injected.shimDisconnect',
+          ];
+
+          keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+          });
+          sessionStorage.clear();
+        }
         reset();
         initRef.current = false;
         redirectedRef.current = false;
@@ -139,11 +174,11 @@ export default function Login() {
     // 4. Haven't started init yet
     // 5. No error
     if (
-      isConnected && 
-      address && 
-      !isInitialized && 
-      !isLoading && 
-      !initRef.current && 
+      isConnected &&
+      address &&
+      !isInitialized &&
+      !isLoading &&
+      !initRef.current &&
       !initError
     ) {
       handleInitialize(address);
