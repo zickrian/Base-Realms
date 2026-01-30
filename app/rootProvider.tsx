@@ -7,8 +7,6 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import "@coinbase/onchainkit/styles.css";
 
 export function RootProvider({ children }: { children: ReactNode }) {
-  // Notify Farcaster MiniApp runtime that the app is ready,
-  // so the splash screen can be dismissed in the Farcaster browser.
   useEffect(() => {
     try {
       sdk.actions.ready();
