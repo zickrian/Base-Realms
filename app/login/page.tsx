@@ -23,17 +23,18 @@ export default function Login() {
   // Clear wallet state on mount to prevent "dapp wants to continue" popup
   useEffect(() => {
     console.log('[Login] Clearing wallet state to prevent auto-reconnect popup');
-    
+
     if (typeof window !== 'undefined') {
       // Check if user properly navigated from landing page
       const fromLanding = sessionStorage.getItem('fromLandingPage');
-      
+
       if (fromLanding) {
         console.log('[Login] Fresh navigation from landing - ready for clean connect');
         sessionStorage.removeItem('fromLandingPage');
       }
 
-      // Clear ALL wallet-related storage to prevent "dapp wants to continue"
+      // Clear specific wagmi keys to prevent auto-connect
+      // We ONLY target wagmi keys to avoid breaking the wallet SDK's internal state
       const keysToRemove = [
         'wagmi.recentConnectorId',
         'wagmi.connected',
@@ -46,9 +47,10 @@ export default function Login() {
         localStorage.removeItem(key);
       });
 
-      // Clear ALL wagmi and wallet-related keys
+      // Clear any other wagmi-specific keys, but NOT general "coinbase" or "wallet" keys
+      // as that might break the embedded wallet's internal session
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+        if (key.startsWith('wagmi.')) {
           localStorage.removeItem(key);
           console.log(`[Login] Cleared: ${key}`);
         }
@@ -71,11 +73,11 @@ export default function Login() {
       console.log('[Login] Blocked initialization - logout in progress');
       return;
     }
-    
+
     // Prevent duplicate initialization
     if (initRef.current) return;
     initRef.current = true;
-    
+
     // Normalize wallet address to lowercase for consistent comparison
     const normalizedAddress = walletAddr.toLowerCase();
     addressRef.current = normalizedAddress;
@@ -194,7 +196,7 @@ export default function Login() {
     if (redirectedRef.current || isLoggingOut) {
       return;
     }
-    
+
     // Only initialize if:
     // 1. Connected with address
     // 2. Not yet initialized

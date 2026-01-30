@@ -32,7 +32,7 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
   const handleLogout = async () => {
     try {
       console.log('[Settings] Logout initiated');
-      
+
       // Close settings menu IMMEDIATELY to give user feedback
       onClose();
 
@@ -56,9 +56,10 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
           localStorage.removeItem(key);
         });
 
-        // Clear ALL wagmi and wallet-related keys
+        // Clear any other wagmi-specific keys, but NOT general "coinbase" or "wallet" keys
+        // as that might break the embedded wallet's internal session
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+          if (key.startsWith('wagmi.')) {
             localStorage.removeItem(key);
             console.log(`[Logout] Cleared: ${key}`);
           }
@@ -76,7 +77,7 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
       // Even on error, force clean redirect
       if (typeof window !== 'undefined') {
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+          if (key.startsWith('wagmi.')) {
             localStorage.removeItem(key);
           }
         });

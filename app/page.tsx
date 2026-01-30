@@ -20,7 +20,8 @@ export default function Landing() {
     console.log('[Landing] Clearing wallet storage on mount to prevent auto-connect');
 
     if (typeof window !== 'undefined') {
-      // Clear ALL wallet-related keys to prevent "dapp wants to continue"
+      // Clear specific wagmi keys to prevent "dapp wants to continue"
+      // We ONLY target wagmi keys to avoid breaking the wallet SDK's internal state
       const keysToRemove = [
         'wagmi.recentConnectorId', // Main culprit for auto-connect
         'wagmi.connected',
@@ -34,9 +35,10 @@ export default function Landing() {
         console.log(`[Landing] Removed: ${key}`);
       });
 
-      // Clear ALL wagmi keys with wildcard pattern
+      // Clear any other wagmi-specific keys, but NOT general "coinbase" or "wallet" keys
+      // as that might break the embedded wallet's internal session
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('wagmi.') || key.includes('coinbase') || key.includes('wallet')) {
+        if (key.startsWith('wagmi.')) {
           localStorage.removeItem(key);
           console.log(`[Landing] Removed wildcard: ${key}`);
         }
