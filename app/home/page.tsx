@@ -18,6 +18,8 @@ import { useAmbientSound } from "../hooks/useAmbientSound";
 import { useWalkSound } from "../hooks/useWalkSound";
 import { useDailyPacks } from "../hooks/useDailyPacks";
 import { useInventoryRealtime } from "../hooks/useInventoryRealtime";
+import { useCarrot } from "../hooks/useCarrot";
+import { useCarrotMint } from "../hooks/useCarrotMint";
 import { prefetchLeaderboard } from "../hooks/useLeaderboard";
 import { useGameStore } from "../stores/gameStore";
 import { getStorageUrl } from "../utils/supabaseStorage";
@@ -93,6 +95,7 @@ export default function HomePage() {
   const VIEWPORT_WIDTH = 430; // Mobile viewport
   const WORLD_WIDTH = 2500; // Extended to accommodate all buildings plus extra space to walk past seum
   const ATM_X = 250;
+  const CARROT_X = 325; // Carrot position next to ATM
   const LEADERBOARD_X = 400;
   const HOME_X = 680; // Updated: shifted right with spacing after leaderboard
   const QUESTBOARD_X = 1000;
@@ -285,6 +288,45 @@ export default function HomePage() {
     setIsMoving(true);
   };
   const { packCount, claimPack, refetch: refetchDailyPacks } = useDailyPacks();
+  const { carrotStatus, plantCarrot, harvestCarrot, loading: carrotLoading } = useCarrot();
+  const {
+    mintCarrot,
+    hash: mintHash,
+    isConfirmed: isMintConfirmed,
+    isPending: isMinting,
+    error: mintError,
+    isOnBase,
+  } = useCarrotMint();
+
+  // Carrot planting state
+  const [isPlanting, setIsPlanting] = useState(false);
+  const [carrotTimeRemaining, setCarrotTimeRemaining] = useState(0);
+
+  // Update carrot timer every second
+  useEffect(() => {
+    if (!carrotStatus || carrotStatus.status !== 'planted') {
+      setCarrotTimeRemaining(0);
+      return;
+    }
+
+    // Update immediately
+    setCarrotTimeRemaining(carrotStatus.timeRemaining || 0);
+
+    // Update every second
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const harvestableAt = new Date(carrotStatus.harvestableAt).getTime();
+      const remaining = Math.max(0, harvestableAt - now);
+      setCarrotTimeRemaining(remaining);
+
+      // If time is up, refresh status
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [carrotStatus]);
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // This ensures React Hooks rules are followed
@@ -317,6 +359,9 @@ export default function HomePage() {
         '/Assets/shop.svg',
         '/Assets/seum.svg',
         '/button/buttongo.svg',
+        '/carrot/carrot1.svg',
+        '/carrot/carrot2.svg',
+        '/carrot/carrot3.svg',
       ];
       
       // Preload in background without blocking
@@ -466,6 +511,123 @@ export default function HomePage() {
     setIsSwapMenuOpen(true);
   };
 
+  // Handle carrot planting
+  const handleCarrotPlant = async () => {
+    // Safety checks
+    if (!address || !isConnected) {
+      alert('Please connect your wallet first.');
+      return;
+    }
+
+    if (isPlanting) {
+      return; // Prevent double-click
+    }
+
+    // Check if already have active carrot
+    if (carrotStatus && (carrotStatus.status === 'planted' || carrotStatus.status === 'harvestable')) {
+      alert('You already have an active carrot. Please harvest it first.');
+      return;
+    }
+
+    try {
+      setIsPlanting(true);
+      await plantCarrot();
+      console.log('[Home] Carrot planted successfully');
+    } catch (error) {
+      console.error('[Home] Failed to plant carrot:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to plant carrot';
+      alert(errorMsg);
+    } finally {
+      setIsPlanting(false);
+    }
+  };
+
+  // Handle carrot harvest (mint NFT)
+  const handleCarrotHarvest = async () => {
+    if (!address || !isConnected) return;
+
+    // Check if on Base network
+    if (!isOnBase) {
+      alert('Please switch to Base network to mint Carrot NFT.');
+      return;
+    }
+
+    // Check if carrot is ready to harvest
+    if (!carrotStatus || carrotStatus.status !== 'harvestable') {
+      alert('Carrot is not ready to harvest yet.');
+      return;
+    }
+
+    try {
+      console.log('[Home] Starting carrot harvest...');
+      
+      // Mint NFT using wagmi hook
+      await mintCarrot();
+      
+      console.log('[Home] Mint transaction submitted');
+    } catch (error) {
+      console.error('[Home] Failed to mint carrot:', error);
+      
+      // Better error messages
+      if (error instanceof Error) {
+        if (error.message.includes('User rejected') || error.message.includes('user rejected')) {
+          alert('Transaction was cancelled.');
+        } else if (error.message.includes('insufficient funds')) {
+          alert('Insufficient funds for gas fee.');
+        } else {
+          alert(error.message);
+        }
+      } else {
+        alert('Failed to mint carrot. Please try again.');
+      }
+    }
+  };
+
+  // Handle mint confirmation
+  useEffect(() => {
+    if (isMintConfirmed && mintHash) {
+      console.log('[Home] Carrot NFT minted successfully:', mintHash);
+
+      // Record harvest in database
+      const recordHarvest = async () => {
+        try {
+          await harvestCarrot(mintHash, String(1)); // Token ID = 1
+          
+          // Show success toast
+          setToast({
+            message: "Carrot harvested! NFT minted successfully!",
+            type: "success",
+            isVisible: true,
+            transactionHash: mintHash,
+          });
+
+          // Auto-hide toast after 5 seconds
+          setTimeout(() => {
+            setToast(prev => ({ ...prev, isVisible: false }));
+          }, 5000);
+        } catch (error) {
+          console.error('[Home] Failed to record harvest:', error);
+          // Still show success since NFT was minted
+          setToast({
+            message: "NFT minted! But failed to record in database.",
+            type: "warning",
+            isVisible: true,
+            transactionHash: mintHash,
+          });
+        }
+      };
+
+      recordHarvest();
+    }
+  }, [isMintConfirmed, mintHash, harvestCarrot]);
+
+  // Handle mint error
+  useEffect(() => {
+    if (mintError) {
+      console.error('[Home] Mint error:', mintError);
+    }
+  }, [mintError]);
+
   const _handlePackClick = async () => {
     if (!address || !isConnected) {
       setToast({
@@ -577,6 +739,96 @@ export default function HomePage() {
           >
             <img src="/button/buttongo.svg" alt="Go to Swap" />
           </button>
+        )}
+
+        {/* Carrot Plant - Next to ATM */}
+        {!carrotLoading && (
+          <>
+            {/* Render carrot based on status */}
+            {!carrotStatus && (
+              // No carrot planted - show carrot1.svg (seed)
+              <img
+                src="/carrot/carrot1.svg"
+                alt="Carrot Seed"
+                className={styles.carrot}
+              />
+            )}
+            
+            {carrotStatus && carrotStatus.status === 'planted' && (
+              // Growing - show carrot2.svg
+              <img
+                src="/carrot/carrot2.svg"
+                alt="Growing Carrot"
+                className={styles.carrot}
+              />
+            )}
+            
+            {carrotStatus && carrotStatus.status === 'harvestable' && (
+              // Ready to harvest - show carrot3.svg
+              <img
+                src="/carrot/carrot3.svg"
+                alt="Harvestable Carrot"
+                className={styles.carrot}
+              />
+            )}
+
+            {/* Go Button for Carrot - Only visible when character is near */}
+            {Math.abs(charPos.x - CARROT_X) < 150 && (
+              <>
+                {!carrotStatus && (
+                  // Plant button - visible when no carrot
+                  <button
+                    key="go-btn-carrot-plant"
+                    className={styles.goButtonCarrot}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCarrotPlant();
+                    }}
+                    disabled={isPlanting}
+                  >
+                    <img src="/button/buttongo.svg" alt="Plant Carrot" />
+                  </button>
+                )}
+                
+                {carrotStatus && carrotStatus.status === 'planted' && (
+                  // Show cooldown timer during planting (button hidden)
+                  <div className={styles.carrotCooldown}>
+                    {(() => {
+                      const remainingMs = carrotTimeRemaining;
+                      const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+                      const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+                      const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+                      return `${hours}h ${minutes}m ${seconds}s`;
+                    })()}
+                  </div>
+                )}
+                
+                {carrotStatus && carrotStatus.status === 'harvestable' && (
+                  // Harvest button - visible when ready
+                  <>
+                    {isMinting ? (
+                      // Show loading during mint
+                      <div className={styles.carrotCooldown}>
+                        {isMintConfirmed ? 'Confirming...' : 'Minting...'}
+                      </div>
+                    ) : (
+                      <button
+                        key="go-btn-carrot-harvest"
+                        className={styles.goButtonCarrot}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCarrotHarvest();
+                        }}
+                        disabled={isMinting}
+                      >
+                        <img src="/button/buttongo.svg" alt="Harvest Carrot" />
+                      </button>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </>
         )}
 
         {/* Leaderboard */}

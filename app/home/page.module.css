@@ -497,6 +497,100 @@
   vertical-align: bottom;
 }
 
+.carrot {
+  position: absolute;
+  bottom: 179px;
+  /* Positioned at top of grass (same as other buildings) */
+  left: 325px;
+  /* Next to ATM */
+  transform: translateX(-50%);
+  z-index: 15;
+  pointer-events: none;
+  width: auto;
+  height: 43px;
+  /* 12 units * 3.6px/unit = 43.2px ≈ 43px for carrot3 */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transform-origin: center bottom;
+  margin: 0;
+  padding: 0;
+  display: block;
+  vertical-align: bottom;
+}
+
+.goButtonCarrot {
+  position: absolute;
+  bottom: 232px;
+  /* 10px above top of carrot (179px bottom + 43px height + 10px gap = 232px) */
+  left: 325px;
+  /* Center aligned with carrot */
+  transform: translateX(-50%);
+  z-index: 100;
+  /* Above buildings, clickable */
+  pointer-events: all;
+  /* Button reset */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 47px;
+  height: 47px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.goButtonCarrot:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.goButtonCarrot:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.goButtonCarrot:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.goButtonCarrot img {
+  width: 47px;
+  height: 47px;
+  /* Proportional to grass: 13 unit * 3.6px/unit = 46.8px ≈ 47px (grass: 50 unit * 3.6 = 180px) */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
+}
+
+.carrotCooldown {
+  position: absolute;
+  bottom: 232px;
+  /* Same position as button */
+  left: 325px;
+  /* Center aligned with carrot */
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  border: 2px solid #3e1f08;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .goButtonLeaderboard {
   position: absolute;
   bottom: 333px;
