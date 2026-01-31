@@ -501,8 +501,8 @@
   position: absolute;
   bottom: 179px;
   /* Positioned at top of grass (same as other buildings) */
-  left: 175px;
-  /* LEFT of ATM (75px spacing from ATM center at 250px) */
+  left: 120px;
+  /* LEFT of ATM (further left for better spacing) */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
@@ -526,8 +526,8 @@
   position: absolute;
   bottom: 232px;
   /* 10px above top of carrot (179px bottom + 43px height + 10px gap = 232px) */
-  left: 175px;
-  /* Center aligned with carrot - LEFT of ATM */
+  left: 120px;
+  /* Center aligned with carrot - LEFT of ATM (further left) */
   transform: translateX(-50%);
   z-index: 100;
   /* Above buildings, clickable */
@@ -576,8 +576,8 @@
   position: absolute;
   bottom: 232px;
   /* Same position as button */
-  left: 175px;
-  /* Center aligned with carrot - LEFT of ATM */
+  left: 120px;
+  /* Center aligned with carrot - LEFT of ATM (further left) */
   transform: translateX(-50%);
   z-index: 100;
   pointer-events: none;
