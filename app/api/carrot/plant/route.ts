@@ -32,25 +32,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
+    const normalizedAddress = walletAddress.toLowerCase();
+
+    // Get user from users table
+    const { data: user, error: userError } = await supabase
+      .from('users')
       .select('id, wallet_address')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', normalizedAddress)
       .single();
 
-    if (profileError) {
-      console.error('[Carrot Plant] Profile error:', profileError);
+    if (userError) {
+      console.error('[Carrot Plant] User error:', userError);
+      
+      // If user not found, they need to login first
+      if (userError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Please login to the game first. Go to the login page to connect your wallet.' },
+          { status: 401 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: 'User profile not found. Please ensure you are logged in.' },
-        { status: 404 }
+        { error: 'Failed to fetch user data' },
+        { status: 500 }
       );
     }
 
-    if (!profile) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'User profile not found. Please ensure you are logged in.' },
-        { status: 404 }
+        { error: 'Please login to the game first. Go to the login page to connect your wallet.' },
+        { status: 401 }
       );
     }
 
@@ -58,7 +69,7 @@ export async function POST(request: NextRequest) {
     const { data: existingCarrot, error: checkError } = await supabase
       .from('carrot_plants')
       .select('*')
-      .eq('user_id', profile.id)
+      .eq('user_id', user.id)
       .in('status', ['planted', 'harvestable'])
       .maybeSingle(); // Use maybeSingle to avoid error if no rows
 
@@ -85,8 +96,8 @@ export async function POST(request: NextRequest) {
     const { data: newCarrot, error: insertError } = await supabase
       .from('carrot_plants')
       .insert({
-        user_id: profile.id,
-        wallet_address: walletAddress.toLowerCase(),
+        user_id: user.id,
+        wallet_address: normalizedAddress,
         planted_at: plantedAt.toISOString(),
         harvestable_at: harvestableAt.toISOString(),
         status: 'planted',

@@ -501,14 +501,17 @@
   position: absolute;
   bottom: 179px;
   /* Positioned at top of grass (same as other buildings) */
-  left: 325px;
-  /* Next to ATM */
+  left: 175px;
+  /* LEFT of ATM (75px spacing from ATM center at 250px) */
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none;
-  width: auto;
-  height: 43px;
-  /* 12 units * 3.6px/unit = 43.2px ≈ 43px for carrot3 */
+  width: 155px;
+  /* 43 units * 3.6px/unit = 154.8px ≈ 155px */
+  height: auto;
+  /* Auto height to maintain aspect ratio - different for each carrot */
+  max-height: 43px;
+  /* Max height for carrot3 (12 units * 3.6 = 43.2px) */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
@@ -523,8 +526,8 @@
   position: absolute;
   bottom: 232px;
   /* 10px above top of carrot (179px bottom + 43px height + 10px gap = 232px) */
-  left: 325px;
-  /* Center aligned with carrot */
+  left: 175px;
+  /* Center aligned with carrot - LEFT of ATM */
   transform: translateX(-50%);
   z-index: 100;
   /* Above buildings, clickable */
@@ -573,8 +576,8 @@
   position: absolute;
   bottom: 232px;
   /* Same position as button */
-  left: 325px;
-  /* Center aligned with carrot */
+  left: 175px;
+  /* Center aligned with carrot - LEFT of ATM */
   transform: translateX(-50%);
   z-index: 100;
   pointer-events: none;

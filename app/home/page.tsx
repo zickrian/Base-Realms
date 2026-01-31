@@ -95,7 +95,7 @@ export default function HomePage() {
   const VIEWPORT_WIDTH = 430; // Mobile viewport
   const WORLD_WIDTH = 2500; // Extended to accommodate all buildings plus extra space to walk past seum
   const ATM_X = 250;
-  const CARROT_X = 325; // Carrot position next to ATM
+  const CARROT_X = 175; // Carrot position - LEFT of ATM (75px spacing)
   const LEADERBOARD_X = 400;
   const HOME_X = 680; // Updated: shifted right with spacing after leaderboard
   const QUESTBOARD_X = 1000;

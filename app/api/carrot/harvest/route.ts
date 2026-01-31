@@ -59,25 +59,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
+    const normalizedAddress = walletAddress.toLowerCase();
+
+    // Get user from users table
+    const { data: user, error: userError } = await supabase
+      .from('users')
       .select('id, wallet_address')
-      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('wallet_address', normalizedAddress)
       .single();
 
-    if (profileError) {
-      console.error('[Carrot Harvest] Profile error:', profileError);
+    if (userError) {
+      console.error('[Carrot Harvest] User error:', userError);
+      
+      if (userError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Please login to the game first. Go to the login page to connect your wallet.' },
+          { status: 401 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Failed to fetch user data' },
+        { status: 500 }
       );
     }
 
-    if (!profile) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Please login to the game first. Go to the login page to connect your wallet.' },
+        { status: 401 }
       );
     }
 
@@ -85,7 +95,7 @@ export async function POST(request: NextRequest) {
     const { data: carrot, error: carrotError } = await supabase
       .from('carrot_plants')
       .select('*')
-      .eq('user_id', profile.id)
+      .eq('user_id', user.id)
       .eq('status', 'harvestable')
       .order('created_at', { ascending: false })
       .limit(1)
