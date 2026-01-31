@@ -25,6 +25,7 @@ export function useSoundEffect() {
     const handleVolumeChange = (event: Event) => {
       const customEvent = event as CustomEvent<number>;
       const volume = customEvent.detail / 100;
+      console.log(`[SoundEffect] Received volume-change event: ${customEvent.detail}% (${volume.toFixed(2)})`);
       audioRefs.current.forEach((audio) => {
         audio.volume = volume;
       });

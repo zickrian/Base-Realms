@@ -152,6 +152,36 @@
   border: 2px dashed #8b5a2b;
 }
 
+/* Swapping Indicator */
+.swappingIndicator {
+  text-align: center;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(242, 37, 97, 0.1);
+  border: 2px solid #f22561;
+  color: #3e1f08;
+  font-size: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(62, 31, 8, 0.2);
+  border-top-color: #f22561;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Info Section - Pixelated Style */
 .infoSection {
   width: 100%;
@@ -232,6 +262,19 @@
 
 .inputWrapper button:hover {
   background: #e8be82 !important;
+}
+
+/* Force token images to display properly - NO CIRCLE FRAME */
+.inputWrapper button img,
+.inputWrapper img {
+  display: inline-block !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 0 !important;
+  object-fit: contain !important;
+  background: transparent !important;
+  padding: 0 !important;
+  image-rendering: pixelated !important;
 }
 
 /* Toggle Button */

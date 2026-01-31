@@ -12,9 +12,10 @@ export function useUserSettings() {
     if (typeof window === 'undefined') return null;
     const cachedVolume = sessionStorage.getItem('userSoundVolume');
     const cachedNotifications = sessionStorage.getItem('userNotificationsEnabled');
-    if (cachedVolume === null && cachedNotifications === null) return null;
+    
+    // Always return a default value to prevent null -> value transitions
     return {
-      soundVolume: cachedVolume ? Number(cachedVolume) : 0,
+      soundVolume: cachedVolume !== null ? Number(cachedVolume) : 50, // Default 50% instead of 0
       notificationsEnabled: cachedNotifications ? cachedNotifications === 'true' : true,
     };
   });
@@ -23,7 +24,7 @@ export function useUserSettings() {
 
   useEffect(() => {
     if (!isConnected || !address) {
-      setSettings(null);
+      // Don't reset to null, keep current settings
       setLoading(false);
       return;
     }
@@ -46,7 +47,17 @@ export function useUserSettings() {
           soundVolume: data.settings.sound_volume,
           notificationsEnabled: data.settings.notifications_enabled,
         };
-        setSettings(nextSettings);
+        
+        // Only update if values actually changed to prevent unnecessary re-renders
+        setSettings(prevSettings => {
+          if (prevSettings && 
+              prevSettings.soundVolume === nextSettings.soundVolume && 
+              prevSettings.notificationsEnabled === nextSettings.notificationsEnabled) {
+            return prevSettings; // No change, return same object
+          }
+          return nextSettings;
+        });
+        
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('userSoundVolume', String(nextSettings.soundVolume));
           sessionStorage.setItem('userNotificationsEnabled', String(nextSettings.notificationsEnabled));
@@ -54,8 +65,9 @@ export function useUserSettings() {
         setError(null);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error('[useUserSettings] Fetch error:', errorMessage);
         setError(errorMessage);
-        setSettings(null);
+        // Don't reset settings on error, keep current values
       } finally {
         setLoading(false);
       }

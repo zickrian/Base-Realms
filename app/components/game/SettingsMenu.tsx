@@ -126,22 +126,34 @@ export const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
+    
+    // Dispatch event IMMEDIATELY for real-time audio update
     window.dispatchEvent(new CustomEvent('volume-change', { detail: newVolume }));
+    
+    // Update session storage immediately
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('userSoundVolume', String(newVolume));
     }
 
-    // Debounce save
+    // Debounce database save to avoid too many requests
     const windowWithTimeout = window as Window & { volumeSaveTimeout?: ReturnType<typeof setTimeout> };
     clearTimeout(windowWithTimeout.volumeSaveTimeout);
     windowWithTimeout.volumeSaveTimeout = setTimeout(() => {
       if (address) {
+        console.log(`[Settings] Saving volume to database: ${newVolume}%`);
         setSaving(true);
-        updateSettings(address, { soundVolume: newVolume }).finally(() => {
-          setSaving(false);
-        });
+        updateSettings(address, { soundVolume: newVolume })
+          .then(() => {
+            console.log(`[Settings] Volume saved successfully: ${newVolume}%`);
+          })
+          .catch((error) => {
+            console.error('[Settings] Failed to save volume:', error);
+          })
+          .finally(() => {
+            setSaving(false);
+          });
       }
-    }, 300);
+    }, 500); // Increased debounce to 500ms for better UX
   };
 
   const handleNotificationsToggle = () => {

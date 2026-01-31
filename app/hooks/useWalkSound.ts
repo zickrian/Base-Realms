@@ -70,9 +70,11 @@ export function useWalkSound(isMoving: boolean) {
   useEffect(() => {
     const handleVolumeChange = (event: Event) => {
       const customEvent = event as CustomEvent<number>;
+      console.log(`[WalkSound] Received volume-change event: ${customEvent.detail}%`);
       if (audioRef.current) {
         const newVolume = customEvent.detail / 100;
         audioRef.current.volume = newVolume;
+        console.log(`[WalkSound] Volume updated to ${customEvent.detail}% (${newVolume.toFixed(2)})`);
       }
     };
 
