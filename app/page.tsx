@@ -98,8 +98,8 @@ export default function Landing() {
         <div className={styles.navLinks}>
           <a href="#" className={styles.navLink}>Home</a>
           <Link href="/docs" className={styles.navLink}>Docs</Link>
-          <a href="#" className={styles.navLink}>Tutorial</a>
-          <a href="#" className={styles.navLink}>Economy</a>
+          <Link href="https://baserealms.app/docs/complete-step-by-step-player-guide" className={styles.navLink}>Tutorial</Link>
+          <Link href="https://baserealms.app/docs/token-economy" className={styles.navLink}>Economy</Link>
         </div>
 
         {/* Play Button Right (desktop: visible, mobile: in drawer) */}
@@ -143,15 +143,24 @@ export default function Landing() {
         <div className={styles.navDrawerLinks}>
           <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Home</a>
           <Link href="/docs" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Docs</Link>
-          <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Tutorial</a>
-          <a href="#" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Economy</a>
+          <Link href="https://baserealms.app/docs/complete-step-by-step-player-guide" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Tutorial</Link>
+          <Link href="https://baserealms.app/docs/token-economy" className={styles.navDrawerLink} onClick={() => setMobileMenuOpen(false)}>Economy</Link>
         </div>
       </div>
 
       {/* Hero Section */}
       <header className={styles.hero}>
         <div className={styles.heroOverlay} />
-        <div className={styles.heroContent} />
+        <div className={styles.heroContent}>
+          <Image
+            src="/tutorialsss.png"
+            alt="Tutorial"
+            width={640}
+            height={480}
+            className={styles.heroTutorialImage}
+            priority
+          />
+        </div>
 
         {/* NO Scroll Indicator as requested */}
       </header>

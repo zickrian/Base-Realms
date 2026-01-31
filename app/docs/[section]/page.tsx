@@ -4,6 +4,7 @@ import path from "path";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { getSections, parseToc, slug } from "../lib/sections";
 import { DocsShell } from "../DocsShell";
 import styles from "../docs.module.css";
@@ -65,7 +66,12 @@ export default async function DocsSectionPage({
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
+          img: ({ src, alt, ...props }) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src ?? ""} alt={alt ?? ""} loading="lazy" decoding="async" {...props} />
+          ),
           h1: ({ children, ...props }) => (
             <h1 id={slug(headingText(children))} {...props}>
               {children}

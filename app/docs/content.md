@@ -143,6 +143,23 @@ Base Realms is **not** a Farcaster-only app. It is a **Base app** and also a **F
 
 ## Complete Step-by-Step Player Guide
 
+### 📺 Video Tutorial
+
+Watch the complete walkthrough:
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 2rem 0;">
+  <iframe 
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+    src="https://www.youtube.com/embed/RtsQ3n32NZs" 
+    title="Base Realms Tutorial" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>
+
+---
+
 This section is a **full walkthrough** of Base Realms from first open to battle, minting, QRIS, and every screen in between. Base Realms is a **Base app** and a **Farcaster MiniApp**: we have registered it in the **Farcaster manifest** at Farcaster.xyz developer tools (see **Farcaster and Base app**). You can open it in **three ways**; in all cases you connect with a **wallet on Base** (e.g. Coinbase Wallet) and use **IDRX** for battle fees and **ETH** for gas.
 
 ---
@@ -217,6 +234,8 @@ If something fails (e.g. login or init), an error message appears; you can try a
     - **Shop** – go to the shop to mint/buy NFTs.  
     - **Seum** (colosseum) – enter battle.
 
+![Home Screen](/docs/home.jpeg)
+
 **Moving your character**  
 - **Left-click** (or tap the ground to the **left** of your character) → character **walks left**.  
 - **Right-click** (or tap the ground to the **right** of your character) → character **walks right**.  
@@ -250,6 +269,8 @@ You must **walk close to a building** to see its **“Go”** button; then tap *
 - Only one card can be selected at a time. You need this card selected before you can start a battle.  
 - Close the Deck menu when done; your selected card is saved for the next battle.
 
+![My Deck](/docs/mydeck.jpeg)
+
 ---
 
 ### 7. ATM – Swap menu and QRIS entry
@@ -271,6 +292,8 @@ You must **walk close to a building** to see its **“Go”** button; then tap *
 - Shows **rankings** (e.g. by wins, BRWIN, or XP).  
 - Your entry may be highlighted.  
 - Close when done.
+
+![Leaderboard](/docs/leaderboard.jpeg)
 
 ---
 
@@ -317,6 +340,8 @@ You must **walk close to a building** to see its **“Go”** button; then tap *
 7. After the transaction is confirmed, the **NFT is minted** to your wallet and the app **syncs your inventory**.  
 8. The new card appears in your **Deck** (Home → Deck) and can be **selected for battle**.
 
+![Minting Success](/docs/mintingsukses.jpeg)
+
 **Free mint vs paid packs**  
 - **Free pack:** One (or more) free mints per day or per account; you only pay **gas in ETH**.  
 - **Paid packs:** Cost IDRX or other token; you select amount, approve spending, then mint. Gas is still paid in ETH.
@@ -348,6 +373,8 @@ You must **walk close to a building** to see its **“Go”** button; then tap *
    - You may be asked to **confirm the battle transaction** in your wallet.  
    - The screen shows **turn-based animation** (you vs enemy, HP bars, damage).  
    - Result is **win** or **lose** (decided by the contract).
+
+![Battle Screen](/docs/battle.jpeg)
 
 4. **Result**  
    - **Win:** You receive **1 BRWIN** (soulbound).  
@@ -393,6 +420,8 @@ QRIS is for **topping up IDRX** (in-game currency) using **Indonesian Rupiah** v
 3. **Show QR code**  
    - The app displays the **QRIS code** (QR image).  
    - You open your **banking or e-wallet app** and **scan** this QR.
+
+![QRIS top-up](/docs/qris.jpg)
 
 4. **Pay with your app**  
    - You complete the payment in **IDR** in your bank/e-wallet app.  
