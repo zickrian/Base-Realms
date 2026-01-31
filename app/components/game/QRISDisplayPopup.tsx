@@ -202,13 +202,13 @@ export const QRISDisplayPopup: React.FC<QRISDisplayPopupProps> = ({
         <div className={styles.content}>
           {/* Timer */}
           <div className={styles.timerBox}>
-            <div className={styles.timerLabel}>Sisa Waktu</div>
+            <div className={styles.timerLabel}>Time Remaining</div>
             <div className={styles.timerValue}>{formatTime(timeRemaining)}</div>
           </div>
 
           {/* Amount */}
           <div className={styles.amountBox}>
-            <div className={styles.amountLabel}>Total Pembayaran</div>
+            <div className={styles.amountLabel}>Total Payment</div>
             <div className={styles.amountValue}>{formatAmount(amount)}</div>
           </div>
 
