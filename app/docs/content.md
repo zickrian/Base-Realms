@@ -209,6 +209,7 @@ If something fails (e.g. login or init), an error message appears; you can try a
   - **Ground:** Grass (tiled).  
   - **Your character:** Standing or walking on the grass.  
   - **Buildings (left to right):**  
+    - **Carrot Patch** – left of ATM; plant, grow & harvest carrot NFTs (6 hour cooldown).  
     - **ATM** – Swap / top-up IDRX (and QRIS entry).  
     - **Leaderboard** – rankings.  
     - **Home** – your house; here you open the **Deck** to select a card.  
@@ -769,6 +770,117 @@ Ensure Node.js and any reverse proxy (e.g. Nginx) are configured for a Node serv
 |          | MerkleTreeJS       | Merkle tree and proof generation |
 
 The client handles movement with **left-click** (walk left) and **right-click** (walk right); the camera follows and position is saved in the session.
+
+---
+
+## Carrot Farming System
+
+### Overview
+
+Base Realms includes a **carrot farming mechanic** where players can plant, grow, and harvest carrot NFTs (ERC-1155). This adds a passive gameplay element alongside the battle system.
+
+### Location
+
+Find the **carrot patch** on the Home world:
+- **Position**: Left of the ATM building (x=120px)
+- Walk to the patch; when close enough (within 150px), buttons appear
+
+### How to Farm Carrots
+
+**1. Plant a Carrot**
+- Walk to the carrot patch (left of ATM)
+- Get close until the **Plant** button appears
+- Tap **Plant** → carrot seed appears
+- Only **ETH gas** required (no IDRX cost)
+
+**2. Wait for Growth (6 hours)**
+- Carrot enters **growing state** (visual changes)
+- **Cooldown timer** appears: "5h 59m 58s..."
+- **Button is hidden** during this phase
+- Timer updates every second
+- You can close the game; carrot keeps growing
+
+**3. Harvest the Carrot**
+- After **6 hours**, carrot becomes **harvestable** (visual change)
+- Walk back to the patch
+- **Harvest** button appears
+- Tap **Harvest** → wallet opens
+
+**4. Mint Carrot NFT**
+- Approve transaction in wallet
+- Mints **1x Carrot NFT** (ERC-1155)
+- Contract: `0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7`
+- Token ID: 1
+- Gas fee: ~$0.01-0.05 (ETH on Base)
+- NFT appears in your wallet
+- Carrot resets to seed state → can plant again
+
+### Carrot States
+
+| Visual | State | What Happens |
+|--------|-------|--------------|
+| Seed (small) | Empty | Plant button visible |
+| Sprout (medium) | Growing | Cooldown timer: 6 hours |
+| Full grown | Harvestable | Harvest button visible |
+
+### Important Details
+
+- **One at a time**: Can only have 1 active carrot per account
+- **Growth time**: Exactly 6 hours (21,600 seconds)
+- **Network**: Must be on Base (Chain ID 8453)
+- **Cost**: Free to plant; only gas for harvest/mint
+- **Storage**: Tracked in Supabase database with timestamps
+- **NFT Type**: ERC-1155 (fungible token standard, can hold multiple)
+
+### Future Plans 🔮
+
+**Carrots will boost battle stats!** (Coming soon)
+
+In a future update, carrot NFTs will provide **stat buffs** for battles:
+
+- **Consume carrot NFTs** to boost your character
+- **+HP** (Health Points) → Survive longer
+- **+ATK** (Attack Power) → Deal more damage
+- Buffs may be:
+  - **Temporary** (lasts X battles)
+  - **Permanent** (consume to upgrade NFT)
+  - **Stackable** (more carrots = bigger boost)
+
+**Strategic tip:** Start farming carrots now! Hold them for the update to power up your battle NFTs and gain an edge in combat.
+
+### Technical Specs
+
+- **Contract**: ERC-1155 at `0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7`
+- **Token ID**: 1
+- **Mint Amount**: 1 per harvest
+- **Growth Time**: 6 hours (server-validated)
+- **Positioning**: 179px above grass, 3.6px per unit (pixel-perfect)
+- **State Management**: Real-time sync with Supabase
+- **API**: `/api/carrot/plant`, `/api/carrot/status`, `/api/carrot/harvest`
+
+### Farming Tips
+
+- 🥕 **Plant before bed** → harvest ready in morning
+- 🥕 **Daily routine** → plant once per ~6 hours
+- 🥕 **Check timer** → exact time remaining always visible
+- 🥕 **Save NFTs** → hold for upcoming stat boost feature
+- 🥕 **Gas-efficient** → Base network has low fees
+
+### Contract Integration
+
+When you harvest, the app calls:
+
+```typescript
+// Mint Carrot NFT (ERC-1155)
+function mint(
+  address account,      // Your wallet
+  uint256 id,          // Token ID: 1
+  uint256 amount,      // Quantity: 1
+  bytes calldata data  // Empty: 0x00
+) external;
+```
+
+This mints 1 carrot NFT (Token ID 1) to your wallet on Base.
 
 ---
 

@@ -10,6 +10,12 @@ battlebank
 nft
 0xabab2d0A3EAF9722E3EE0840D0360c68899cB305
 
+carrot NFT (ERC-1155)
+0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7
+- Token ID: 1
+- Farming system: 6 hour growth cycle
+- Future: Will affect battle stats (ATK/HP boost)
+
 merkleROOT (generateMerkle.js)
 0xf92321255d63a7a9d08684e50479f5d9ca625dfd8c902319e28d10bd029406c8
 

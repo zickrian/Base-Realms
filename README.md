@@ -90,6 +90,7 @@ Players mint or acquire NFT characters, each with unique **HP (Health Points)** 
 - Explorable pixel art environments
 - Multiple locations: Home, Shop, Battle Arena, Museum
 - Character movement with walk animations
+- **Carrot Farming System** - Plant, grow, and harvest carrot NFTs
 
 ### 🔗 Farcaster MiniKit
 - Native Farcaster Frame integration
@@ -138,7 +139,7 @@ Players mint or acquire NFT characters, each with unique **HP (Health Points)** 
 - 💡 Higher rarity NFTs have better stats
 - 💡 Complete daily quests for XP bonuses
 - 💡 Check the Leaderboard to see top players
-- 💡 Visit the Museum to view your battle history
+- 💡 Plant carrots daily - they take 6 hours to grow and mint into ERC-1155 NFTs
 
 ---
 
@@ -207,6 +208,7 @@ All contracts are deployed on **Base Mainnet (Chain ID: 8453)**
 | **BattleBank** | `0x9885B2DE7b8f0169f4Ed2C17BF71bC3D5a42d684` | IDRX fee vault |
 | **QRIS Claim** | `0x544596e3EFE6F407B21aA6b3430Aa8F1024fcb2a` | IDRX distribution |
 | **IDRX Token** | `0x18Bc5bcC660cf2B9cE3cd51a404aFe1a0cBD3C22` | Payment token (2 decimals) |
+| **Carrot NFT** | `0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7` | ERC-1155 carrot farming NFT |
 
 ---
 
@@ -713,6 +715,152 @@ npm start
 | QRIS Payments | ✅ | Indonesian payment support |
 | Farcaster MiniApp | ✅ | Frame integration |
 | Character Movement | ✅ | Pixel art world exploration |
+| Carrot Farming | ✅ | Plant, grow & harvest carrot NFTs |
+
+---
+
+## 🥕 Carrot Farming System
+
+### Overview
+
+Base Realms features a **carrot farming system** where players can plant, grow, and harvest carrots that become **ERC-1155 NFTs**. This farming mechanic adds a passive gameplay layer to the battle-focused game.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CARROT FARMING FLOW                          │
+└─────────────────────────────────────────────────────────────────┘
+
+1. PLANT CARROT
+   └── Walk to carrot patch (left of ATM on Home)
+   └── Click "Plant" button when near
+   └── Carrot seed appears (carrot1.svg)
+
+2. GROWING PHASE (6 HOURS)
+   ├── Carrot changes to growing state (carrot2.svg)
+   ├── Cooldown timer visible: "5h 59m 58s..."
+   ├── Button hidden during growth
+   └── Timer updates every second
+
+3. HARVEST READY
+   ├── After 6 hours, carrot becomes harvestable (carrot3.svg)
+   ├── "Harvest" button appears
+   └── Player walks to carrot and clicks harvest
+
+4. MINT CARROT NFT
+   ├── Wallet prompts transaction approval
+   ├── Mints 1x Carrot NFT (ERC-1155, Token ID: 1)
+   ├── Contract: 0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7
+   ├── NFT appears in wallet
+   └── Carrot resets to seed state (can plant again)
+```
+
+### Carrot States
+
+| State | Visual | Duration | Action |
+|-------|--------|----------|--------|
+| **Empty** | `carrot1.svg` (seed) | - | Plant button visible |
+| **Growing** | `carrot2.svg` (sprout) | 6 hours | Cooldown timer visible |
+| **Harvestable** | `carrot3.svg` (full grown) | Until harvested | Harvest button visible |
+
+### Carrot NFT Details
+
+- **Contract Type**: ERC-1155 (multi-token standard)
+- **Contract Address**: `0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7`
+- **Token ID**: 1
+- **Network**: Base (Chain ID 8453)
+- **Quantity per Harvest**: 1 NFT
+- **Growth Time**: 6 hours (21,600 seconds)
+
+### Database Tracking
+
+Each carrot plant is tracked in Supabase with:
+
+```sql
+CREATE TABLE carrot_plants (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  wallet_address TEXT NOT NULL,
+  planted_at TIMESTAMPTZ NOT NULL,
+  harvestable_at TIMESTAMPTZ NOT NULL,  -- planted_at + 6 hours
+  harvested_at TIMESTAMPTZ,
+  nft_token_id TEXT,
+  status TEXT CHECK (status IN ('planted', 'harvestable', 'harvested')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### Finding the Carrot Patch
+
+1. From **Home**, look **left** of the ATM building
+2. Walk to position **x=120px** on the world map
+3. When character is near (**within 150px**), button appears
+4. Carrot is positioned **179px above grass** (same level as buildings)
+
+### Cost & Requirements
+
+- **Planting**: Free (only ETH gas for database interaction)
+- **Harvesting**: ETH gas fee for minting ERC-1155 NFT (~$0.01-0.05 on Base)
+- **Network**: Must be on Base network (Chain ID 8453)
+- **Wallet**: Any Base-compatible wallet (Coinbase Wallet, MetaMask, etc.)
+
+### Future Plans 🔮
+
+**Carrots will affect battle stats!** (Planned update)
+
+- Consuming carrot NFTs will boost:
+  - **+HP** (Health Points) - Higher survivability in battles
+  - **+ATK** (Attack Power) - Deal more damage to enemies
+- Carrot buffs may be:
+  - **Temporary**: Last for X battles
+  - **Permanent**: Consume carrot to permanently upgrade an NFT
+  - **Stackable**: Multiple carrots = stronger boost
+
+This adds strategic depth: farm carrots to power up your battle NFTs!
+
+### Technical Implementation
+
+- **Frontend**: React hooks (`useCarrot`, `useCarrotMint`)
+- **Smart Contract Interaction**: Wagmi v2 + Viem
+- **State Management**: Real-time sync with Supabase
+- **Cooldown Timer**: Client-side countdown with server validation
+- **Anti-Cheat**: Server-side timestamp validation
+- **Positioning**: 3.6px per pixel unit (pixel-perfect rendering)
+
+### API Endpoints
+
+```
+POST /api/carrot/plant     - Plant a new carrot
+GET  /api/carrot/status    - Check carrot growth status
+POST /api/carrot/harvest   - Record NFT mint after harvest
+```
+
+### Contract Integration
+
+```typescript
+// Mint Carrot NFT (ERC-1155)
+await writeContract({
+  address: "0x1a3902fF5CfDeD81D307CA89d8b2b045Abbbe0a7",
+  abi: ERC1155_ABI,
+  functionName: 'mint',
+  args: [
+    userAddress,    // address account
+    BigInt(1),      // uint256 id (Token ID)
+    BigInt(1),      // uint256 amount (quantity)
+    '0x00'         // bytes data
+  ],
+});
+```
+
+### Carrot Farming Tips
+
+- 🥕 **Plant before bed** - Harvest will be ready in the morning
+- 🥕 **One at a time** - Can only have 1 active carrot per account
+- 🥕 **Check cooldown** - Timer shows exact time remaining
+- 🥕 **Save for future** - Hold carrot NFTs for upcoming stat boost feature
+- 🥕 **Daily routine** - Plant → Wait 6h → Harvest → Repeat
 
 ---
 
